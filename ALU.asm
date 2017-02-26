@@ -182,8 +182,8 @@ global _start
 global _end
 
 _start:
-	limpiar_pantalla limpiar,limpiar_tam
-	impr_texto l1,tamano_l1
+	limpiar_pantalla limpiar,limpiar_tam ; Limpia la pantalla antes de iniciar
+	impr_texto l1,tamano_l1 ; Mensaje de inicio de programa
 
 	mov r9,num1 ; registro que indica la operacion a realizar
 	mov r8,0 ; registro indice de operacion
@@ -222,14 +222,14 @@ _start:
 	;Direcciones de operacion de instrucciones
 
 	.add:
-	impr_texto Op1,tamano_Op1
+	impr_texto Op1,tamano_Op1 ; Indica al usuario que operacion se realiza
 
-	mov rax,r12
+	mov rax,r12 ;Se pasan los datos a los registros que van a operar
 	mov rbx,r13
 
-	add rax,rbx
+	add rax,rbx ; Se realiza la operacion
 
-	cmp r8,r9
+	cmp r8,r9 ; terminada la operacion, se sale del programa
 	jae .end
 
 	.and:
