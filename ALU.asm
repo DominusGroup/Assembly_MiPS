@@ -155,10 +155,14 @@ Op7: db 'Se realiza una Resta',0xa
 tamano_Op7: equ $-Op7
 Op8: db 'Se realiza una multiplicacion',0xa
 tamano_Op8: equ $-Op8
+Op9: db 'Se realiza un beq',0xa
+tamano_Op9: equ $-Op9
+Op10: db 'Se realiza un bne',0xa
+tamano_Op10: equ $-Op10
 l3: db 'Fin del Programa!',0xa
 tamano_l3: equ $-l3
 
-num1: equ 0x1
+num1: equ 0xa
 
 ;Definicion de los caracteres especiales para limpiar la pantalla
 limpiar    db 0x1b, "[2J", 0x1b, "[H"
@@ -188,122 +192,158 @@ _start:
 	mov r9,num1 ; registro que indica la operacion a realizar
 	mov r8,0 ; registro indice de operacion
 
-	mov r12,5; r12 --- registro que almacena el primer parametro
-	mov r13,6; r13 ---  registro que almacena el segundo parametro
+	mov r12,1011101011B; r12 --- registro que almacena el primer parametro
+	mov r13,1011101011B; r13 ---  registro que almacena el segundo parametro
 	;Se compara el registro r9 con el r8 para saber que operacion se desea realizar
 
 	cmp r8,r9
-	je .end ; 0  La ALU no debe realizar ninguna operacion
+	je _end ; 0  La ALU no debe realizar ninguna operacion
 	inc r8
 	cmp r8,r9
-	je .add ; 1 La ALU debe realizar una suma
+	je _add ; 1 La ALU debe realizar una suma
 	inc r8
 	cmp r8,r9
-	je .and ; 2 La ALU debe realizar un and
+	je _and ; 2 La ALU debe realizar un and
 	inc r8
 	cmp r8,r9
-	je .or ; 3 La ALU debe realizar un or
+	je _or ; 3 La ALU debe realizar un or
 	inc r8
 	cmp r8,r9
-	je .nor ; 4 La ALU debe realizar un nor
+	je _nor ; 4 La ALU debe realizar un nor
 	inc r8
 	cmp r8,r9
-	je .shl ; 5 La ALU debe realizar un Shift Logical Left
+	je _shl ; 5 La ALU debe realizar un Shift Logical Left
 	inc r8
 	cmp r8,r9
-	je .shr ; 6 La ALU debe realizar un Shift Logical Right
+	je _shr ; 6 La ALU debe realizar un Shift Logical Right
 	inc r8
 	cmp r8,r9
-	je .sub ; 7 La ALU debe realizar una resta
+	je _sub ; 7 La ALU debe realizar una resta
 	inc r8
 	cmp r8,r9
-	je .imul ; 8 La ALU debe realizar una multiplicacion
+	je _imul ; 8 La ALU debe realizar una multiplicacion
+	inc r8
+	cmp r8,r9
+	je _beq ; 9 La ALU debe realizar un beq
+	inc r8
+	cmp r8,r9
+	je _bne ; 10 La ALU debe realizar un bne
 
 	;Direcciones de operacion de instrucciones
 
-	.add:
+	_add:
 	impr_texto Op1,tamano_Op1 ; Indica al usuario que operacion se realiza
 
 	mov rax,r12 ;Se pasan los datos a los registros que van a operar
 	mov rbx,r13
 
 	add rax,rbx ; Se realiza la operacion
-
+	_AddR:
 	cmp r8,r9 ; terminada la operacion, se sale del programa
-	jae .end
+	jae _end
 
-	.and:
+	_and:
 	impr_texto Op2,tamano_Op2
 	mov rax,r12
 	mov rbx,r13
 
 	and rax,rbx
-
+	_AndR:
 	cmp r8,r9
-	jae .end
+	jae _end
 
-	.or:
+	_or:
 	impr_texto Op3,tamano_Op3
 	mov rax,r12
 	mov rbx,r13
 
 	or rax,rbx
-
+	_OrR:
 	cmp r8,r9
-	jae .end
+	jae _end
 
-	.nor:
+	_nor:
 	impr_texto Op4,tamano_Op4
 	mov rax,r12
 	mov rbx,r13
 
 	or rax,rbx
 	not rax
-
+	_NorR:
 	cmp r8,r9
-	jae .end
+	jae _end
 
-	.shl:
+	_shl:
 	impr_texto Op5,tamano_Op5
 	mov rax,r12
 	mov rcx,r13
 
 	shl rax,cl
-
+	_ShlR:
 	cmp r8,r9
-	jae .end
+	jae _end
 
-	.shr:
+	_shr:
 	impr_texto Op6,tamano_Op6
 	mov rax,r12
 	mov rcx,r13
 
 	shr rax,cl
-
+	_ShrR:
 	cmp r8,r9
-	jae .end
+	jae _end
 
-	.sub:
+	_sub:
 	impr_texto Op7,tamano_Op7
 	mov rax,r12
 	mov rbx,r13
 
 	sub rax,rbx
-
+	_SubR:
 	cmp r8,r9
-	jae .end
+	jae _end
 
-	.imul:
+	_imul:
 	impr_texto Op8,tamano_Op8
 	mov rax,r12
 	mov rbx,r13
-
 	imul rbx
 
+	_ImulR:
 	cmp r8,r9
-	jae .end
+	jae _end
 
-	.end:
+	_beq:
+	impr_texto Op9,tamano_Op9
+	mov rax, r12
+	mov rbx, r13
+	sub rax,rbx
+	cmp rax,0
+	je _BeqC
+	mov rax,0
+	jmp _BeqR
+	_BeqC:
+	mov rax,1
+	_BeqR:
+	cmp r8,r9
+	jae _end
+
+	_bne:
+	impr_texto Op10,tamano_Op10
+	mov rax, r12
+	mov rbx, r13
+	sub rax,rbx
+	cmp rax,0
+	je _BneC
+	mov rax,1
+	jmp _BneR
+	_BneC:
+	mov rax,0
+	_BneR:
+	cmp r8,r9
+	jae _end
+
+	_end:
 	impr_texto l3,tamano_l3
 	mov rax,60						;se carga la llamada 60d (sys_exit) en rax
 	mov rdi,0							;en rdi se carga un 0
