@@ -28,7 +28,7 @@ section .data
   fmtint:       db "%ld", 10, 0
 
   FILE_NAME:    db "code.txt", 0
-  FILE_LENGTH:  equ 32 ;320        		; length of inside text
+  FILE_LENGTH:  equ 41 ;300        		; length of inside text
   
   OFFSET_POINTER_REG:  equ 8 ;256    ; 1 dword = 4 bytes
   						  ; 128bytes = 32 dwords
@@ -77,6 +77,7 @@ section .bss
 	FD_OUT: 	resb 1
 	FD_IN: 		resb 1
 	TEXT: 		resb 32
+	;TxT_BUFFER: resb 41 ;300
 	Num: 		resb 33 
 
 
@@ -96,9 +97,7 @@ _start:                     			; tell linker entry point
 
 	xor rcx, 			rcx 
 	sub rsp, 			TOT_MEM ;iMEM_BYTES	    ; number of memory bytes allocation		
-
-
-
+ 
 _txt:
 ;------- open file for reading
 	mov rax, 	  		SYS_OPEN		            
@@ -110,10 +109,11 @@ _txt:
 ;------- read from file
 	mov rax, 	  		SYS_READ    	; sys_read
 	mov rdi, 	  		[FD_IN]
-	mov rsi, 	  		TEXT 			; The Buffer 
+	;mov rsi, 	  	    TxT_BUFFER			; The Buffer 
+	mov rsi,            TEXT
 	mov rdx, 	  		FILE_LENGTH   	; Data length 
 	syscall
-	
+
 ;------- close the file 
 	mov rax,      		SYS_CLOSE 
 	mov rdi,      		[FD_IN]
@@ -122,120 +122,177 @@ _txt:
 	mov rax,      		SYS_WRITE 
 	mov rdi,      		STDOUT
 	mov rsi,      		TEXT			; The Buffer TEXT
+	;mov rsi, TxT_BUFFER
 	mov rdx,      		FILE_LENGTH     ; Data length 
 	syscall	
 ;------------------ At this point -------------------------
 ;----------- $rsi have txt instructions -------------------
 
-
-;---------- Copy upper dword from TEXT Buffer	
-  	mov rax, 			qword [TEXT]
-  	mov rdx, 			rax
-  	mov ecx, 			32				; Shift 32 bits
-  	shr rdx, 			cl              ; dh, cl
-	xor rax, 			rax
-	mov eax, 			edx
-
-; The input text is hex in ASCII so you will need to 
-; word format :  $eax : 0011abcd_0011efgh_0011ijkl_0011mnño...   
-; you want it :  $rsp : abcd_efgh_ijkl_mnño...
-       ; 20080003 >> es el 3
-  	mov r8d, 			eax 			; $aux1
-  	and r8d, 			0x0F000000		; save abcd
-  	mov r9d,            r8d
-  	
-	mov edx, 			dword r9d		; $edx is special for shift
-  	mov ecx, 			24 				; $ecx is special to pass shift num 										
-  	shr edx, 			cl              ; shifting abcd bits to 1st position
-	or dword [rsp], edx		            ; sum aux_dword to $rsp (instructions memory)
-										; $rsp : abcd0000_00000000_.... 
-		; ---------------------------- 
-		; 200800b3 >> es el b
-	mov r8d, 			eax  			; $aux2
-	and r8d, 			0x000F0000		; save efgh
-	mov r10d, 			r8d
-
-  	mov edx, 			dword r10d		
-  	mov ecx, 			12 				; Shift 8 bits (to left)
-  	shr edx, 			cl              ; Shifting efgh to 2nd position 
-	or dword [rsp],     edx				; $rsp : abcdefgh_00000000_....
-
-		; ----------------------------  
-	mov r8d, 			eax				; $aux3
-	and r8d, 			0x00000F00
-	mov r12d, 			r8d				
-
-  	mov edx, 			dword r12d
-  	mov ecx, 			0  				
-  	shr edx, 			cl              
-	or dword [rsp],     edx			    ; $rsp : abcdefgh_ijkl0000_....
-
-		; ----------------------------
-		; 2008d003 >> es el d
-	mov r8d, 			eax             ; $aux4
-	and r8d, 			0x0000000F
-	mov r12d, 			r8d				
-
-  	mov edx, 			dword r12d
-  	mov ecx, 			12 				; Shift left 16 bits
-  	shl edx, 			cl              
-	or dword [rsp],     edx
+	xor r13, r13
+	xor r14, r14
 
 
+;_Count:
+	;call _NN 
+	;call _LOAD	
 
-;---------- Copy lower dword from TEXT Buffer
-	mov eax, 			dword [TEXT]	; Truncate Buffer
 
-		; 20080003 >> es el 2
-	mov r8d, 			eax             ; $aux5
-	and r8d,   			0x0000000F
-	mov r9d, 			r8d
+	;mov ecx, FILE_LENGTH 	
+	;LOOP _NN				;LLama a NN 41 veces 
 
-	mov edx, 			dword r9d
-	mov ecx, 			28				; Shift = 0	
-	shl edx, 			cl              ; Shift right 0 bits
-	or dword [rsp],     edx				; Filling to 32 bits instruction, last 4 bits
+_NN: ; $r13 points to first byte of instruction (after blank space)
+	mov ax, word [TEXT+r13]	 
+	inc r13
 
-		; ----------------------------
-		; 2g0800b3 >> es el g
-	mov r8d, 			eax             ; $aux6
-	and r8d, 			0x00000F00	      
-	mov r9d, 			r8d
+	cmp r13, 39 
+	je _Reg
 
-  	mov edx, 			dword r9d
-  	mov ecx, 			16				; Shift 4 bits
-  	shl edx, 			cl              
-	or dword [rsp],     edx
+	cmp ax, 0x205d 			;espacio
+	je _LOAD
+	jne _NN
+	
 
-		; ----------------------------
-		; 20f80003 >> es el f
-	mov r8d, 			eax  			; $aux7
-	and r8d, 			0x000F0000
-	mov r10d, 			r8d
+	_LOAD:
+		
+	;---------- Copy upper dword from TEXT Buffer	
+	  	mov rax, 			qword [TEXT+r13+1]   ; [..] Instruction, 
+	  	mov rdx, 			rax
+	  	mov ecx, 			32				; Shift 32 bits
+	  	shr rdx, 			cl              ; dh, cl
+		xor rax, 			rax
+		mov eax, 			edx
 
-  	mov edx, 			dword r10d
-  	mov ecx, 			4				; Shift 4 bits
-  	shl edx, 			cl              ; dh, cl
-	or dword [rsp],     edx
+	; The input text is hex in ASCII so you will need to 
+	; word format :  $eax : 0011abcd_0011efgh_0011ijkl_0011mnño...   
+	; you want it :  $rsp : abcd_efgh_ijkl_mnño...
+	       ; 20080003 >> es el 3
+	  	mov r8d, 			eax 			; $aux1
+	  	and r8d, 			0x0F000000		; save abcd
+	  	mov r9d,            r8d
+	  	
+		mov edx, 			dword r9d		; $edx is special for shift
+	  	mov ecx, 			24 				; $ecx is special to pass shift num 										
+	  	shr edx, 			cl              ; shifting abcd bits to 1st position
+		or dword [rsp+r14], edx		            ; sum aux_dword to $rsp (instructions memory)
+											; $rsp : abcd0000_00000000_.... 
+			; ---------------------------- 
+			; 200800b3 >> es el b
+		mov r8d, 			eax  			; $aux2
+		and r8d, 			0x000F0000		; save efgh
+		mov r10d, 			r8d
 
-		; ----------------------------
-		; 20080003 >> es el 8
-	mov r8d, 			eax             ; $aux8
-	and r8d, 			0x0F000000
-	mov r12d, 			r8d				; Holds last important data
+	  	mov edx, 			dword r10d		
+	  	mov ecx, 			12 				; Shift 8 bits (to left)
+	  	shr edx, 			cl              ; Shifting efgh to 2nd position 
+		or dword [rsp+r14],     edx				; $rsp : abcdefgh_00000000_....
 
-  	mov edx, 			dword r12d
-  	mov ecx, 		    8				; Shift 4 bits
-  	shr edx, 			cl              ; dh, cl
-	or dword [rsp],     edx
-;------------------------------- At this point -----------------------------------
-;------------- Virtual memory $rsp contains decoded instructions -----------------
-	xor r10, r10
+			; ----------------------------  
+		mov r8d, 			eax				; $aux3
+		and r8d, 			0x00000F00
+		mov r12d, 			r8d				
 
+	  	mov edx, 			dword r12d
+	  	mov ecx, 			0  				
+	  	shr edx, 			cl              
+		or dword [rsp+r14],     edx			    ; $rsp : abcdefgh_ijkl0000_....
+
+			; ----------------------------
+			; 2008d003 >> es el d
+		mov r8d, 			eax             ; $aux4
+		and r8d, 			0x0000000F
+		mov r12d, 			r8d				
+
+	  	mov edx, 			dword r12d
+	  	mov ecx, 			12 				; Shift left 16 bits
+	  	shl edx, 			cl              
+		or dword [rsp+r14],     edx
+
+
+
+	;---------- Copy lower dword from TEXT Buffer
+		mov eax, 			dword [TEXT+r13+1]	; Truncate Buffer
+
+			; 20080003 >> es el 2
+		mov r8d, 			eax             ; $aux5
+		and r8d,   			0x0000000F
+		mov r9d, 			r8d
+
+		mov edx, 			dword r9d
+		mov ecx, 			28				; Shift = 0	
+		shl edx, 			cl              ; Shift right 0 bits
+		or dword [rsp+r14],     edx				; Filling to 32 bits instruction, last 4 bits
+
+			; ----------------------------
+			; 2g0800b3 >> es el g
+		mov r8d, 			eax             ; $aux6
+		and r8d, 			0x00000F00	      
+		mov r9d, 			r8d
+
+	  	mov edx, 			dword r9d
+	  	mov ecx, 			16				; Shift 4 bits
+	  	shl edx, 			cl              
+		or dword [rsp+r14],     edx
+
+			; ----------------------------
+			; 20f80003 >> es el f
+		mov r8d, 			eax  			; $aux7
+		and r8d, 			0x000F0000
+		mov r10d, 			r8d
+
+	  	mov edx, 			dword r10d
+	  	mov ecx, 			4				; Shift 4 bits
+	  	shl edx, 			cl              ; dh, cl
+		or dword [rsp+r14],     edx
+
+			; ----------------------------
+			; 20080003 >> es el 8
+		mov r8d, 			eax             ; $aux8
+		and r8d, 			0x0F000000
+		mov r12d, 			r8d				; Holds last important data
+
+	  	mov edx, 			dword r12d
+	  	mov ecx, 		    8				; Shift 4 bits
+	  	shr edx, 			cl              ; dh, cl
+		or dword [rsp+r14],     edx
+	;------------------------------- At this point -----------------------------------
+	;------------- Virtual memory $rsp contains decoded instructions -----------------
+
+	add r14, 4	;dec rcx
+	jmp _NN
+	;ret 
+;		inc r14
+;		imul r14, 4
+		
+;		mov r8, 0 
+;		mov r9, 0
+;		cmp r14, FILE_LENGTH ;  r9
+;		je _
+
+
+	;	cmp r14, FILE_LENGTH  ; REG_BYTES
+	;	je _Reg
+	;ret 
+	;call _NN
+
+
+; NEW LINE BUFFER
+	
+	;mov r13, 11
+	;mov r14, 0
+	;cmp qword [TEXT+20], 0x3B        ; compare (;)
+	;dec r13
+	;je _LOAD 
+	;inc r12
+	;mov rax, r12
+	;imul rax, 11
+	;mov r13, rax
+	;imul rax, 4
+	;add r14, rax 
+	;cmp 
 
 ;------------------- $rs $rt $rd Deco pointers -------------------------
 ;-----------------------------------------------------------------------
-	_Reg:
+_Reg:
 ; Enmascarar y hacer shift para $rs 	
 	mov r8d, dword [rsp]		; passing instruction from memory; 
 	and r8d, 0000_0011_1110_0000_0000_0000_0000_0000b ; masking address $rs 
@@ -248,7 +305,7 @@ _txt:
 	mov rax, rdx 
 	mov r13, rax                     ; $r13 is the rs pointer
 	add r13, OFFSET_POINTER_REG	     ; adding memory offset to $r13 to start in Reg allocation 
-_1:
+;_1:
 
 ; Enmascarar y hacer shift para $rt 	
 	mov r8d, dword [rsp]		; passing instruction from memory
@@ -262,7 +319,7 @@ _1:
 	mov rax, rdx
 	mov r14, rax			; $r14 is the rt pointer
 	add r14, OFFSET_POINTER_REG    ; starting above memory 
- _2:
+ ;_2:
 
 ; Enmascarar y hacer shift para $rd 	
 	mov r8d, dword [rsp]		; passing instruction from memory
@@ -277,7 +334,7 @@ _1:
 	mov r15, rax			; $r14 is the rt pointer
 	add r15, OFFSET_POINTER_REG    ; starting above memory 
  
-_3:
+;_3:
 
 ;--------------------------- Control --------------------------------------------
 ;------------------------------------------------------------------------------
