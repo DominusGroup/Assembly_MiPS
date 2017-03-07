@@ -28,7 +28,7 @@ section .data
   fmtint:       db "%ld", 10, 0
 
   FILE_NAME:    db "code.txt", 0
-  FILE_LENGTH:  equ 41 ;300        		; length of inside text
+  FILE_LENGTH:  equ 1300 ;62 ;41 ;300        		; length of inside text
   
   OFFSET_POINTER_REG:  equ 8 ;256    ; 1 dword = 4 bytes
   						  ; 128bytes = 32 dwords
@@ -144,7 +144,7 @@ _NN: ; $r13 points to first byte of instruction (after blank space)
 	mov ax, word [TEXT+r13]	 
 	inc r13
 
-	cmp r13, 39 
+	cmp r13, FILE_LENGTH ; 100 ;62 ; 39 
 	je _Reg
 
 	cmp ax, 0x205d 			;espacio
@@ -153,7 +153,8 @@ _NN: ; $r13 points to first byte of instruction (after blank space)
 	
 
 	_LOAD:
-		
+		;shr sil, 0
+_1:		
 	;---------- Copy upper dword from TEXT Buffer	
 	  	mov rax, 			qword [TEXT+r13+1]   ; [..] Instruction, 
 	  	mov rdx, 			rax
@@ -162,95 +163,605 @@ _NN: ; $r13 points to first byte of instruction (after blank space)
 		xor rax, 			rax
 		mov eax, 			edx
 
+
+
+_2:
 	; The input text is hex in ASCII so you will need to 
 	; word format :  $eax : 0011abcd_0011efgh_0011ijkl_0011mnño...   
 	; you want it :  $rsp : abcd_efgh_ijkl_mnño...
 	       ; 20080003 >> es el 3
 	  	mov r8d, 			eax 			; $aux1
+	  	mov r9d,            eax
 	  	and r8d, 			0x0F000000		; save abcd
-	  	mov r9d,            r8d
-	  	
-		mov edx, 			dword r9d		; $edx is special for shift
+
+
+
+		mov r10d,           r9d	
+		and r10d,   		0xFF000000 ; mascara 3 o 6
+		_Letra4:
+			mov eax, 0x61000000
+			cmp r10d, eax 
+			je _A4  
+			
+			mov eax, 0x62000000
+			cmp r10d, eax
+			je _B4 
+			
+			mov eax, 0x63000000
+	 		cmp r10d, eax 
+			je _C4 
+			
+			mov eax, 0x64000000
+			cmp r10d, eax
+			je _D4 
+			
+			mov eax, 0x65000000
+	 		cmp r10d, eax 
+			je _E4 
+			
+			mov eax, 0x66000000
+			cmp r10d, eax
+			je _F4 
+
+			_A4:
+				mov eax, 0x0A000000
+				mov r8d, eax
+				jmp _Shifting4
+			_B4:
+				mov eax, 0x0B000000
+				mov r8d, eax
+				jmp _Shifting4
+			_C4:	
+				mov eax, 0x0C000000
+				mov r8d, eax
+				jmp _Shifting4
+			_D4:
+				mov eax, 0x0D000000
+				mov r8d, eax			
+				jmp _Shifting4
+			_E4:
+				mov eax, 0x0E000000
+				mov r8d, eax
+				jmp _Shifting4 
+			_F4:
+				mov eax, 0x0F000000
+				mov r8d, eax
+				jmp _Shifting4
+
+	    _Shifting4:	
+
+
+		mov edx, 			dword r8d		; $edx is special for shift
 	  	mov ecx, 			24 				; $ecx is special to pass shift num 										
 	  	shr edx, 			cl              ; shifting abcd bits to 1st position
 		or dword [rsp+r14], edx		            ; sum aux_dword to $rsp (instructions memory)
-											; $rsp : abcd0000_00000000_.... 
+_3:											; $rsp : abcd0000_00000000_.... 
 			; ---------------------------- 
 			; 200800b3 >> es el b
-		mov r8d, 			eax  			; $aux2
+		mov r8d, 			r9d ;eax  			; $aux2
 		and r8d, 			0x000F0000		; save efgh
-		mov r10d, 			r8d
+		;mov r9d, 			eax
 
-	  	mov edx, 			dword r10d		
+
+		mov r10d,           r9d	
+		and r10d,   		0x00FF0000 ; mascara 3 o 6
+		_Letra5:
+			mov eax, 0x610000
+			cmp r10d, eax 
+			je _A5 ;
+			;jne _Shifting 
+			
+			mov eax, 0x620000
+			cmp r10d, eax
+			je _B5 ;
+			;jne _Shifting
+			
+			mov eax, 0x630000 
+	 		cmp r10d, eax 
+			je _C5 ;
+			;jne _Shifting
+			
+			mov eax, 0x640000 
+			cmp r10d, eax
+			je _D5 ;
+			;jne _Shifting
+			
+			mov eax, 0x650000 
+	 		cmp r10d, eax 
+			je _E5 ;
+			;jne _Shifting
+			
+			mov eax, 0x660000
+			cmp r10d, eax
+			je _F5 ;	
+			;jne _Shifting 
+
+			_A5:
+				mov eax, 0x0A0000
+				mov r8d, eax
+				jmp _Shifting5
+			_B5:
+				mov eax, 0x0B0000
+				mov r8d, eax
+				jmp _Shifting5
+			_C5:	
+				mov eax, 0x0C0000
+				mov r8d, eax
+				jmp _Shifting5
+			_D5:
+				mov eax, 0x0D0000
+				mov r8d, eax			
+				jmp _Shifting5
+			_E5:
+				mov eax, 0x0E0000
+				mov r8d, eax
+				jmp _Shifting5
+			_F5:
+				mov eax, 0x0F0000
+				mov r8d, eax
+				jmp _Shifting5
+
+	    _Shifting5:	
+
+
+
+	  	mov edx, 			dword r8d		
 	  	mov ecx, 			12 				; Shift 8 bits (to left)
 	  	shr edx, 			cl              ; Shifting efgh to 2nd position 
 		or dword [rsp+r14],     edx				; $rsp : abcdefgh_00000000_....
-
-			; ----------------------------  
-		mov r8d, 			eax				; $aux3
+_4:
+	
+	; ------------------------------------------
+		mov r8d, 			r9d ;eax				; $aux3
 		and r8d, 			0x00000F00
-		mov r12d, 			r8d				
+		;mov r9d, 			eax				
 
-	  	mov edx, 			dword r12d
+
+		mov r10d,           r9d	
+		and r10d,   		0x0000FF00 ; mascara 3 o 6
+		_Letra6:
+			mov eax, 0x6100
+			cmp r10d, eax 
+			je _A6 ;
+			;jne _Shifting 
+			
+			mov eax, 0x6200
+			cmp r10d, eax
+			je _B6 ;
+			;jne _Shifting
+			
+			mov eax, 0x6300 
+	 		cmp r10d, eax 
+			je _C6 ;
+			;jne _Shifting
+			
+			mov eax, 0x6400
+			cmp r10d, eax
+			je _D6 ;
+			;jne _Shifting
+			
+			mov eax, 0x6500
+	 		cmp r10d, eax 
+			je _E6 ;
+			;jne _Shifting
+			
+			mov eax, 0x6600
+			cmp r10d, eax
+			je _F6 ;	
+			;jne _Shifting 
+
+			_A6:
+				mov eax, 0x0A00
+				mov r8d, eax
+				jmp _Shifting6
+			_B6:
+				mov eax, 0x0B00
+				mov r8d, eax
+				jmp _Shifting6
+			_C6:	
+				mov eax, 0x0C00
+				mov r8d, eax
+				jmp _Shifting6
+			_D6:
+				mov eax, 0x0D00
+				mov r8d, eax			
+				jmp _Shifting6
+			_E6:
+				mov eax, 0x0E00
+				mov r8d, eax
+				jmp _Shifting6 
+			_F6:
+				mov eax, 0x0F00
+				mov r8d, eax
+				jmp _Shifting6
+
+
+	    _Shifting6:	
+
+
+
+	  	mov edx, 			dword r8d
 	  	mov ecx, 			0  				
 	  	shr edx, 			cl              
 		or dword [rsp+r14],     edx			    ; $rsp : abcdefgh_ijkl0000_....
-
-			; ----------------------------
+_5:
+	; ---------------------------------------------
 			; 2008d003 >> es el d
-		mov r8d, 			eax             ; $aux4
+		mov r8d, 			r9d;eax             ; $aux4
 		and r8d, 			0x0000000F
-		mov r12d, 			r8d				
+		;mov r12d, 			r8d				
 
-	  	mov edx, 			dword r12d
+
+		mov r10d,           r9d	
+		and r10d,   		0x000000FF ; mascara 3 o 6
+		_Letra7:
+			mov eax, 0x61
+			cmp r10d, eax 
+			je _A7 
+
+			mov eax, 0x62
+			cmp r10d, eax
+			je _B7 
+			
+			mov eax, 0x63
+	 		cmp r10d, eax 
+			je _C7 
+			
+			mov eax, 0x64
+			cmp r10d, eax
+			je _D7 ;
+			;jne _Shifting
+			
+			mov eax, 0x65
+	 		cmp r10d, eax 
+			je _E7 ;
+			;jne _Shifting
+			
+			mov eax, 0x66
+			cmp r10d, eax
+			je _F7 ;	
+			;jne _Shifting 
+
+			_A7:
+				mov eax, 0x0A
+				mov r8d, eax
+				jmp _Shifting7
+			_B7:
+				mov eax, 0x0B
+				mov r8d, eax
+				jmp _Shifting7
+			_C7:	
+				mov eax, 0x0C
+				mov r8d, eax
+				jmp _Shifting7
+			_D7:
+				mov eax, 0x0D
+				mov r8d, eax			
+				jmp _Shifting7
+			_E7:
+				mov eax, 0x0E
+				mov r8d, eax
+				jmp _Shifting7 
+			_F7:
+				mov eax, 0x0F
+				mov r8d, eax
+				jmp _Shifting7
+
+	    _Shifting7:	
+
+
+	  	mov edx, 			dword r8d
 	  	mov ecx, 			12 				; Shift left 16 bits
 	  	shl edx, 			cl              
 		or dword [rsp+r14],     edx
 
 
 
+		;xchg ah, al 
+		;ror eax, 16
+		;xchg ah, al 
+
+
+
+
 	;---------- Copy lower dword from TEXT Buffer
-		mov eax, 			dword [TEXT+r13+1]	; Truncate Buffer
-
+		mov eax, 			dword [TEXT+r13+1]  ; Truncate Buffer
 			; 20080003 >> es el 2
-		mov r8d, 			eax             ; $aux5
+		mov r8d, 			eax             ; $aux5 
+		mov r9d,            eax 	
 		and r8d,   			0x0000000F
-		mov r9d, 			r8d
+		
+		mov r10d,           r9d ; eax	
+		and r10d,   		0x000000FF ; mascara 3 o 6
+		_Letra:
+			mov eax, 0x61
+			cmp r10d, eax 
+			je _A ;
+			;jne _Shifting 
+			
+			mov eax, 0x62
+			cmp r10d, eax
+			je _B ;
+			;jne _Shifting
+			
+			mov eax, 0x63 
+	 		cmp r10d, eax 
+			je _C ;
+			;jne _Shifting
+			
+			mov eax, 0x64 
+			cmp r10d, eax
+			je _D ;
+			;jne _Shifting
+			
+			mov eax, 0x65 
+	 		cmp r10d, eax 
+			je _E ;
+			;jne _Shifting
+			
+			mov eax, 0x66
+			cmp r10d, eax
+			je _F ;	
+			;jne _Shifting 
 
-		mov edx, 			dword r9d
+			_A:
+				mov eax, 0x0A
+				mov r8d, eax
+				jmp _Shifting
+			_B:
+				mov eax, 0x0B
+				mov r8d, eax
+				jmp _Shifting 
+			_C:	
+				mov eax, 0x0C
+				mov r8d, eax
+				jmp _Shifting 
+			_D:
+				mov eax, 0x0D
+				mov r8d, eax			
+				jmp _Shifting 
+			_E:
+				mov eax, 0x0E
+				mov r8d, eax
+				jmp _Shifting 
+			_F:
+				mov eax, 0x0F
+				mov r8d, eax
+				jmp _Shifting
+
+
+	    _Shifting:
+;		mov r9d, 			r8d
+
+		mov edx, 			dword r8d ; r9d
 		mov ecx, 			28				; Shift = 0	
 		shl edx, 			cl              ; Shift right 0 bits
 		or dword [rsp+r14],     edx				; Filling to 32 bits instruction, last 4 bits
 
-			; ----------------------------
-			; 2g0800b3 >> es el g
-		mov r8d, 			eax             ; $aux6
-		and r8d, 			0x00000F00	      
-		mov r9d, 			r8d
 
-	  	mov edx, 			dword r9d
+    ; --------------------------------------------------------
+			; 2g0800b3 >> es el g
+		mov r8d, 			r9d ;eax             ; $aux6
+		and r8d, 			0x00000F00	      
+		;mov r9d, 			r8d
+
+
+		mov r10d,           r9d	
+		and r10d,   		0x0000FF00 ; mascara 3 o 6
+		_Letra1:
+			mov eax, 0x6100
+			cmp r10d, eax 
+			je _A1 ;
+			;jne _Shifting 
+			
+			mov eax, 0x6200
+			cmp r10d, eax
+			je _B1 ;
+			;jne _Shifting
+			
+			mov eax, 0x6300 
+	 		cmp r10d, eax 
+			je _C1 ;
+			;jne _Shifting
+			
+			mov eax, 0x6400 
+			cmp r10d, eax
+			je _D1 ;
+			;jne _Shifting
+			
+			mov eax, 0x6500 
+	 		cmp r10d, eax 
+			je _E1 ;
+			;jne _Shifting
+			
+			mov eax, 0x6600
+			cmp r10d, eax
+			je _F1 ;	
+			;jne _Shifting 
+
+			_A1:
+				mov eax, 0x0A00
+				mov r8d, eax
+				jmp _Shifting1
+			_B1:
+				mov eax, 0x0B00
+				mov r8d, eax
+				jmp _Shifting1 
+			_C1:	
+				mov eax, 0x0C00
+				mov r8d, eax
+				jmp _Shifting1 
+			_D1:
+				mov eax, 0x0D00
+				mov r8d, eax			
+				jmp _Shifting1 
+			_E1:
+				mov eax, 0x0E00
+				mov r8d, eax
+				jmp _Shifting1 
+			_F1:
+				mov eax, 0x0F00
+				mov r8d, eax
+				jmp _Shifting1
+
+
+	    _Shifting1:		
+
+
+	  	mov edx, 			dword r8d
 	  	mov ecx, 			16				; Shift 4 bits
 	  	shl edx, 			cl              
 		or dword [rsp+r14],     edx
 
-			; ----------------------------
+	; -------------------------------------------
 			; 20f80003 >> es el f
-		mov r8d, 			eax  			; $aux7
+		mov r8d, 			r9d ;eax  			; $aux7
 		and r8d, 			0x000F0000
-		mov r10d, 			r8d
+		;mov r10d, 			r8d
 
-	  	mov edx, 			dword r10d
+
+		mov r10d,           r9d	
+		and r10d,   		0x00FF0000 ; mascara 3 o 6
+		_Letra2:
+			mov eax, 0x610000
+			cmp r10d, eax 
+			je _A2 ;
+			;jne _Shifting 
+			
+			mov eax, 0x620000
+			cmp r10d, eax
+			je _B2 ;
+			;jne _Shifting
+			
+			mov eax, 0x630000 
+	 		cmp r10d, eax 
+			je _C2 ;
+			;jne _Shifting
+			
+			mov eax, 0x640000 
+			cmp r10d, eax
+			je _D2 ;
+			;jne _Shifting
+			
+			mov eax, 0x650000 
+	 		cmp r10d, eax 
+			je _E2 ;
+			;jne _Shifting
+			
+			mov eax, 0x660000
+			cmp r10d, eax
+			je _F2 ;	
+			;jne _Shifting 
+
+			_A2:
+				mov eax, 0x0A0000
+				mov r8d, eax
+				jmp _Shifting2
+			_B2:
+				mov eax, 0x0B0000
+				mov r8d, eax
+				jmp _Shifting2
+			_C2:	
+				mov eax, 0x0C0000
+				mov r8d, eax
+				jmp _Shifting2
+			_D2:
+				mov eax, 0x0D0000
+				mov r8d, eax			
+				jmp _Shifting2
+			_E2:
+				mov eax, 0x0E0000
+				mov r8d, eax
+				jmp _Shifting2 
+			_F2:
+				mov eax, 0x0F0000
+				mov r8d, eax
+				jmp _Shifting2
+
+
+	    _Shifting2:	
+
+
+
+	  	mov edx, 			dword r8d
 	  	mov ecx, 			4				; Shift 4 bits
 	  	shl edx, 			cl              ; dh, cl
 		or dword [rsp+r14],     edx
 
-			; ----------------------------
+	; ---------------------------------------
 			; 20080003 >> es el 8
-		mov r8d, 			eax             ; $aux8
+		mov r8d, 			r9d ; eax             ; $aux8
 		and r8d, 			0x0F000000
-		mov r12d, 			r8d				; Holds last important data
+		;mov r12d, 			r8d				; Holds last important data
 
-	  	mov edx, 			dword r12d
+
+
+		mov r10d,           r9d	
+		and r10d,   		0xFF000000 ; mascara 3 o 6
+		_Letra3:
+			mov eax, 0x61000000
+			cmp r10d, eax 
+			je _A3 ;
+			;jne _Shifting 
+			
+			mov eax, 0x62000000
+			cmp r10d, eax
+			je _B3 ;
+			;jne _Shifting
+			
+			mov eax, 0x63000000
+	 		cmp r10d, eax 
+			je _C3 ;
+			;jne _Shifting
+			
+			mov eax, 0x64000000
+			cmp r10d, eax
+			je _D3 ;
+			;jne _Shifting
+			
+			mov eax, 0x65000000 
+	 		cmp r10d, eax 
+			je _E3 ;
+			;jne _Shifting
+			
+			mov eax, 0x66000000
+			cmp r10d, eax
+			je _F3 ;	
+			;jne _Shifting 
+
+			_A3:
+				mov eax, 0x0A000000
+				mov r8d, eax
+				jmp _Shifting3
+			_B3:
+				mov eax, 0x0B000000
+				mov r8d, eax
+				jmp _Shifting3
+			_C3:	
+				mov eax, 0x0C000000
+				mov r8d, eax
+				jmp _Shifting3
+			_D3:
+				mov eax, 0x0D000000
+				mov r8d, eax			
+				jmp _Shifting3
+			_E3:
+				mov eax, 0x0E000000
+				mov r8d, eax
+				jmp _Shifting3
+			_F3:
+				mov eax, 0x0F000000
+				mov r8d, eax
+				jmp _Shifting3
+
+
+	    _Shifting3:	
+
+
+
+
+
+	  	mov edx, 			dword r8d
 	  	mov ecx, 		    8				; Shift 4 bits
 	  	shr edx, 			cl              ; dh, cl
 		or dword [rsp+r14],     edx
@@ -258,6 +769,7 @@ _NN: ; $r13 points to first byte of instruction (after blank space)
 	;------------- Virtual memory $rsp contains decoded instructions -----------------
 
 	add r14, 4	;dec rcx
+ _10:
 	jmp _NN
 	;ret 
 ;		inc r14
@@ -347,7 +859,7 @@ _Reg:
 
 	mov rax, rdx		 ; Rax is the OPCODE
 	; ver a que registro se lo paso 
-_4:
+ 
 	; ------------------- FUNCT
 	mov r8d, dword [rsp]
 	and r8d, 0000_0000_0000_0000_0000_0000_0011_1111b ; masking opcode
@@ -356,7 +868,7 @@ _4:
 	shr edx, cl 
 
 	mov rax, rdx		 ; Rax is the FUNCT
-_5:
+ 
 
 ;--------------------------- ALU ----------------------------------------------
 ;------------------------------------------------------------------------------
@@ -370,7 +882,7 @@ _5:
 
 	mov eax, 6
 	mov dword [rsp+r14], eax ; precargndo a 6	
-_6:	
+ 
 	;mov r12,5; r12 --- registro que almacena el primer parametro
 	;mov r13,6; r13 ---  registro que almacena el segundo parametro
 	;Se compara el registro r9 con el r8 para saber que operacion se desea realizar
