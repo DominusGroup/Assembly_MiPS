@@ -125,20 +125,50 @@ _txt:
 
 	xor r13, r13
 	xor r14, r14
+	xor rax, rax 
+
+
+;--------------- Get Instruction Address ------------------
+;------------------------- PC -----------------------------
+_PC: ; This is a deco 
+	mov al, 		byte [TEXT+r13+19]		; 19 is a constant to find Index(;)
+											; in format [yyyyyyyy] xxxxxxxx;
+	inc 			r13
+
+	cmp r13, 		FILE_LENGTH				; Break condition
+	je 				_GetInstrucLoop
+
+    mov r15, 		0x1          			; bandera (Decode Address)
+	cmp al, 		0x3b 				    ; 0x3b => Index ( ; ) 
+	je              _LOAD0		 			
+	jne             _PC					
+
+	_LOAD0:
+		sub r13, 1						    
+		je _LOAD 						    ;;;;;;; LOAD Address
 
 
 ;---------------- Get_Instruction_Loop --------------------
 ;-- Loop that looks for all Instructions into .txt input --
 _GetInstrucLoop: 
-	mov ax, 			word [TEXT+r13]	 			; Dynamic access to Buffer data
+
+	mov ax, 			word [TEXT+r13]				; Getting ( ; ) position
+	mov bx, 			ax 
+	mov ax, 			word [TEXT+r13+10]	 		; Dynamic access to Buffer data
 	inc 				r13							; $r13 increase in order to read next word from Instruction
 
 	cmp r13, 			FILE_LENGTH  				; $r13 cannot be greater than file length
 	je 					_Reg						; break the Get_Instruction_Bucle 
-	cmp ax, 			0x205d 						; Index  
-	je 					_LOAD						; if(Instruction){LOAD it}
+	cmp bx, 			0x205d ;0x3b		; Init_Index ;=>3b espace=>20 [=>5b ]=>5d
+	je 					_Index2						; if(Instruction){LOAD it}
 	jne 				_GetInstrucLoop				; else           {Check if Instruction in next word}
+	_Index2:										; Confirm that is actually getting instrucion
+		;xor r15, r15
+		cmp al, 		0x3b   ;0x205d			; Final_Index  ;espace
+		je 				_LOAD
+		jne 			_GetInstrucLoop
 ;....................................................
+	
 
 	_LOAD: 		
 	;------------------------------------------------
@@ -171,8 +201,22 @@ _GetInstrucLoop:
 	  	mov edx, 			dword eax				; $edx is special for shift
 	  	mov ecx, 			24 						; $ecx is special to pass shift num 										
 	  	shr edx, 			cl              		; shifting abcd bits to 1st position
-		or dword [rsp+r14], edx		            	; sum aux_dword to $rsp (instructions memory)
-													; $rsp : abcd0000_00000000_.... 
+		;or dword [rsp+r14], edx		            	; sum aux_dword to $rsp (instructions memory)
+			
+	  	cmp r15, 0x1 
+	  	je _ReadAddress1		; if(address_flag)
+	  	jne _ReadInstruc1   ;Address1
+		
+		_ReadAddress1:
+			;xor r13,				r13    ;solo al final
+			or r12d,				edx 
+			cmp r15, 0x1
+			je _jumpInstruction1
+
+		_ReadInstruc1:
+			or dword [rsp+r14], edx	             	; sum aux_dword to $rsp (instructions memory)
+													; $rsp : abcd0000_00000000_....
+		_jumpInstruction1:
 	;------------------------------------------------ 
 			; 200800b3 >> for b
 		mov r8d, 			r9d 		  			; $aux2
@@ -188,7 +232,22 @@ _GetInstrucLoop:
 	  	mov edx, 			dword eax		
 	  	mov ecx, 			12 						; Shift 12 bits (to left)
 	  	shr edx, 			cl              		; Shifting efgh to 2nd position 
-		or dword [rsp+r14], edx  					; $rsp at this point: abcdefgh_00000000_....
+		;or dword [rsp+r14], edx  					; $rsp at this point: abcdefgh_00000000_....
+
+	  	cmp r15, 0x1 
+	  	je _ReadAddress2		; if(address_flag)
+	  	jne _ReadInstruc2       ; Address1
+		
+		_ReadAddress2:
+			;xor r13,				r13 solo al final
+			or r12d,				edx 
+			cmp r15, 0x1
+			je _jumpInstruction2
+
+		_ReadInstruc2:
+			or dword [rsp+r14], edx	             	; sum aux_dword to $rsp (instructions memory)
+													; $rsp : abcd0000_00000000_....
+		_jumpInstruction2:
 	;------------------------------------------------ 
 			; 20080c03 >> for c	
 		mov r8d, 			r9d      				; $aux3
@@ -204,7 +263,22 @@ _GetInstrucLoop:
 	  	mov edx, 			dword eax		
 	  	mov ecx, 			0  				
 	  	shr edx, 			cl              		; shifting
-		or dword [rsp+r14], edx 			    	; $rsp at this point : abcdefgh_ijkl0000_....
+		;;or dword [rsp+r14], edx 			    	; $rsp at this point : abcdefgh_ijkl0000_....
+
+	  	cmp r15, 0x1 
+	  	je _ReadAddress3		; if(address_flag)
+	  	jne _ReadInstruc3   ;Address1
+		
+		_ReadAddress3:
+			;xor r13,				r13 solo al final
+			or r12d,				edx 
+			cmp r15, 0x1
+			je _jumpInstruction3
+
+		_ReadInstruc3:
+			or dword [rsp+r14], edx	             	; sum aux_dword to $rsp (instructions memory)
+													; $rsp : abcd0000_00000000_....
+		_jumpInstruction3:
 	; -----------------------------------------------
 			; 2008d003 >> for d
 		mov r8d, 			r9d                     ; $aux4
@@ -220,7 +294,22 @@ _GetInstrucLoop:
 	  	mov edx, 			dword eax		
 	  	mov ecx, 			12      				; Shift left 16 bits
 	  	shl edx, 			cl              
-		or dword [rsp+r14], edx
+		;or dword [rsp+r14], edx
+
+	  	cmp r15, 0x1 
+	  	je _ReadAddress4		; if(address_flag)
+	  	jne _ReadInstruc4   ;Address1
+		
+		_ReadAddress4:
+			;xor r13,				r13 solo al final
+			or r12d,				edx 
+			cmp r15, 0x1
+			je _jumpInstruction4
+
+		_ReadInstruc4:
+			or dword [rsp+r14], edx	             	; sum aux_dword to $rsp (instructions memory)
+													; $rsp : abcd0000_00000000_....
+		_jumpInstruction4:
 	;................................................
 
 	;------------------------------------------------
@@ -242,7 +331,22 @@ _GetInstrucLoop:
 	  	mov edx, 			dword eax		
 		mov ecx, 			28						; Shift = 0	
 		shl edx, 			cl      		        ; Shift right 28 bits
-		or dword [rsp+r14], edx						; Filling 32 bits instruction, last 4 bits
+		;or dword [rsp+r14], edx						; Filling 32 bits instruction, last 4 bits
+
+	  	cmp r15, 0x1 
+	  	je _ReadAddress5		; if(address_flag)
+	  	jne _ReadInstruc5   ;Address1
+		
+		_ReadAddress5:
+			;xor r13,				r13 solo al final
+			or r12d,				edx 
+			cmp r15, 0x1
+			je _jumpInstruction5
+
+		_ReadInstruc5:
+			or dword [rsp+r14], edx	             	; sum aux_dword to $rsp (instructions memory)
+													; $rsp : abcd0000_00000000_....
+		_jumpInstruction5:	
     ; --------------------------------------------------------
 			; 2g0800b3 >> es el g
 		mov r8d, 			r9d 		            ; $aux6
@@ -258,7 +362,22 @@ _GetInstrucLoop:
 	  	mov edx, 			dword eax		
 	  	mov ecx, 			16						; Shift left 16 bits
 	  	shl edx, 			cl              
-		or dword [rsp+r14], edx						; Saved into Instruction memory	
+		;or dword [rsp+r14], edx						; Saved into Instruction memory	
+
+	  	cmp r15, 0x1 
+	  	je _ReadAddress6		; if(address_flag)
+	  	jne _ReadInstruc6   ;Address1
+		
+		_ReadAddress6:
+			;xor r13,				r13 solo al final
+			or r12d,				edx 
+			cmp r15, 0x1
+			je _jumpInstruction6
+
+		_ReadInstruc6:
+			or dword [rsp+r14], edx	             	; sum aux_dword to $rsp (instructions memory)
+													; $rsp : abcd0000_00000000_....
+		_jumpInstruction6:
 	; -------------------------------------------
 			; 20f80003 >> es el f
 		mov r8d, 			r9d      			    ; $aux7
@@ -274,7 +393,22 @@ _GetInstrucLoop:
 	  	mov edx, 			dword eax		
 	  	mov ecx, 			4						; Shift 4 bits
 	  	shl edx, 			cl              		; dh, cl
-		or dword [rsp+r14], edx						; Saved into Instruction memory
+		;or dword [rsp+r14], edx						; Saved into Instruction memory
+
+	  	cmp r15, 0x1 
+	  	je _ReadAddress7		; if(address_flag)
+	  	jne _ReadInstruc7   ;Address1
+		
+		_ReadAddress7:
+			;xor r13,				r13 solo al final
+			or r12d,				edx 
+			cmp r15, 0x1
+			je _jumpInstruction7
+
+		_ReadInstruc7:
+			or dword [rsp+r14], edx	             	; sum aux_dword to $rsp (instructions memory)
+													; $rsp : abcd0000_00000000_....
+		_jumpInstruction7:
 	; ---------------------------------------
 			; 20080003 >> es el 8
 		mov r8d, 			r9d 	             	; $aux8
@@ -290,12 +424,44 @@ _GetInstrucLoop:
 	  	mov edx, 			dword eax		
 	  	mov ecx, 		    8						; Shift 4 bits
 	  	shr edx, 			cl              		; dh, cl
-		or dword [rsp+r14], edx						; Saved into Instruction memory asignation 
+		;or dword [rsp+r14], edx						; Saved into Instruction memory asignation 
+
+	  	cmp r15, 0x1 
+	  	je _ReadAddress8		; if(address_flag)
+	  	jne _ReadInstruc8   ;Address1
+		
+		_ReadAddress8:
+			or r12d,				edx 
+			or eax, 				edx
+			and eax,  0xFF
+			mov r14, rax ;r12d ;4						;R-type			; $r14 is a dynamic Instruction memory pointer
+
+			mov r12, r13
+			xor r13,				r13             ; solo al final
+			xor r15, 				r15
+			jmp _jumpInstruction8
+
+		_ReadInstruc8:
+			or dword [rsp+r14], edx	             	; sum aux_dword to $rsp (instructions memory)
+													; $rsp : abcd0000_00000000_....
+			mov r13, r12
+			jmp _PC
+		;_jumpPC:
+			;mov r13, r12
+			
+
+		_jumpInstruction8:
+		jmp _GetInstrucLoop
+
+
 	;------------------------------- At this point -----------------------------------
 	;------------- Virtual memory $rsp contains decoded instructions -----------------
 
-	add r14, 4										; $r14 is a dynamic Instruction memory pointer
-	jmp _GetInstrucLoop								; After LOAD the instruction return to Get_Instruction_Bucle
+;Decodificar para mem de instr 400xx, datos 100100xx .....
+		;mov eax,  				   r12d 		
+		;_1:
+										; After LOAD the instruction return to Get_Instruction_Bucle
+
 
 
 _HexAsciiFixer: 
