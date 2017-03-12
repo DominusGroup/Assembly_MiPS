@@ -447,63 +447,69 @@ _txt:
 	xor r13, r13
 	xor r14, r14
 	xor rax, rax 
+	mov r15, 4
+
+_LOOP: 
+	;--------------- Get Instruction Address ------------------
+	;------------------------- PC -----------------------------
+	_PC:  
+		mov al, 		byte [TEXT+r13+20]		; 19 is a constant to find Index(;)
+												; in format [yyyyyyyy] xxxxxxxx;
+		inc 			r13
+
+		cmp r13, 		FILE_LENGTH  			; Break condition
+		je 				_Reg  
+
+	    ;mov r15, 		0x1          			; bandera (Decode Address)
+		cmp al, 		0x3b 				    ; 0x3b => Index ( ; ) 
+		je              _LOAD0		 			
+		jne             _PC					
+
+		_LOAD0:
+			;sub r13, 2		
+			jmp _loadAddress 					;;;;;;; LOAD Address
 
 
+	_loadAddress:
+		GetFromTxt 		r13 					; output is $r12d
+		mov eax,        r12d
+		mov r14, 		rax					    ; r14 es el puntero en rsp
+		and r14,        0xFF
+		xor r13,		r13
+		
 
-;--------------- Get Instruction Address ------------------
-;------------------------- PC -----------------------------
-_PC:  
-	mov al, 		byte [TEXT+r13+18]		; 19 is a constant to find Index(;)
-											; in format [yyyyyyyy] xxxxxxxx;
-	inc 			r13
+	;---------------- Get_Instruction_Loop --------------------
+	;-- Loop that looks for all Instructions into .txt input --
+	_GetInstrucLoop: 
+		mov ax, 			word [TEXT+r13]				; Getting ( ; ) position
+		mov bx, 			ax 
+		mov ax, 			word [TEXT+r13+10]	 		; Dynamic access to Buffer data
+		inc 				r13							; $r13 increase in order to read next word from Instruction
 
-	cmp r13, 		FILE_LENGTH-18			; Break condition
-	je 				_Reg 
+		cmp r13, 			FILE_LENGTH     			; $r13 cannot be greater than file length
+		je 					_Reg						; break the Get_Instruction_Bucle 
+		cmp bx, 			0x205d ;0x3b		        ; Init_Index ;=>3b espace=>20 [=>5b ]=>5d
+		je 					_Index2						; if(Instruction){LOAD it}
+		jne 				_GetInstrucLoop				; else           {Check if Instruction in next word}
+		_Index2:										; Confirm that is actually getting instrucion
+			;xor r15, r15
+			cmp al, 		0x3b   ;0x205d			    ; Final_Index  ;espace
+			je 				_loadInstruction            ; Load Instruction 
+			jne 			_GetInstrucLoop
+	;....................................................
 
-    mov r15, 		0x1          			; bandera (Decode Address)
-	cmp al, 		0x3b 				    ; 0x3b => Index ( ; ) 
-	je              _LOAD0		 			
-	jne             _PC					
+	_loadInstruction:
+		sub r13,            0
+		xor r12d,           r12d
+		GetFromTxt r13 									; output is $r12d
+	;Decodificar para mem de instr 400xx, datos 100100xx ..... 
+		mov dword [rsp+r14], r12d 						; $r14 from loadAddress		
+		;add r13,            1
+		;jmp _PC
 
-	_LOAD0:
-		sub r13, 1		
-		jmp _loadAddress 					;;;;;;; LOAD Address
 
-
-_loadAddress:
-	GetFromTxt 		r13 					; output is $r12d
-	mov eax,        r12d
-	mov r14, 		rax					    ; r14 es el puntero en rsp
-	and r14,        0xFF
-	xor r13,		r13
-	
-
-;---------------- Get_Instruction_Loop --------------------
-;-- Loop that looks for all Instructions into .txt input --
-_GetInstrucLoop: 
-	mov ax, 			word [TEXT+r13]				; Getting ( ; ) position
-	mov bx, 			ax 
-	mov ax, 			word [TEXT+r13+10]	 		; Dynamic access to Buffer data
-	inc 				r13							; $r13 increase in order to read next word from Instruction
-
-	cmp r13, 			FILE_LENGTH-10  			; $r13 cannot be greater than file length
-	je 					_Reg						; break the Get_Instruction_Bucle 
-	cmp bx, 			0x205d ;0x3b		        ; Init_Index ;=>3b espace=>20 [=>5b ]=>5d
-	je 					_Index2						; if(Instruction){LOAD it}
-	jne 				_GetInstrucLoop				; else           {Check if Instruction in next word}
-	_Index2:										; Confirm that is actually getting instrucion
-		;xor r15, r15
-		cmp al, 		0x3b   ;0x205d			    ; Final_Index  ;espace
-		je 				_loadInstruction            ; Load Instruction 
-		jne 			_GetInstrucLoop
-;....................................................
-
-_loadInstruction:
-	GetFromTxt r13 									; output is $r12d
-;Decodificar para mem de instr 400xx, datos 100100xx ..... 
-	mov dword [rsp+r14], r12d 						; $r14 from loadAddress		
-	;jmp _PC
-
+	sub r15,                 1
+	jns _LOOP
 	;------------------------------- At this point -----------------------------------
 	;------------- Virtual memory $rsp contains decoded instructions -----------------
 
