@@ -466,31 +466,31 @@ _HexAsciiFixer:
 	;r14  ; --- rt : registro que almacena el segundo parametro
 	;Se compara el registro r9 con el r8 para saber que operacion se desea realizar
 
-	cmp r8, %1 
+	cmp r8, %5 ;r9
 	je _end 										; 0 La ALU no debe realizar ninguna operacion
 	inc r8
-	cmp r8, %1
+	cmp r8, %5
 	je _add 										; 1 La ALU debe realizar una suma
 	inc r8
-	cmp r8, %1
+	cmp r8, %5
 	je _and 										; 2 La ALU debe realizar un and
 	inc r8
-	cmp r8, %1
+	cmp r8, %5
 	je _or 											; 3 La ALU debe realizar un or
 	inc r8
-	cmp r8, %1
+	cmp r8, %5
 	je _nor 										; 4 La ALU debe realizar un nor
 	inc r8
-	cmp r8, %1
+	cmp r8, %5
 	je _shl 										; 5 La ALU debe realizar un Shift Logical Left
 	inc r8
-	cmp r8, %1
+	cmp r8, %5
 	je _shr 										; 6 La ALU debe realizar un Shift Logical Right
 	inc r8
-	cmp r8, %1
+	cmp r8, %5
 	je _sub 										; 7 La ALU debe realizar una resta
 	inc r8
-	cmp r8, %1
+	cmp r8, %5
 	je _imul 										; 8 La ALU debe realizar una multiplicacion
 
 	;Direcciones de operacion de instrucciones
@@ -503,7 +503,7 @@ _HexAsciiFixer:
 
 	add eax, 			 ebx 						; Se realiza la operacion
 	mov dword [rsp+%4], eax						; 
-	cmp r8,				 %1  						; terminada la operacion, se sale del programa
+	cmp r8,				 %5  						; terminada la operacion, se sale del programa
 	jae _end
 
 	_and:
@@ -512,7 +512,7 @@ _HexAsciiFixer:
 	mov ebx,			 dword [rsp+%3]
 
 	and eax, 			 ebx
-	cmp r8,              %1
+	cmp r8,              %5
 	jae _end
 
 	_or:
@@ -522,7 +522,7 @@ _HexAsciiFixer:
 
 	or eax,              ebx
 
-	cmp r8,				 %1
+	cmp r8,				 %5
 	jae _end
 
 	_nor:
@@ -533,7 +533,7 @@ _HexAsciiFixer:
 	or eax, 			 ebx
 	not eax
 
-	cmp r8,				 %1
+	cmp r8,				 %5
 	jae _end
 
 	_shl:
@@ -542,7 +542,7 @@ _HexAsciiFixer:
 	mov ecx,			 dword [rsp+%3]
 
 	shl eax,             cl
-	cmp r8,				 %1
+	cmp r8,				 %5
 	jae _end
 
 	_shr:
@@ -551,7 +551,7 @@ _HexAsciiFixer:
 	mov ecx,			 dword [rsp+%3]
 
 	shr eax,			 cl
-	cmp r8,				 %1
+	cmp r8,				 %5
 	jae _end
 
 	_sub:
@@ -560,7 +560,7 @@ _HexAsciiFixer:
 	mov ebx,			 dword [rsp+%3]
 
 	sub eax,			 ebx
-	cmp r8,				 %1
+	cmp r8,				 %5
 	jae _end
 
 	_imul:
@@ -569,17 +569,124 @@ _HexAsciiFixer:
 	mov ebx,			 dword [rsp+%3]
 
 	imul ebx
-	cmp r8,			     %1
+	cmp r8,			     %5
 	jae _end
 %endmacro	
 
 
+%macro Controlx 1
+		; %1 = $r12   ( opcode )
+_Inicio:
+        ; obtiene el opcode de la instruccion que esta almacenada en memoria
+        mov [OpCode], 	 %1 	     ; obtenido el opcode, se almacena en la direccion de memoria del registro Opcode, para empezar a comparar   
+        jmp 		     ComparaR    ; salta al bloque de comparacion	
+
+ComparaR:
+	mov	rax, 			 [R]		 ; Mueve el OpCode de tipo R al registro para su posterior comparacion
+    mov rbx, 			 [OpCode]
+    cmp	rax, 			 rbx     	 ; Compara los OpCode
+	je       			 SalidaR	 ; Si son iguales salta al bloque que ejecuta las instrucciones que dan las salidas 
+	jne      			 Comparaddi  ; Si no son iguales salta a otro bloque para seguir comparando el OpCode
+
+SalidaR:
+         mov r11, 		 [AluOP1]    ; almacena el valor de operacion en el registro de proposito general
+         mov [Aluop],	 r11 		 ; almacena el codigo de operacion en la direccion de memoria AluOp
+         mov r12,		 [RegDST1]   ; 
+         mov [RegDest],  r12         ; almacena el codigo de en la direccion de memoria RegDest
+         mov r13,		 [Jump1]     ;
+         mov [Jump],     r13         ;almacena el codigo de en la direccion de memoria Jump
+         mov r8,		 [AluScr0]   ;
+	     mov [AluSrc],   r8 		 ;almacena el codigo de en la direccion de memoria AluSrc
+	     mov r9,		 [RegWrite1] ;
+	     mov [Regwrite], r9          ;almacena el codigo de en la direccion de memoria Regwrite      
+ 	     mov r10,		 [MemtoReg0] ;
+	     mov [MemtoReg], r10         ;almacena el codigo de en la direccion de memoria MemtoReg
+         jmp Inicio 				 ; Al terminar de asignar los valores a los registros, salta incodicionalmente al inicio para volver a obtener el Opcode         
+
+
+Comparaddi:
+	mov	rax,			 [addi]	 	 ; Mueve el OpCode de la instruccion addi al registro para su posterior comparacion
+	mov	rbx,			 [OpCode]    ; Mueve el OpCode de entrada, proveniente de la instruccion	
+    cmp	rax,             rbx         ; Compara los OpCode
+	je      			 Salidaddi	 ; Si son iguales salta al bloque que ejecuta las instrucciones que dan las salidas 
+	jne    				 ComparaLW   ; Si no son iguales salta a otro bloque para seguir comparando el OpCode
+
+
+Salidaddi:
+         mov r11, 		 [AluOP2] 	 ; almacena el valor de operacion en el registro de proposito general
+         mov [Aluop],	 r11 		 ; almacena el codigo de operacion en la direccion de memoria AluOp
+         mov r12,		 [RegDST1]	 ; 
+         mov [RegDest],	 r12         ; almacena el codigo de en la direccion de memoria RegDest
+         mov r13,		 [Jump1]     ;
+         mov [Jump],	 r13 		 ;almacena el codigo de en la direccion de memoria Jump
+         mov r8,		 [AluScr0]	 ;
+	     mov [AluSrc],   r8 		 ;almacena el codigo de en la direccion de memoria AluSrc
+	     mov r9,		 [RegWrite1] ;
+	     mov [Regwrite], r9 		 ;almacena el codigo de en la direccion de memoria Regwrite      
+ 	     mov r10,		 [MemtoReg0] ;
+	     mov [MemtoReg], r10 		 ;almacena el codigo de en la direccion de memoria MemtoReg  
+         jmp Inicio    
+
+
+ComparaLW:
+
+	mov	rax,			 [lw]	     ; Mueve el OpCode de la instruccion Load word al registro para su posterior comparacion
+	mov	rbx,			 [OpCode]	 ; Mueve el OpCode de entrada, proveniente de la instruccion	
+    cmp	rax,			 rbx		 ;  Compara los OpCode
+	je                   SalidaLW	 ; Si son iguales salta al bloque que ejecuta las instrucciones que dan las salidas 
+	jne   				 ComparaSW   ; Si no son iguales salta a otro bloque para seguir comparando el OpCode
+
+
+SalidaLW:
+     	mov r11, 		 [AluOP2]    ; almacena el valor de operacion en el registro de proposito general
+        mov [Aluop],	 r11         ; almacena el codigo de operacion en la direccion de memoria AluOp
+        mov r12,		 [RegDST1]   ; 
+        mov [RegDest],	 r12         ; almacena el codigo de en la direccion de memoria RegDest
+        mov r13,		 [Jump1]     ;
+        mov [Jump],      r13 		 ; almacena el codigo de en la direccion de memoria Jump
+        mov r8,			 [AluScr0]	 ;
+	 	mov [AluSrc],    r8          ;almacena el codigo de en la direccion de memoria AluSrc
+	 	mov r9,			 [RegWrite1] ;
+	 	mov [Regwrite],  r9 		 ;almacena el codigo de en la direccion de memoria Regwrite      
+ 	 	mov r10,		 [MemtoReg0] ;
+		mov [MemtoReg],  r10 		 ;almacena el codigo de en la direccion de memoria MemtoReg  
+    	jmp Inicio    
+
+ComparaSW:
+
+	mov	rax,             [sw]        ; Mueve el OpCode de la instruccion store word al registro para su posterior comparacion
+	mov	rbx,			 [OpCode]	 ; Mueve el OpCode de entrada, proveniente de la instruccion	
+    cmp	rax,			 rbx		 ; Compara los OpCode
+	je     				 SalidaSW	 ; Si son iguales salta al bloque que ejecuta las instrucciones que dan las salidas 
+	jne    				 Jumpi       ; Si no son iguales salta a otro bloque para seguir comparando el OpCode
+
+SalidaSW:
+         mov r11, 		 [AluOP2] 	 ; almacena el valor de operacion en el registro de proposito general
+         mov [Aluop],	 r11 		 ; almacena el codigo de operacion en la direccion de memoria AluOp
+         mov r12,		 [RegDST1]   ; 
+         mov [RegDest],  r12         ; almacena el codigo de en la direccion de memoria RegDest
+         mov r13,        [Jump1]     ;
+         mov [Jump],     r13 		 ;almacena el codigo de en la direccion de memoria Jump
+         mov r8,         [AluScr0]   ;
+	     mov [AluSrc],   r8 		 ;almacena el codigo de en la direccion de memoria AluSrc
+	 	 mov r9,         [RegWrite1] ;
+	     mov [Regwrite], r9          ;almacena el codigo de en la direccion de memoria Regwrite      
+ 	     mov r10,        [MemtoReg0] ;
+	     mov [MemtoReg], r10         ;almacena el codigo de en la direccion de memoria MemtoReg  
+         jmp Inicio;     
+      
+;faltan tdavia agregar el resto de instrucciones que no son R, pero por ahora para probar una suma
+
+%endmacro
+
+
+
 
 section .data
+;-------------------  Memory Data -------------------------
   iMEM_BYTES:   equ 56    ; x/4 = words num       		; Instructions Memory allocation
   REG_BYTES:	equ 128   ; 32 dwords 
   TOT_MEM:		equ 184   ; iMEM+REG_B
-
 
   msg:          db " Memory Allocated! ", 10
   len:          equ $ - msg
@@ -590,7 +697,7 @@ section .data
   
   OFFSET_POINTER_REG:  equ iMEM_BYTES 					; 1 dword = 4 bytes
   						  								; 128bytes = 32 dwords
-  						  								; offset for Registers Allocation
+  	    				  								; offset for Registers Allocation
 
   SYS_EXIT: 	equ 60
   SYS_READ: 	equ 0
@@ -607,7 +714,7 @@ section .data
   STDOUT:       equ 1
   STDERR:       equ 2  
 
-;Alu
+;------------------- Alu -----------------------------
   l1: db 'Inicio del Programa',0xa
   tamano_l1: equ $-l1
   Op1: db 'Se realiza un add',0xa
@@ -630,11 +737,67 @@ section .data
   tamano_l3: equ $-l3
   num1: equ 0x1
 
+;--------------------- Control Data -------------------------
+;se definen las constantes que van a ser los 6 bits del opcode, de acuerdo a la instrucción, y son los que //se van a comparar con el opcode entrante para realizar los condicionales
+R: db 0x00  ;// definicion de la constante del OPCode de las instrucciones tipo R
+;definiciones de la constante del OPCode de las instrucciones tipo i y j
+addi: db 0x08
+addiu: db 0x09
+andi: db 0x0C
+beq: db 0x04
+bne: db 0x05
+j: db 0x02
+jal: db 0x03
+lbu: db 0x24
+lhu: db 0x25
+lui: db 0x25
+lw: db 0x23
+sb: db 0x28
+sh: db 0x29
+slti: db 0x0A
+sltiu: db 0x0B
+sw: db 0x2B
+
+; definicion de los valores que van a obtener las senales de control, segun la tabla de verdad
+
+AluOPx: db 00000001 ; instruccion branch on equal
+AluOP1: db 00000000 ; instruccion store word y load word ? 
+AluOP2: db 00000010 ; instrucciones R ? 
+
+RegDST0: db 00000000 ; segundo campo de 5 bits en la instrucción para lw
+RegDST1: db 00000001 ; tercer campo de 5 bits en la instrucción para operaciones de tipo R
+
+Jump0: db 00000000 ; Dirección de alguna instrucción de tipo I
+Jump1: db 00000001 ; PC + 4
+
+AluScr0: db 00000000; (operaciones de tipo R)
+AluScr1: db 00000001 ;Extension de signo(lw, sw)
+
+RegWrite0: db 00000000; (No permite escritura)
+RegWrite1: db 00000001; (Permite escritura)
+
+MemtoReg0: db 00000000; desde ALUoutput (para operaciones de tipo R);
+MemtoReg1: db 00000001; de MDR (para lw)
+;---------------------------------------------
+
+
 section .bss
 	FD_OUT: 	resb 1
 	FD_IN: 		resb 1
 	TEXT: 		resb 32
 	Num: 		resb 33 
+
+;------------ Control -----------------
+; se reserva 1 byte para cada una
+   AluSrc   resb 1 ; r8
+   RegWrite resb 1 ;r9
+   MemtoReg resb 1 ;r10
+   AluOp    resb 1 ;r11
+   RegDest  resb 1 ;r12
+   Jump     resb 1 ;r13
+   OpCode   resb 1 ;r14 
+
+
 
 section  .text
    global _start       
@@ -743,10 +906,9 @@ _1:
 	mov dword [rsp+r13], 3
 	mov dword [rsp+r14], 2							; preloading because there is not I-Intruct yet
 
-_AALu:
-	ALUx r9, r12, r13, r14, r15 ; , r9 
+_ALU:
+	ALUx [Aluop], r13, r14, r15, r9 
 
-;_ALUx:
 
 
 	
