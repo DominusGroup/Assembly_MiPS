@@ -15,18 +15,17 @@
 %endmacro
 ;------------------------- FIN DE MACRO --------------------------------
 
-
-
-
-
-%macro GetFromTxt 1   
-		; $r13 = %1 
-		; TEXT ? 
-	;_LOAD: 		
+;-------------------------  MACRO #2  ----------------------------------
+;Macro-2: Gets 8-bytes, from index into buffer.
+;	Loads Address/Instruction into $r12d register 
+;	Input parameters:
+;		%1 Is the Index of buffer truncation, passed by $r13 register.
+;	Output: $r12d  
+;-----------------------------------------------------------------------
+%macro GetFromTxt 1   ; $r13 = %1 
 	;------------------------------------------------
 	;------- Copy upper dword from TEXT Buffer ------
 	;------------------------------------------------
-	  	;mov rax, 			qword [TEXT+r13+1]   	; [..] Instruction;
 	  	mov rax, 			qword [TEXT+%1+1]   	; [..] Instruction;
 	  	mov rdx, 			rax
 	  	mov ecx, 			32						; Shift 32 bits
@@ -56,8 +55,6 @@
 	  	shr edx, 			cl              		; shifting abcd bits to 1st position
 		
 		or r12d,			edx 					; Partial data
-		;or dword [rsp+r14], edx		            	; sum aux_dword to $rsp (instructions memory)
-			
 	;------------------------------------------------ 
 			; 200800b3 >> for b
 		mov r8d, 			r9d 		  			; $aux2
@@ -75,8 +72,7 @@
 	  	shr edx, 			cl              		; Shifting efgh to 2nd position 
 		
 		or r12d,			edx 					; Partial data
-		;or dword [rsp+r14], edx  					; $rsp at this point: abcdefgh_00000000_....
-
+													; $rsp at this point: abcdefgh_00000000_....
 	;------------------------------------------------ 
 			; 20080c03 >> for c	
 		mov r8d, 			r9d      				; $aux3
@@ -94,8 +90,6 @@
 	  	shr edx, 			cl              		; shifting
 
 		or r12d,			edx 					; Partial data	  	
-		;;or dword [rsp+r14], edx 			    	; $rsp at this point : abcdefgh_ijkl0000_....
-
 	; -----------------------------------------------
 			; 2008d003 >> for d
 		mov r8d, 			r9d                     ; $aux4
@@ -113,8 +107,6 @@
 	  	shl edx, 			cl              
 		
 		or r12d,			edx 					; Partial data	 
-		;or dword [rsp+r14], edx
-
 	;................................................
 
 	;------------------------------------------------
@@ -138,8 +130,6 @@
 		shl edx, 			cl      		        ; Shift right 28 bits
 
 		or r12d,			edx 					; Partial data	 		
-		;or dword [rsp+r14], edx						; Filling 32 bits instruction, last 4 bits
-
     ; --------------------------------------------------------
 			; 2g0800b3 >> es el g
 		mov r8d, 			r9d 		            ; $aux6
@@ -157,8 +147,6 @@
 	  	shl edx, 			cl              
 		
 		or r12d,			edx 					; Partial data	 
-		;or dword [rsp+r14], edx						; Saved into Instruction memory	
-
 	; -------------------------------------------
 			; 20f80003 >> es el f
 		mov r8d, 			r9d      			    ; $aux7
@@ -176,8 +164,6 @@
 	  	shl edx, 			cl              		; dh, cl
 		
 		or r12d,			edx 					; Partial data	 
-		;or dword [rsp+r14], edx						; Saved into Instruction memory
-
 	; ---------------------------------------
 			; 20080003 >> es el 8
 		mov r8d, 			r9d 	             	; $aux8
@@ -194,11 +180,13 @@
 	  	mov ecx, 		    8						; Shift 4 bits
 	  	shr edx, 			cl              		; dh, cl
 		
-		or r12d,			edx 					; Completed data	 
-		;or dword [rsp+r14], edx						; Saved into Instruction memory asignation 
+		or r12d,			edx 					; $r12d contains the data 
 %endmacro
 
-
+;----------------------------------------------------
+;---------- Auxiliar for macros GetFromTxt-----------
+; Helps to rid off the ascii offset per byte readed.
+;----------------------------------------------------
 _HexAsciiFixer: 
 ;------------------ Check which hex to fix {0123456789}
 	mov r10d, 0x30 
@@ -333,15 +321,264 @@ _HexAsciiFixer:
 ;.......................................................................
 
 
+;;;;;;;;;;;;;;; R-Type
+%macro deco_RegBankPointers 1 ;$r10 is the instruction that will be decoded
+	xor r9, r9 
+	xor r12, r12 
+	xor r13, r13
+	xor r14, r14
+	xor r15, r15 
+
+	;mov r10, 0x2c ; INSTRUCCION QUE SE ESTA DECODIFICANDO 
 
 
+;--------------------- Mask & shift for OPcode 	
+	mov r8d, 			dword [rsp+%1]					  ; getting instruction from memory; 
+	and r8d, 1111_0000_0000_0000_0000_0000_0000_0000b ; masking address $rs 
+	mov rcx, 			28  						  ; shifting 28 bits
+	mov edx, 			dword r8d
+	shr edx,			cl 							  ; $rdx is the output ( OPCODE )
+	mov r12,            rdx
+
+
+;--------------------- Mask & shift for $rs 	
+	mov r8d, 			dword [rsp+%1]					  ; getting instruction from memory; 
+	and r8d, 0000_0011_1110_0000_0000_0000_0000_0000b ; masking address $rs 
+	mov rcx, 			21  						  ; shifting 20 bits
+	mov edx, 			dword r8d
+	shr edx,			cl 	
+	imul rdx, 			4 
+	sub rdx, 			4	
+
+	mov rax, 			rdx 
+	mov r13, 			rax                           ; $r13 is the rs pointer
+	add r13, 			OFFSET_POINTER_REG	          ; adding memory offset to $r13 to start in Register Bank allocation 
+
+;--------------------- Mask & shift for $rt 	
+	mov r8d, 			dword [rsp+%1]					  ; getting instruction from memory
+	and r8d, 0000_0000_0001_1111_0000_0000_0000_0000b ; masking address $rt
+	mov rcx, 			16       	    			  ; shifting 16 bits
+	mov edx, 			dword r8d
+	shr edx,			cl 
+	imul rdx, 			4  							  ; escale x4
+	sub rdx, 			4							  ; substract 4 to point propertly	
+
+	mov rax, 			rdx
+	mov r14, 			rax							  ; $r14 is the rt pointer
+	add r14, 			OFFSET_POINTER_REG            ; Jumping Memory allocation 
+
+;---------------------- Mask & shift for $rd 	
+	mov r8d, 			dword [rsp+%1]					  ; getting instruction from memory
+	and r8d, 0000_0000_0000_0000_1111_1000_0000_0000b ; masking address $rd
+	mov rcx, 			11							  ; shifting 11 bits
+	mov edx,		    dword r8d
+	shr edx,			cl 
+	imul rdx, 			4
+	sub rdx, 			4
+
+	mov rax, 			rdx
+	mov r15, 			rax					     	  ; $r14 is the rt pointer
+	add r15, 			OFFSET_POINTER_REG 			  ; starting above memory 
+
+;---------------------- Mask & shift for FUNCTION 	
+	mov r8d, 			dword [rsp+%1]					  ; getting instruction from memory
+	and r8d, 0000_0000_0000_0000_0000_0000_0011_1111b ; masking address $rd
+	mov rcx, 			0							  ; shifting 11 bits
+	mov edx,		    dword r8d
+	shr edx,			cl 
+	mov r9,            rdx
+%endmacro
+
+
+
+;;;;;;;;;;;;;;; I-Type
+%macro deco_RegBankPointersI 1 ;$r10 is the instruction that will be decoded
+	xor r9, r9 
+	xor r12, r12 
+	xor r13, r13
+	xor r14, r14
+	xor r15, r15 
+
+	;mov r10, 0x2c ; INSTRUCCION QUE SE ESTA DECODIFICANDO 
+
+
+;--------------------- Mask & shift for OPcode 	
+	mov r8d, 			dword [rsp+%1]					  ; getting instruction from memory; 
+	and r8d, 1111_0000_0000_0000_0000_0000_0000_0000b ; masking address $rs 
+	mov rcx, 			28  						  ; shifting 28 bits
+	mov edx, 			dword r8d
+	shr edx,			cl 							  ; $rdx is the output ( OPCODE )
+	mov r12,            rdx
+
+
+;--------------------- Mask & shift for $rs 	
+	mov r8d, 			dword [rsp+%1]					  ; getting instruction from memory; 
+	and r8d, 0000_0011_1110_0000_0000_0000_0000_0000b ; masking address $rs 
+	mov rcx, 			21  						  ; shifting 20 bits
+	mov edx, 			dword r8d
+	shr edx,			cl 	
+	imul rdx, 			4 
+	sub rdx, 			4	
+
+	mov rax, 			rdx 
+	mov r13, 			rax                           ; $r13 is the rs pointer
+	add r13, 			OFFSET_POINTER_REG	          ; adding memory offset to $r13 to start in Register Bank allocation 
+
+;--------------------- Mask & shift for $rt 	
+	mov r8d, 			dword [rsp+%1]					  ; getting instruction from memory
+	and r8d, 0000_0000_0001_1111_0000_0000_0000_0000b ; masking address $rt
+	mov rcx, 			16       	    			  ; shifting 16 bits
+	mov edx, 			dword r8d
+	shr edx,			cl 
+	imul rdx, 			4  							  ; escale x4
+	sub rdx, 			4							  ; substract 4 to point propertly	
+
+	mov rax, 			rdx
+	mov r14, 			rax							  ; $r14 is the rt pointer
+	add r14, 			OFFSET_POINTER_REG            ; Jumping Memory allocation 
+
+;---------------------- Mask & shift for Inmediate 	
+	mov r8d, 			dword [rsp+%1]					  ; getting instruction from memory
+	and r8d, 0000_0000_0000_0000_1111_1111_1111_1111b ; masking address $rd
+	mov rcx, 			0							  ; shifting 11 bits
+	mov edx,		    dword r8d
+	shr edx,			cl 
+	mov r9,             rdx 
+%endmacro
+
+
+
+%macro ALUx 5  
+	; %1 = $r12 ( OPCODE )
+	; %2 = $r13 ( rs )
+	; %3 = $r14 ( rt )
+	; %4 = $r15 ( rd )
+	; %5 = $r9  (Function) 
+
+;------------------------------------------------------------------------------
+;-------------------------------- ALU -----------------------------------------
+;------------------------------------------------------------------------------
+	;mov r9, 			 rax    					; FUNCT :registro que indica la operacion a realizar
+	mov r8, 			 0      					; registro indice de operacion
+  
+
+	;r13  ; --- rs : registro que almacena el primer parametro
+	;r14  ; --- rt : registro que almacena el segundo parametro
+	;Se compara el registro r9 con el r8 para saber que operacion se desea realizar
+
+	cmp r8, %1 
+	je _end 										; 0 La ALU no debe realizar ninguna operacion
+	inc r8
+	cmp r8, %1
+	je _add 										; 1 La ALU debe realizar una suma
+	inc r8
+	cmp r8, %1
+	je _and 										; 2 La ALU debe realizar un and
+	inc r8
+	cmp r8, %1
+	je _or 											; 3 La ALU debe realizar un or
+	inc r8
+	cmp r8, %1
+	je _nor 										; 4 La ALU debe realizar un nor
+	inc r8
+	cmp r8, %1
+	je _shl 										; 5 La ALU debe realizar un Shift Logical Left
+	inc r8
+	cmp r8, %1
+	je _shr 										; 6 La ALU debe realizar un Shift Logical Right
+	inc r8
+	cmp r8, %1
+	je _sub 										; 7 La ALU debe realizar una resta
+	inc r8
+	cmp r8, %1
+	je _imul 										; 8 La ALU debe realizar una multiplicacion
+
+	;Direcciones de operacion de instrucciones
+
+	_add:
+	impr_texto Op1,tamano_Op1 ; Indica al usuario que operacion se realiza
+
+	mov eax,		     dword [rsp+%2]			; Se pasan los datos a los registros que van a operar
+	mov ebx,			 dword [rsp+%3] 			; SE DEBE MODIFICAR PARA QUE RECIBA INMEDIATO
+
+	add eax, 			 ebx 						; Se realiza la operacion
+	mov dword [rsp+%4], eax						; 
+	cmp r8,				 %1  						; terminada la operacion, se sale del programa
+	jae _end
+
+	_and:
+	impr_texto Op2,tamano_Op2
+	mov eax,			 dword [rsp+%2]			; getting data 
+	mov ebx,			 dword [rsp+%3]
+
+	and eax, 			 ebx
+	cmp r8,              %1
+	jae _end
+
+	_or:
+	impr_texto Op3,tamano_Op3
+	mov eax, 			 dword [rsp+%2]
+	mov ebx,             dword [rsp+%3]
+
+	or eax,              ebx
+
+	cmp r8,				 %1
+	jae _end
+
+	_nor:
+	impr_texto Op4,tamano_Op4
+	mov eax, 		     dword [rsp+%2]
+	mov ebx,             dword [rsp+%3]
+
+	or eax, 			 ebx
+	not eax
+
+	cmp r8,				 %1
+	jae _end
+
+	_shl:
+	impr_texto Op5,tamano_Op5
+	mov eax,			 dword [rsp+%2]
+	mov ecx,			 dword [rsp+%3]
+
+	shl eax,             cl
+	cmp r8,				 %1
+	jae _end
+
+	_shr:
+	impr_texto Op6,tamano_Op6
+	mov eax,			 dword [rsp+%2]
+	mov ecx,			 dword [rsp+%3]
+
+	shr eax,			 cl
+	cmp r8,				 %1
+	jae _end
+
+	_sub:
+	impr_texto Op7,tamano_Op7
+	mov eax,			 dword [rsp+%2]
+	mov ebx,			 dword [rsp+%3]
+
+	sub eax,			 ebx
+	cmp r8,				 %1
+	jae _end
+
+	_imul:
+	impr_texto Op8,tamano_Op8
+	mov eax,			 dword [rsp+%2]
+	mov ebx,			 dword [rsp+%3]
+
+	imul ebx
+	cmp r8,			     %1
+	jae _end
+%endmacro	
 
 
 
 section .data
-  iMEM_BYTES:   equ 32    ; x/4 = words num       		; Instructions Memory allocation
-  REG_BYTES:	equ 128   ; 64 dwords 
-  TOT_MEM:		equ 136   ; 384
+  iMEM_BYTES:   equ 56    ; x/4 = words num       		; Instructions Memory allocation
+  REG_BYTES:	equ 128   ; 32 dwords 
+  TOT_MEM:		equ 184   ; iMEM+REG_B
 
 
   msg:          db " Memory Allocated! ", 10
@@ -449,11 +686,11 @@ _txt:
 	xor rax, rax 
 	
 
-	;--------------- Get Instruction Address ------------------
-	;------------------------- PC -----------------------------
+;------------- Loads Instruction into Memory --------------
+;------------------------- PC -----------------------------
 	_PC:  
-		mov al, 		byte [TEXT+r13]		; 19 is a constant to find Index(;) ; in format [yyyyyyyy] xxxxxxxx;
-		inc 			r13
+		mov al, 		byte [TEXT+r13]		    ; 19 is a constant to find Index(;) 
+		inc 			r13						; in format [yyyyyyyy] xxxxxxxx;
 
 		cmp r13, 		FILE_LENGTH  			; Break condition
 		je 				_Reg  
@@ -464,213 +701,53 @@ _txt:
 
 	_loadAddress:
 		mov r15, 	    r13 
-		sub r13,        20						; 18 positions before Index ; starts address
+		sub r13,        20						; 20 positions before Index starts the address
 		GetFromTxt 		r13 					; output is $r12d
 		mov eax,        r12d
-		mov r14, 		rax					    ; r14 es el puntero en rsp
+		mov r14, 		rax					    ; $r14 is the Memory address pointer
 		and r14,        0xFF
 		add r13,        20
 
 	_loadInstruction:
-		sub r13,            10 
-		xor r12d,           r12d
-		GetFromTxt r13 									; output is $r12d
+		sub r13,             	10 
+		xor r12d,            	r12d
+		GetFromTxt r13 							; output is $r12d
 
-		mov dword [rsp+r14], r12d 						; $r14 from loadAddress		
-		
-		mov r13,            r15 
-		xor r12d,           r12d
+		mov dword [rsp+r14], 	r12d 			; Saves addressed Intruction into Memory
+														
+		mov r13,            	r15 
+		xor r12d,           	r12d
 		jmp _PC
-		_1:
+;------------------------------- At this point -----------------------------------
+;------------- Virtual memory $rsp contains addressed instructions ---------------
 
-	;------------------------------- At this point -----------------------------------
-	;------------- Virtual memory $rsp contains decoded instructions -----------------
+
+
 
 ;-----------------------------------------------------------------------
 ;------------------- $rs $rt $rd Deco pointers -------------------------
 ;-----------------------------------------------------------------------
 _Reg:
-;--------------------- Mask & shift for $rs 	
-	mov r8d, 			dword [rsp]					  ; getting instruction from memory; 
-	and r8d, 0000_0011_1110_0000_0000_0000_0000_0000b ; masking address $rs 
-	mov rcx, 			21  						  ; shifting 20 bits
-	mov edx, 			dword r8d
-	shr edx,			cl 	
-	imul rdx, 			4 
-	sub rdx, 			4	
-
-	mov rax, 			rdx 
-	mov r13, 			rax                           ; $r13 is the rs pointer
-	add r13, 			OFFSET_POINTER_REG	          ; adding memory offset to $r13 to start in Register Bank allocation 
-
-;--------------------- Mask & shift for $rt 	
-	mov r8d, 			dword [rsp]					  ; getting instruction from memory
-	and r8d, 0000_0000_0001_1111_0000_0000_0000_0000b ; masking address $rt
-	mov rcx, 			16       	    			  ; shifting 16 bits
-	mov edx, 			dword r8d
-	shr edx,			cl 
-	imul rdx, 			4  							  ; escale x4
-	sub rdx, 			4							  ; substract 4 to point propertly	
-
-	mov rax, 			rdx
-	mov r14, 			rax							  ; $r14 is the rt pointer
-	add r14, 			OFFSET_POINTER_REG            ; Jumping Memory allocation 
-
-;---------------------- Mask & shift for $rd 	
-	mov r8d, 			dword [rsp]					  ; getting instruction from memory
-	and r8d, 0000_0000_0000_0000_1111_1000_0000_0000b ; masking address $rd
-	mov rcx, 			11							  ; shifting 11 bits
-	mov edx,		    dword r8d
-	shr edx,			cl 
-	imul rdx, 			4
-	sub rdx, 			4
-
-	mov rax, 			rdx
-	mov r15, 			rax					     	  ; $r14 is the rt pointer
-	add r15, 			OFFSET_POINTER_REG 			  ; starting above memory 
+	;mov r10, 0x28 ; 20090002
+	;deco_RegBankPointersI r10   ; I-Type Instructions
 
 
-;------------------------------------------------------------------------
-;--------------------------- Control ------------------------------------
-;------------------------------------------------------------------------
-	; ------------------- OPCODE
-	mov r8d, dword [rsp]
-	and r8d, 1111_1100_0000_0000_0000_0000_0000_0000b ; masking opcode
-	mov rcx, 26 ; shifting 0 bits 
-	mov edx, dword r8d 
-	shr edx, cl 
-
-	mov rax, rdx		 ; Rax is the OPCODE
-	; ver a que registro se lo paso 
- 
-	; ------------------- FUNCT
-	mov r8d, dword [rsp]
-	and r8d, 0000_0000_0000_0000_0000_0000_0011_1111b ; masking opcode
-	mov rcx, 0 ; shifting 26 bits 
-	mov edx, dword r8d 
-	shr edx, cl 
-
-	mov rax, rdx		 ; Rax is the FUNCT
- 
-
-
-;------------------------------------------------------------------------------
-;-------------------------------- ALU -----------------------------------------
-;------------------------------------------------------------------------------
-	mov r9, 			 rax    					; FUNCT :registro que indica la operacion a realizar
-	mov r8, 			 0      					; registro indice de operacion
+	mov r10, 0x2c ; 01095020 INSTRUCCION QUE SE ESTA DECODIFICANDO 
+	deco_RegBankPointers r10   ; R-Type Instructions
+_1:
+	; $r10 is the input ( Pointing to actual instruction address into iMeM)
+	; $r13 is rs pointer in Registers Bank
+	; $r14 is rt pointer in Registers Bank
+	; $r15 is rd pointer in Registers Bank
 
 	mov dword [rsp+r13], 3
 	mov dword [rsp+r14], 2							; preloading because there is not I-Intruct yet
-	;r13  ; --- rs : registro que almacena el primer parametro
-	;r14  ; --- rt : registro que almacena el segundo parametro
-	;Se compara el registro r9 con el r8 para saber que operacion se desea realizar
 
-	cmp r8,r9
-	je _end 										; 0 La ALU no debe realizar ninguna operacion
-	inc r8
-	cmp r8,r9
-	je _add 										; 1 La ALU debe realizar una suma
-	inc r8
-	cmp r8,r9
-	je _and 										; 2 La ALU debe realizar un and
-	inc r8
-	cmp r8,r9
-	je _or 											; 3 La ALU debe realizar un or
-	inc r8
-	cmp r8,r9
-	je _nor 										; 4 La ALU debe realizar un nor
-	inc r8
-	cmp r8,r9
-	je _shl 										; 5 La ALU debe realizar un Shift Logical Left
-	inc r8
-	cmp r8,r9
-	je _shr 										; 6 La ALU debe realizar un Shift Logical Right
-	inc r8
-	cmp r8,r9
-	je _sub 										; 7 La ALU debe realizar una resta
-	inc r8
-	cmp r8,r9
-	je _imul 										; 8 La ALU debe realizar una multiplicacion
+_AALu:
+	ALUx r9, r12, r13, r14, r15 ; , r9 
 
-	;Direcciones de operacion de instrucciones
+;_ALUx:
 
-	_add:
-	impr_texto Op1,tamano_Op1 ; Indica al usuario que operacion se realiza
-
-	mov eax,		     dword [rsp+r13]			; Se pasan los datos a los registros que van a operar
-	mov ebx,			 dword [rsp+r14] 			; SE DEBE MODIFICAR PARA QUE RECIBA INMEDIATO
-
-	add eax, 			 ebx 						; Se realiza la operacion
-	mov dword [rsp+r15], eax						; 
-	cmp r8,				 r9  						; terminada la operacion, se sale del programa
-	jae _end
-
-	_and:
-	impr_texto Op2,tamano_Op2
-	mov eax,			 dword [rsp+r13]			; getting data 
-	mov ebx,			 dword [rsp+r14]
-
-	and eax, 			 ebx
-	cmp r8,              r9
-	jae _end
-
-	_or:
-	impr_texto Op3,tamano_Op3
-	mov eax, 			 dword [rsp+r13]
-	mov ebx,             dword [rsp+r14]
-
-	or eax,              ebx
-
-	cmp r8,				 r9
-	jae _end
-
-	_nor:
-	impr_texto Op4,tamano_Op4
-	mov eax, 		     dword [rsp+r13]
-	mov ebx,             dword [rsp+r14]
-
-	or eax, 			 ebx
-	not eax
-
-	cmp r8,				 r9
-	jae _end
-
-	_shl:
-	impr_texto Op5,tamano_Op5
-	mov eax,			 dword [rsp+r13]
-	mov ecx,			 dword [rsp+r14]
-
-	shl eax,             cl
-	cmp r8,				 r9
-	jae _end
-
-	_shr:
-	impr_texto Op6,tamano_Op6
-	mov eax,			 dword [rsp+r13]
-	mov ecx,			 dword [rsp+r14]
-
-	shr eax,			 cl
-	cmp r8,				 r9
-	jae _end
-
-	_sub:
-	impr_texto Op7,tamano_Op7
-	mov eax,			 dword [rsp+r13]
-	mov ebx,			 dword [rsp+r14]
-
-	sub eax,			 ebx
-	cmp r8,				 r9
-	jae _end
-
-	_imul:
-	impr_texto Op8,tamano_Op8
-	mov eax,			 dword [rsp+r13]
-	mov ebx,			 dword [rsp+r14]
-
-	imul ebx
-	cmp r8,			     r9
-	jae _end
 
 	
 ;exit:                               
