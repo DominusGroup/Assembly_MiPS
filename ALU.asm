@@ -159,10 +159,18 @@ Op9: db 'Se realiza un beq',0xa
 tamano_Op9: equ $-Op9
 Op10: db 'Se realiza un bne',0xa
 tamano_Op10: equ $-Op10
+Op11: db 'Se realiza un addu',0xa
+tamano_Op11: equ $-Op11
+Op12: db 'Se realiza un sltiu',0xa
+tamano_Op12: equ $-Op12
+Op13: db 'Se realiza un sltu',0xa
+tamano_Op13: equ $-Op13
+Op14: db 'Se realiza un subu',0xa
+tamano_Op14: equ $-Op14
 l3: db 'Fin del Programa!',0xa
 tamano_l3: equ $-l3
 
-num1: equ 0xa
+num1: equ 0xb
 
 ;Definicion de los caracteres especiales para limpiar la pantalla
 limpiar    db 0x1b, "[2J", 0x1b, "[H"
@@ -192,8 +200,8 @@ _start:
 	mov r9,num1 ; registro que indica la operacion a realizar
 	mov r8,0 ; registro indice de operacion
 
-	mov r12,1011101011B; r12 --- registro que almacena el primer parametro
-	mov r13,1011101011B; r13 ---  registro que almacena el segundo parametro
+	mov r12,-5; r12 --- registro que almacena el primer parametro
+	mov r13,3; r13 ---  registro que almacena el segundo parametro
 	;Se compara el registro r9 con el r8 para saber que operacion se desea realizar
 
 	cmp r8,r9
@@ -228,6 +236,18 @@ _start:
 	inc r8
 	cmp r8,r9
 	je _bne ; 10 La ALU debe realizar un bne
+	inc r8
+	cmp r8,r9
+	je _addu ; 11 La ALU debe realizar un addu
+	;inc r8
+	;cmp r8,r9
+	;je _sltiu ; 12 La ALU debe realizar un sltiu
+	;inc r8
+	;cmp r8,r9
+	;je _sltu ; 13 La ALU debe realizar un sltu
+	;inc r8
+	;cmp r8,r9
+	;je _subu ; 14 La ALU debe realizar un subu
 
 	;Direcciones de operacion de instrucciones
 
@@ -239,6 +259,31 @@ _start:
 
 	add rax,rbx ; Se realiza la operacion
 	_AddR:
+	cmp r8,r9 ; terminada la operacion, se sale del programa
+	jae _end
+
+	_addu:
+	impr_texto Op11,tamano_Op11 ; Indica al usuario que operacion se realiza
+
+	mov rax,r12 ;Se pasan los datos a los registros que van a operar
+	mov rbx,r13
+	_compare:
+	cmp r12,0 ; compara r12 con 0 para saber si es mayor a el
+	jg _CR2 ;si es mayor a cero realiza un salto, ya que no se debe modificar el registro
+	mov rax,r12 ; se pasa r12 al registro rax, el cual es propio de la operacion imul
+	mov r12,-1 ; se carga el registro con -1 para multiplicar
+	imul  r12; se multiplica por -1 para que el resultado sea positivo
+	mov r12,rax ; guarda el valor modificado en el registro deseado
+	_CR2: ; brinco a evaluar el contenido del segundo registro
+	cmp r13,0 ; procedimiento igual al aplicado al registro anterior
+	jg _CRL ; brinco a ejecucion ALU
+	mov rax,r13
+	mov r13,-1
+	imul r13
+	mov r13,rax
+	_CRL: ; Ejecucion ALU realiza la operacion deseada
+		add r12,r13 ; Se realiza la operacion
+	_AdduR:
 	cmp r8,r9 ; terminada la operacion, se sale del programa
 	jae _end
 
