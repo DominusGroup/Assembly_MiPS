@@ -1,0 +1,94 @@
+_Alu2: 
+
+	mov eax, 0x20  ; add function
+	cmp dword [Function], eax
+	je _add 									
+
+	mov eax, 0x24  ; and function
+	cmp dword [Function], eax
+	je _and 										
+													
+	mov eax, 0x25  ; or function
+	cmp dword [Function], eax
+	je _or 						
+
+	mov eax, 0x27  ; nor function
+	cmp dword [Function], eax
+	je _nor 
+
+	mov eax, 0x00  ; shl function
+	cmp dword [Function], eax
+	je _shl 			
+
+	mov eax, 0x02  ; shr function
+	cmp dword [Function], eax
+	je _shr
+
+	mov eax, 0x18  ; *mult function
+	cmp dword [Function], eax
+	je _imul 
+	
+
+
+	_add:
+		;impr_texto Op1, tamano_Op1 ; Indica al usuario que operacion se realiza
+		mov eax,		     dword [rsp+r14+8] ; +8, because call use rsp register	; Se pasan los datos a los registros que van a operar
+		mov edx,			 dword [rsp+r13+8]  ; %3] 		; SE DEBE MODIFICAR PARA QUE RECIBA INMEDIATO
+		add eax, 			 edx 						    ; Se realiza la operacion
+		mov r9d,             eax
+		ret 
+	_and:
+		impr_texto Op2, tamano_Op2
+		mov eax,			 dword [rsp+r14+8]			; getting data 
+		mov ebx,			 dword [rsp+r13+8]
+		and eax, 			 ebx
+		mov r9d,             eax
+		ret
+	_or:
+		impr_texto Op3,tamano_Op3
+		mov eax, 			 dword [rsp+r14+8]
+		mov ebx,             dword [rsp+r13+8]
+		or eax,              ebx
+		mov r9d,             eax
+		ret 
+	_nor:
+		impr_texto Op4,tamano_Op4
+		mov eax, 		     dword [rsp+r14+8]
+		mov ebx,             dword [rsp+r13+8]
+		or eax, 			 ebx
+		not eax
+		mov r9d,             eax
+		ret 
+
+	_shl: ; ******   sll 
+		impr_texto Op5,tamano_Op5
+		mov eax,			 dword [rsp+r14+8]
+		mov ecx,			 dword [rsp+r13+8]
+		shl eax,             cl
+		mov r9d,             eax
+		ret 
+
+	_shr: ; ******   srl
+		impr_texto Op6,tamano_Op6
+		mov eax,			 dword [rsp+r14+8]
+		mov ecx,			 dword [rsp+r13+8]
+		shr eax,			 cl
+		mov r9d,             eax
+		ret 
+
+	_sub:
+		impr_texto Op7,tamano_Op7
+		mov eax,			 dword [rsp+r14+8]
+		mov ebx,			 dword [rsp+r13+8]
+		sub eax,			 ebx
+		mov r9d,             eax
+		ret
+
+	_imul: ; *******
+		impr_texto Op8,tamano_Op8
+		mov eax,			 dword [rsp+r14+8]
+		mov ebx,			 dword [rsp+r13+8]
+		imul ebx
+		mov r9d,             eax
+		ret 
+
