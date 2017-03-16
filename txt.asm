@@ -404,192 +404,246 @@ _HexAsciiFixer:
 	mov r10,            rdx
 
 ;---------------------- Mask & shift for Inmediate 	
+		;CERO 
 	mov r8d, 			dword [rsp+%1]					  ; getting instruction from memory
 	and r8d, 0000_0000_0000_0000_1111_1111_1111_1111b ; masking address $rd
-	mov rcx, 			0							  ; shifting 11 bits
-	mov edx,		    dword r8d
-	shr edx,			cl 
-	mov r9,             rdx 
+	mov r9d,			r8d 
+	
+	;mov rcx, 			0							  ; shifting 11 bits
+	;mov edx,		    dword r8d
+	;shr edx,			cl 
+	;;mov r9,             rdx 
 
 ;---------------------- Mask & shift for Address 	
 	mov r8d, 			dword [rsp+%1]				  ; getting instruction from memory
 	and r8d, 0000_0011_1111_1111_1111_1111_1111_1111b ; masking address $rd
-	mov rcx, 			0							  ; shifting 11 bits
-	mov edx,		    dword r8d
-	shr edx,			cl 
-	mov r8,             rdx 
+	;mov rcx, 			0							  ; shifting 11 bits
+	;mov edx,		    dword r8d
+	;shr edx,			cl 
+	;mov r8d,             rdx 
 %endmacro
 
 
 ;------------------------------------------------------------------------------
 ;-------------------------------- ALU -----------------------------------------
 ;------------------------------------------------------------------------------
-%macro ALUx 4  
+;%macro ALUx 4  
+
+;	call _Alu2
 	; %1 = [Opcode]   -------Control----- $r15    ( OPCODE )
 	; %2 = $r14       ------Reg. Bank---- [rs]    ( rs )
-	; %3 = $rax       ---------Mux------- [rax]   ( [rt]=r13 or [Immendiate]=r9 )
-	; %4 = [Function] --------Control---- $r10     (Function) 
+	; %3 = $rax       ---------Mux------- [rax]   ( [rt]=r13 )
+	; %4 = [Function] --------Control----      ([Function]=r10 or [Immendiate]=r9) 
 	
 	;mov r9, 			 rax    					; FUNCT :registro que indica la operacion a realizar
 	
-	mov r8, 			 0      					; registro indice de operacion
+	;mov r8d, 			 0      					; registro indice de operacion
   
 	;r13  ; --- rs : registro que almacena el primer parametro
 	;r14  ; --- rt : registro que almacena el segundo parametro
 	;Se compara el registro r9 con el r8 para saber que operacion se desea realizar
 
-	cmp r8, %4 ;r9
-	je _end 										; 0 La ALU no debe realizar ninguna operacion
-	inc r8
-	cmp r8, %4
-	je _add 										; 1 La ALU debe realizar una suma
-	inc r8
-	cmp r8, %4
-	je _and 										; 2 La ALU debe realizar un and
-	inc r8
-	cmp r8, %4
-	je _or 											; 3 La ALU debe realizar un or
-	inc r8
-	cmp r8, %4
-	je _nor 										; 4 La ALU debe realizar un nor
-	inc r8
-	cmp r8, %4
-	je _shl 										; 5 La ALU debe realizar un Shift Logical Left
-	inc r8
-	cmp r8, %4
-	je _shr 										; 6 La ALU debe realizar un Shift Logical Right
-	inc r8
-	cmp r8, %4
-	je _sub 										; 7 La ALU debe realizar una resta
-	inc r8
-	cmp r8, %4
-	je _imul 										; 8 La ALU debe realizar una multiplicacion
+;;;;; Function or Immediate compare
 
-	;Direcciones de operacion de instrucciones
+	;mov esi, %1
+	;call _addix
+	;jmp _addix
+
+_Alu2: 
+	cmp dword [OpCode], 0x00
+	je _OPcodeR
+	jne _OPcodeI
+
+	_OPcodeI:  
+		cmp dword [OpCode], 0x08   ; addi 
+		je _addi 
+
+		;cmp dword [Function], 0x09      FALTA HACER ESTAS ETIQUETAS I
+		;je _addiu
+
+	_OPcodeR:
+		mov eax, 0x20  ; add function
+		cmp dword [Function], eax
+		je _add 									
+
+		mov eax, 0x24  ; and function
+		cmp dword [Function], eax
+		je _and 										
+														
+		mov eax, 0x25  ; or function
+		cmp dword [Function], eax
+		je _or 						
+
+		mov eax, 0x27  ; nor function
+		cmp dword [Function], eax
+		je _nor 
+
+		mov eax, 0x00  ; shl function
+		cmp dword [Function], eax
+		je _shl 			
+
+		mov eax, 0x02  ; shr function
+		cmp dword [Function], eax
+		je _shr
+
+		mov eax, 0x18  ; *mult function
+		cmp dword [Function], eax
+		je _imul 
+	
+
 
 	_add:
-	impr_texto Op1,tamano_Op1 ; Indica al usuario que operacion se realiza
-
-	mov eax,		     dword [rsp+%2]			; Se pasan los datos a los registros que van a operar
-	mov ebx,			 dword [rsp+%3] 			; SE DEBE MODIFICAR PARA QUE RECIBA INMEDIATO
-
-	add eax, 			 ebx 						; Se realiza la operacion
-	;mov dword [rsp+%4],  eax						; 
-	cmp r8,				 %4  						; terminada la operacion, se sale del programa
-	jmp _endAlu
-
+		;impr_texto Op1, tamano_Op1 ; Indica al usuario que operacion se realiza
+		mov eax,		       dword [rsp+r14+8] ; +8, because call use rsp register	; Se pasan los datos a los registros que van a operar
+		mov edx,			   dword [rsp+r13+8]  ; %3] 		; SE DEBE MODIFICAR PARA QUE RECIBA INMEDIATO
+		add eax, 			   edx 						    ; Se realiza la operacion
+		mov dword [rsp+r12+8], eax
+		;mov r9d,             eax
+		ret 
 	_and:
-	impr_texto Op2,tamano_Op2
-	mov eax,			 dword [rsp+%2]			; getting data 
-	mov ebx,			 dword [rsp+%3]
-
-	and eax, 			 ebx
-	cmp r8,              %4
-	;jae _end
-	jmp _endAlu
-
+		impr_texto Op2, tamano_Op2
+		mov eax,			 dword [rsp+r14+8]			; getting data 
+		mov ebx,			 dword [rsp+r13+8]
+		and eax, 			 ebx
+		mov r9d,             eax
+		ret
 	_or:
-	impr_texto Op3,tamano_Op3
-	mov eax, 			 dword [rsp+%2]
-	mov ebx,             dword [rsp+%3]
-
-	or eax,              ebx
-
-	cmp r8,				 %4
-	jmp _endAlu 
-
+		impr_texto Op3,tamano_Op3
+		mov eax, 			 dword [rsp+r14+8]
+		mov ebx,             dword [rsp+r13+8]
+		or eax,              ebx
+		mov r9d,             eax
+		ret 
 	_nor:
-	impr_texto Op4,tamano_Op4
-	mov eax, 		     dword [rsp+%2]
-	mov ebx,             dword [rsp+%3]
+		impr_texto Op4,tamano_Op4
+		mov eax, 		     dword [rsp+r14+8]
+		mov ebx,             dword [rsp+r13+8]
+		or eax, 			 ebx
+		not eax
+		mov r9d,             eax
+		ret 
 
-	or eax, 			 ebx
-	not eax
+	_shl: ; ******   sll 
+		impr_texto Op5,tamano_Op5
+		mov eax,			 dword [rsp+r14+8]
+		mov ecx,			 dword [rsp+r13+8]
+		shl eax,             cl
+		mov r9d,             eax
+		ret 
 
-	cmp r8,				 %4
-	jmp _endAlu 
-
-	_shl: ; sll cambiar
-	impr_texto Op5,tamano_Op5
-	mov eax,			 dword [rsp+%2]
-	mov ecx,			 dword [rsp+%3]
-
-	shl eax,             cl
-	cmp r8,				 %4
-	jmp _endAlu
-
-	_shr: ; srl
-	impr_texto Op6,tamano_Op6
-	mov eax,			 dword [rsp+%2]
-	mov ecx,			 dword [rsp+%3]
-
-	shr eax,			 cl
-	cmp r8,				 %4
-	jmp _endAlu
+	_shr: ; ******   srl
+		impr_texto Op6,tamano_Op6
+		mov eax,			 dword [rsp+r14+8]
+		mov ecx,			 dword [rsp+r13+8]
+		shr eax,			 cl
+		mov r9d,             eax
+		ret 
 
 	_sub:
-	impr_texto Op7,tamano_Op7
-	mov eax,			 dword [rsp+%2]
-	mov ebx,			 dword [rsp+%3]
+		impr_texto Op7,tamano_Op7
+		mov eax,			 dword [rsp+r14+8]
+		mov ebx,			 dword [rsp+r13+8]
+		sub eax,			 ebx
+		mov r9d,             eax
+		ret
 
-	sub eax,			 ebx
-	cmp r8,				 %4
-	jmp _endAlu
+	_imul: ; *******
+		impr_texto Op8,tamano_Op8
+		mov eax,			 dword [rsp+r14+8]
+		mov ebx,			 dword [rsp+r13+8]
+		imul ebx
+		mov r9d,             eax
+		ret 
 
-	_imul:
-	impr_texto Op8,tamano_Op8
-	mov eax,			 dword [rsp+%2]
-	mov ebx,			 dword [rsp+%3]
+;----------------- I-Type----------------------------
+; Pointer 	 $rs  ($r14)
+; Pointer is $rt  ($r13)
+	_addi:
+		mov eax, 	    	 dword [rsp+r14+8]    ; Register ( $rs ) Data 
+		mov ecx, 			 dword [ImCtrl]     ; Immediate from Control 
+		add eax,    		 ecx                ; ImmediateCtrl
+		mov dword [rsp+r13+8], eax                ; addi into Reg Bank (addressed $rt) i-type
+		ret 
 
-	imul ebx
-	cmp r8,			     %4
-	jmp _endAlu
 
-	_endAlu:
+
+	; OpCode = 0 =>> R-type
+
+%macro CtrlSel 3
+	cmp %1, 0x0 
+	je _CtrlSelR
+	jne _CtrlSelI
+
+	_CtrlSelR: 
+		ControlR %1, %2       ; r15d, r10d  
+		jmp _endCtrlSel
+
+	_CtrlSelI:
+		ControlI %1, %3       ; r15d, r9d
+
+	_endCtrlSel:
 %endmacro	
 
-
-
-
-%macro Controlx 2
-		; %1 = $r15   ( opcode )
+%macro ControlR 2
+		; %1 = $r15    ( opcode )
 		; %2 = $r10    ( function )
-_Inicio:
+	_Inicio:
         ; obtiene el opcode de la instruccion que esta almacenada en memoria
-        mov [OpCode], 	 %1 	     ; obtenido el opcode, se almacena en la direccion de memoria del registro Opcode, para empezar a comparar   
-        jmp 		     _ComparaR    ; salta al bloque de comparacion	
+    	mov dword [OpCode],     %1 	     	  ; obtenido el opcode, se almacena en la direccion de memoria del registro Opcode, para empezar a comparar   
 
-_ComparaR:
-	mov	rax, 			 R		 ; Mueve el OpCode de tipo R al registro para su posterior comparacion
-    mov rbx, 			 OpCode
-    cmp	rax, 			 rbx     	 ; Compara los OpCode
-	je       			 _SalidaR	 ; Si son iguales salta al bloque que ejecuta las instrucciones que dan las salidas 
-	jne      			 _endControl ;_Comparaddi  ; Si no son iguales salta a otro bloque para seguir comparando el OpCode
+		mov	eax, 			 	 R		      ; Mueve el OpCode de tipo R al registro para su posterior comparacion
+    	mov ebx, 			 	 %1 ; OpCode
+    	cmp	eax, 			     ebx     	  ; Compara los OpCode
+		je       			 	 _ControlR	  ; Si son iguales salta al bloque que ejecuta las instrucciones que dan las salidas 
+		jne      			     _endControlR ; _Comparaddi  ; Si no son iguales salta a otro bloque para seguir comparando el OpCode
+	    
+	_ControlR:
+		;mov dword [OpCode],     %1 ; r15d
+		mov dword [Function],   %2  ; r10d          ; Passing function 
+	    mov eax, 		 	 	AluOP1    ; almacena el valor de operacion en el registro de proposito general
+	    mov dword [AluOp],	    eax 		 ; almacena el codigo de operacion en la direccion de memoria AluOp
+	    mov eax,		 		RegDST1   ; 
+	    mov dword [RegDest],    eax         ; almacena el codigo de en la direccion de memoria RegDest
+	    mov eax,		 		Jump1     ;
+	    mov dword [Jump],       eax         ;almacena el codigo de en la direccion de memoria Jump
+	    mov eax,		 		AluScr0   ;
+		mov dword [AluSrc],     eax 		 ;almacena el codigo de en la direccion de memoria AluSrc
+		mov eax,		 		RegWrite1 ;
+		mov dword [RegWrite],   eax          ;almacena el codigo de en la direccion de memoria Regwrite      
+		mov eax,		 		MemtoReg0 ;
+		mov dword [MemtoReg],   eax         ;almacena el codigo de en la direccion de memoria MemtoReg
+	    					 				 ; Al terminar de asignar los valores a los registros, salta incodicionalmente al inicio para volver a obtener el Opcode         
 
-
-_SalidaR:
-	
-	;mov dword [OpCode],     %1 ; r15d
-	mov dword [Function],   %2 ; r10d          ; Passing function 
-    mov eax, 		 	 	AluOP1    ; almacena el valor de operacion en el registro de proposito general
-    mov dword [AluOp],	    eax 		 ; almacena el codigo de operacion en la direccion de memoria AluOp
-    mov eax,		 		RegDST1   ; 
-    mov dword [RegDest],     eax         ; almacena el codigo de en la direccion de memoria RegDest
-    mov eax,		 		Jump1     ;
-    mov dword [Jump],        eax         ;almacena el codigo de en la direccion de memoria Jump
-    mov eax,		 		AluScr0   ;
-	mov dword [AluSrc],      eax 		 ;almacena el codigo de en la direccion de memoria AluSrc
-	mov eax,		 		RegWrite1 ;
-	mov dword [RegWrite],    eax          ;almacena el codigo de en la direccion de memoria Regwrite      
-	mov eax,		 		MemtoReg0 ;
-	mov dword [MemtoReg],    eax         ;almacena el codigo de en la direccion de memoria MemtoReg
-    jmp _endControl ; Inicio 				 ; Al terminar de asignar los valores a los registros, salta incodicionalmente al inicio para volver a obtener el Opcode         
- 
+	_endControlR:     
+%endmacro
 
 
-      
-_endControl:     
-;faltan tdavia agregar el resto de instrucciones que no son R, pero por ahora para probar una suma
+%macro ControlI 2  ; %2 = immediate (r9d) from deco 
+	_InicioI:		
+		mov dword [OpCode],     %1
+
+		mov eax, 				addi            ; I-Type
+		mov ebx, 				 %1 ;OpCode
+		cmp eax, 				ebx
+		je 						_ControlI
+		jne 					_endControlI
+
+	_ControlI:	 
+	   	mov dword [ImCtrl],     %2         ; immediate (r9d)          ; Passing function 
+	   	mov eax,                AluOP2    ; almacena el valor de operacion en el registro de proposito general
+	   	mov dword [AluOp],      eax       ; almacena el codigo de operacion en la direccion de memoria AluOp
+	   	mov eax,                RegDST1   ; 
+	    mov dword [RegDest],    eax         ; almacena el codigo de en la direccion de memoria RegDest
+	    mov eax,                Jump1     ;
+	    mov dword [Jump],       eax       ;almacena el codigo de en la direccion de memoria Jump
+	    mov eax,                AluScr0  ;
+	    mov dword [AluSrc],     eax       ;almacena el codigo de en la direccion de memoria AluSrc
+	    mov eax,                RegWrite1 ;
+	    mov dword [RegWrite],   eax       ;almacena el codigo de en la direccion de memoria Regwrite      
+	    mov eax,                MemtoReg0 ;
+	    mov dword [MemtoReg],   eax       ;almacena el codigo de en la direccion de memoria MemtoReg  
+
+	_endControlI:
 %endmacro
 
 
@@ -676,7 +730,7 @@ sw: equ 0x2b
 ; definicion de los valores que van a obtener las senales de control, segun la tabla de verdad
 AluOPx: equ 00000001b ; instruccion branch on equal
 AluOP1: equ  00000000b ; instruccion store word y load word ? 
-AluOP2: equ 00000010b ; instrucciones R ? 
+AluOP2: equ  00001000b ; instrucciones R ? 
 
 RegDST0: equ 00000000b ; segundo campo de 5 bits en la instrucción para lw
 RegDST1: equ 00000001b ; tercer campo de 5 bits en la instrucción para operaciones de tipo R
@@ -711,6 +765,7 @@ section .bss
    Jump:     resb 4 ;r13
    OpCode:   resb 4 ;r14 
    Function: resb 4
+   ImCtrl:   resb 4 
 
 
 
@@ -800,40 +855,33 @@ _txt:
 ;------------- Virtual memory $rsp contains addressed instructions ---------------
 
 
-
-
-	;mov r10, 0x28 ; 20090002
-	;deco_RegBankPointersI r10   ; I-Type Instructions
 _Reg:
 
-	mov r10, 0x2c 		; 01095020 INSTRUCCION QUE SE ESTA DECODIFICANDO 
-	DECO r10   			; R-Type Instructions
-	; $r10 (input)
-	; Outputs
-	; %1 = $r15 ( OPCODE )
-	; %2 = $r14 ( rs )
-	; %3 = $r13 ( rt )
-	; %4 = $r12 ( rd )
-	; %5 = $r10 ( Function ) 
-	; %6 = $r9  ( Immediate) 
-	; %7 = $r8  ( Address )
+	;mov rbx, 0x2c 		      		; 01095020 INSTRUCCION QUE SE ESTA DECODIFICANDO 
+	mov rbx, 0x28                   ; 20080002
+	DECO rbx 
+	CtrlSel r15d, r10d, r9d 
+	call _Alu2
 
+	mov rbx, 0x24                   ; 20080003
+	DECO rbx 
+	CtrlSel r15d, r10d, r9d 
+	call _Alu2
 
+	mov rbx, 0x2c                   ; 01095020
+	DECO rbx 
+	CtrlSel r15d, r10d, r9d 
+	call _Alu2	
+
+	;DECO [rsp+rbx] rbx        			    ; I & R-Type Instructions
+	;mov dword [rsp+r13], 3         
+	;mov dword [rsp+r14], 2			; preloading because there is not I-Intruct yet
+	;ControlR r15d, r10d 
+
+	;ControlI r15d, r9d
+	;call _Alu2
+	_4:
 	
-_Precarga:
-	Controlx r15d, r10d 
-	mov dword [rsp+r13], 3
-	mov dword [rsp+r14], 2							; preloading because there is not I-Intruct yet
-
-
-_ALU:
-	;ALUx [Aluop], r14, rbx, [Function] ; with mux 
-	;;ALUx r15, r14, r13, r10
-	ALUx qword [AluOp], r14, r13, qword [Function]  ; rtype
-	;mov r15, [Function]
-_1:	
-
-; eax is Alu output =5 
 
 ;exit:                               
 	_end:
