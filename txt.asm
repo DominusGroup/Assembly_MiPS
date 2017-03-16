@@ -335,7 +335,9 @@ _HexAsciiFixer:
 	; %6 = $r9  ( Immediate) 
 	; %7 = $r8  ( Address )
 
-%macro DECO 1 ;$r10 is the instruction that will be decoded
+;%macro DECO 1 ;$rbx is the instruction that will be decoded
+
+_DECO:
 	xor r8, r8 
 	xor r9, r9 
 	;xor r10, r10
@@ -348,7 +350,7 @@ _HexAsciiFixer:
 
 
 ;--------------------- Mask & shift for OPcode 	
-	mov r8d, 			dword [rsp+%1]					  ; getting instruction from memory; 
+	mov r8d, 			dword [rsp+rbx] ;%1]					  ; getting instruction from memory; 
 	and r8d, 1111_1100_0000_0000_0000_0000_0000_0000b ; masking address $rs 
 	mov rcx, 			26  						  ; shifting 26 bits
 	mov edx, 			dword r8d
@@ -357,7 +359,7 @@ _HexAsciiFixer:
 
 
 ;--------------------- Mask & shift for $rs 	
-	mov r8d, 			dword [rsp+%1]					  ; getting instruction from memory; 
+	mov r8d, 			dword [rsp+rbx]					  ; getting instruction from memory; 
 	and r8d, 0000_0011_1110_0000_0000_0000_0000_0000b ; masking address $rs 
 	mov rcx, 			21  						  ; shifting 20 bits
 	mov edx, 			dword r8d
@@ -370,7 +372,7 @@ _HexAsciiFixer:
 	add r14, 			OFFSET_POINTER_REG	          ; adding memory offset to $r13 to start in Register Bank allocation 
 
 ;--------------------- Mask & shift for $rt 	
-	mov r8d, 			dword [rsp+%1]					  ; getting instruction from memory
+	mov r8d, 			dword [rsp+rbx]					  ; getting instruction from memory
 	and r8d, 0000_0000_0001_1111_0000_0000_0000_0000b ; masking address $rt
 	mov rcx, 			16       	    			  ; shifting 16 bits
 	mov edx, 			dword r8d
@@ -383,7 +385,7 @@ _HexAsciiFixer:
 	add r13, 			OFFSET_POINTER_REG            ; Jumping Memory allocation 
 
 ;---------------------- Mask & shift for $rd 	
-	mov r8d, 			dword [rsp+%1]					  ; getting instruction from memory
+	mov r8d, 			dword [rsp+rbx]					  ; getting instruction from memory
 	and r8d, 0000_0000_0000_0000_1111_1000_0000_0000b ; masking address $rd
 	mov rcx, 			11							  ; shifting 11 bits
 	mov edx,		    dword r8d
@@ -396,7 +398,7 @@ _HexAsciiFixer:
 	add r12, 			OFFSET_POINTER_REG 			  ; starting above memory 
 
 ;---------------------- Mask & shift for FUNCTION 	
-	mov r8d, 			dword [rsp+%1]					  ; getting instruction from memory
+	mov r8d, 			dword [rsp+rbx]					  ; getting instruction from memory
 	and r8d, 0000_0000_0000_0000_0000_0000_0011_1111b ; masking address $rd
 	mov rcx, 			0							  ; shifting 11 bits
 	mov edx,		    dword r8d
@@ -405,7 +407,7 @@ _HexAsciiFixer:
 
 ;---------------------- Mask & shift for Inmediate 	
 		;CERO 
-	mov r8d, 			dword [rsp+%1]					  ; getting instruction from memory
+	mov r8d, 			dword [rsp+rbx]					  ; getting instruction from memory
 	and r8d, 0000_0000_0000_0000_1111_1111_1111_1111b ; masking address $rd
 	mov r9d,			r8d 
 	
@@ -415,13 +417,16 @@ _HexAsciiFixer:
 	;;mov r9,             rdx 
 
 ;---------------------- Mask & shift for Address 	
-	mov r8d, 			dword [rsp+%1]				  ; getting instruction from memory
+	mov r8d, 			dword [rsp+rbx]				  ; getting instruction from memory
 	and r8d, 0000_0011_1111_1111_1111_1111_1111_1111b ; masking address $rd
 	;mov rcx, 			0							  ; shifting 11 bits
 	;mov edx,		    dword r8d
 	;shr edx,			cl 
 	;mov r8d,             rdx 
-%endmacro
+
+
+	ret
+;%endmacro
 
 
 ;------------------------------------------------------------------------------
@@ -569,37 +574,44 @@ _Alu2:
 
 	; OpCode = 0 =>> R-type
 
-%macro CtrlSel 3
-	cmp %1, 0x0 
-	je _CtrlSelR
-	jne _CtrlSelI
+;%macro MasterControl 3
+;	call _2MasterControl
+;%endmacro	
 
-	_CtrlSelR: 
-		ControlR %1, %2       ; r15d, r10d  
-		jmp _endCtrlSel
 
-	_CtrlSelI:
-		ControlI %1, %3       ; r15d, r9d
+_MasterControl:	
+	cmp r15d, 0x0 
+	je _ControlR     ;  CtrlSelR
+	jne _ControlI    ;  CtrlSelI
 
-	_endCtrlSel:
-%endmacro	
+	;_CtrlSelR: 
+	;	_ControlR ; r15d, r10d     ;  %1, %2       ; r15d, r10d  
+	;	jmp _endCtrlSel
 
-%macro ControlR 2
+	;_CtrlSelI:
+	;	_ControlI ; r15d, r9d      ; %1, %3        ; r15d, r9d
+
+	;_endCtrlSel:
+	;	ret 
+
+
+_ControlR:
+;%macro ControlR 2
 		; %1 = $r15    ( opcode )
 		; %2 = $r10    ( function )
 	_Inicio:
         ; obtiene el opcode de la instruccion que esta almacenada en memoria
-    	mov dword [OpCode],     %1 	     	  ; obtenido el opcode, se almacena en la direccion de memoria del registro Opcode, para empezar a comparar   
+    	mov dword [OpCode],     r15d ;  %1 	     	  ; obtenido el opcode, se almacena en la direccion de memoria del registro Opcode, para empezar a comparar   
 
 		mov	eax, 			 	 R		      ; Mueve el OpCode de tipo R al registro para su posterior comparacion
-    	mov ebx, 			 	 %1 ; OpCode
+    	mov ebx, 			 	 r15d ; %1 ; OpCode
     	cmp	eax, 			     ebx     	  ; Compara los OpCode
-		je       			 	 _ControlR	  ; Si son iguales salta al bloque que ejecuta las instrucciones que dan las salidas 
+		je       			 	 _ControlR1	  ; Si son iguales salta al bloque que ejecuta las instrucciones que dan las salidas 
 		jne      			     _endControlR ; _Comparaddi  ; Si no son iguales salta a otro bloque para seguir comparando el OpCode
 	    
-	_ControlR:
+	_ControlR1:
 		;mov dword [OpCode],     %1 ; r15d
-		mov dword [Function],   %2  ; r10d          ; Passing function 
+		mov dword [Function],   r10d ;%2  ; r10d          ; Passing function 
 	    mov eax, 		 	 	AluOP1    ; almacena el valor de operacion en el registro de proposito general
 	    mov dword [AluOp],	    eax 		 ; almacena el codigo de operacion en la direccion de memoria AluOp
 	    mov eax,		 		RegDST1   ; 
@@ -615,21 +627,23 @@ _Alu2:
 	    					 				 ; Al terminar de asignar los valores a los registros, salta incodicionalmente al inicio para volver a obtener el Opcode         
 
 	_endControlR:     
-%endmacro
+		ret
 
+;%endmacro
 
-%macro ControlI 2  ; %2 = immediate (r9d) from deco 
+_ControlI: 
+;%macro ControlI 2  ; %2 = immediate (r9d) from deco 
 	_InicioI:		
-		mov dword [OpCode],     %1
+		mov dword [OpCode],     r15d ; %1
 
 		mov eax, 				addi            ; I-Type
-		mov ebx, 				 %1 ;OpCode
+		mov ebx, 				r15d ; %1 ;OpCode
 		cmp eax, 				ebx
-		je 						_ControlI
+		je 						_ControlI1
 		jne 					_endControlI
 
-	_ControlI:	 
-	   	mov dword [ImCtrl],     %2         ; immediate (r9d)          ; Passing function 
+	_ControlI1:	 
+	   	mov dword [ImCtrl],     r9d ;  %2         ; immediate (r9d)          ; Passing function 
 	   	mov eax,                AluOP2    ; almacena el valor de operacion en el registro de proposito general
 	   	mov dword [AluOp],      eax       ; almacena el codigo de operacion en la direccion de memoria AluOp
 	   	mov eax,                RegDST1   ; 
@@ -644,7 +658,9 @@ _Alu2:
 	    mov dword [MemtoReg],   eax       ;almacena el codigo de en la direccion de memoria MemtoReg  
 
 	_endControlI:
-%endmacro
+		ret 
+
+;%endmacro
 
 
 
@@ -771,21 +787,22 @@ section .bss
 
 section  .text
    global _start       
-   global _txt
-   global _shift
-   global _1
-   global _2
-   global _3
-   global _4
-   global _5
-   global _6
-   global _7
+   ;global _txt
+   ;global _shift
+   ;global _1
+   ;global _2
+   ;lobal _3
+   ;global _4
+   ;global _5
+   ;global _6
+   ;global _7
 
 _start:                     			; tell linker entry point
 
 	xor rcx, 			rcx 
 	sub rsp, 			TOT_MEM         ; number of memory bytes allocation		
  
+ ;%macros OpenFile 
 _txt:
 ;------- open file for reading
 	mov rax, 	  		SYS_OPEN		            
@@ -821,36 +838,36 @@ _txt:
 
 ;------------- Loads Instruction into Memory --------------
 ;------------------------- PC -----------------------------
-	_PC:  
-		mov al, 		byte [TEXT+r13]		    ; 19 is a constant to find Index(;) 
-		inc 			r13						; in format [yyyyyyyy] xxxxxxxx;
+_PC:  
+	mov al, 		byte [TEXT+r13]		    ; 19 is a constant to find Index(;) 
+	inc 			r13						; in format [yyyyyyyy] xxxxxxxx;
 
-		cmp r13, 		FILE_LENGTH  			; Break condition
-		je 				_Reg  
+	cmp r13, 		FILE_LENGTH  			; Break condition
+	je 				_Reg  
 
-		cmp al, 		0x3b 				    ; 0x3b => Index ( ; ) 
-		je              _loadAddress  			
-		jne             _PC					
+	cmp al, 		0x3b 				    ; 0x3b => Index ( ; ) 
+	je              _loadAddress  			
+	jne             _PC					
 
-	_loadAddress:
-		mov r15, 	    r13 
-		sub r13,        20						; 20 positions before Index starts the address
-		GetFromTxt 		r13 					; output is $r12d
-		mov eax,        r12d
-		mov r14, 		rax					    ; $r14 is the Memory address pointer
-		and r14,        0xFF
-		add r13,        20
+_loadAddress:
+	mov r15, 	    r13 
+	sub r13,        20						; 20 positions before Index starts the address
+	GetFromTxt 		r13 					; output is $r12d
+	mov eax,        r12d
+	mov r14, 		rax					    ; $r14 is the Memory address pointer
+	and r14,        0xFF
+	add r13,        20
 
-	_loadInstruction:
-		sub r13,             	10 
-		xor r12d,            	r12d
-		GetFromTxt r13 							; output is $r12d
+_loadInstruction:
+	sub r13,             	10 
+	xor r12d,            	r12d
+	GetFromTxt r13 							; output is $r12d
 
-		mov dword [rsp+r14], 	r12d 			; Saves addressed Intruction into Memory
-														
-		mov r13,            	r15 
-		xor r12d,           	r12d
-		jmp _PC
+	mov dword [rsp+r14], 	r12d 			; Saves addressed Intruction into Memory
+													
+	mov r13,            	r15 
+	xor r12d,           	r12d
+	jmp _PC
 ;------------------------------- At this point -----------------------------------
 ;------------- Virtual memory $rsp contains addressed instructions ---------------
 
@@ -858,33 +875,46 @@ _txt:
 _Reg:
 
 	;mov rbx, 0x2c 		      		; 01095020 INSTRUCCION QUE SE ESTA DECODIFICANDO 
-	mov rbx, 0x28                   ; 20080002
-	DECO rbx 
-	CtrlSel r15d, r10d, r9d 
+	mov rbx, 0x2c ;14 ;0x28                   ; 20080002
+	;DECO rbx 
+	call _DECO
+	;MasterControl r15d, r10d, r9d 
+	call _MasterControl
 	call _Alu2
 
-	mov rbx, 0x24                   ; 20080003
-	DECO rbx 
-	CtrlSel r15d, r10d, r9d 
+	mov rbx, 0x30          ; 20080002
+	call _DECO 
+	call _MasterControl
 	call _Alu2
 
-	mov rbx, 0x2c                   ; 01095020
-	DECO rbx 
-	CtrlSel r15d, r10d, r9d 
-	call _Alu2	
+	mov rbx, 0x34          ; 01095020
+	call _DECO 
+	call _MasterControl
+	call _Alu2
+_Reg1:
 
-	;DECO [rsp+rbx] rbx        			    ; I & R-Type Instructions
-	;mov dword [rsp+r13], 3         
-	;mov dword [rsp+r14], 2			; preloading because there is not I-Intruct yet
-	;ControlR r15d, r10d 
-
-	;ControlI r15d, r9d
+	;mov rbx, 0x24                   ; 20080003
+;	DECO rbx 
+;	MasterControl r15d, r10d, r9d 
 	;call _Alu2
-	_4:
-	
 
-;exit:                               
-	_end:
+		;mov rbx, 0x2c                   ; 01095020
+		;DECO rbx 
+		;MasterControl r15d, r10d, r9d 
+		;call _Alu2	
+
+		;DECO [rsp+rbx] rbx        			    ; I & R-Type Instructions
+		;mov dword [rsp+r13], 3         
+		;mov dword [rsp+r14], 2			; preloading because there is not I-Intruct yet
+		;ControlR r15d, r10d 
+
+		;ControlI r15d, r9d
+		;call _Alu2
+		;_4:
+		
+
+;exit:                              
+_end:
  	mov rax,       		 SYS_EXIT
    	mov rdi,       		 STDIN
     xor rbx,       		 rbx
