@@ -210,7 +210,7 @@ _HexAsciiFixer:
 	je _54 
 	
 	;mov r10d, 0x35
-	cmp eax, 0x36 ; r10d 
+	cmp eax, 0x35 ; r10d 
 	je _55 
 	
 	; mov r10d, 0x36
@@ -678,6 +678,9 @@ _MasterControl:
 
 		salecontrol:
 			ret 
+
+
+
 
 
 
