@@ -189,134 +189,134 @@
 ;----------------------------------------------------
 _HexAsciiFixer: 
 ;------------------ Check which hex to fix {0123456789}
-	mov r10d, 0x30 
-	cmp eax, r10d 
+	;mov r10d, 0x30 
+	cmp eax, 0x30 ; r10d 
 	je _50
 
-	mov r10d, 0x31
-	cmp eax, r10d 
+	;mov r10d, 0x31
+	cmp eax, 0x31 ; r10d 
 	je _51  
 	
-	mov r10d, 0x32
-	cmp eax, r10d
+	;mov r10d, 0x32
+	cmp eax, 0x32 ; r10d
 	je _52 
 	
-	mov r10d, 0x33
-	cmp eax, r10d
+	;mov r10d, 0x33
+	cmp eax, 0x33 ; r10d
 	je _53 
 	
-	mov r10d, 0x34
-	cmp eax, r10d
+	;mov r10d, 0x34
+	cmp eax, 0x34 ; r10d
 	je _54 
 	
-	mov r10d, 0x35
-	cmp eax, r10d 
+	;mov r10d, 0x35
+	cmp eax, 0x36 ; r10d 
 	je _55 
 	
-	mov r10d, 0x36
-	cmp eax, r10d
+	; mov r10d, 0x36
+	cmp eax, 0x36 ; r10d
 	je _56 
 
-	mov r10d, 0x37
-	cmp eax, r10d
+	;mov r10d, 0x37
+	cmp eax, 0x37 ;r10d
 	je _57
 	
-	mov r10d, 0x38
-	cmp eax, r10d 
+	;mov r10d, 0x38
+	cmp eax, 0x38 ;r10d 
 	je _58 
 	
-	mov r10d, 0x39
-	cmp eax, r10d
+	;mov r10d, 0x39
+	cmp eax, 0x39 ;r10d
 	je _59 	
 ;------------------- Check which hex to fix {ABCDEF}
-	mov r10d, 0x61
-	cmp eax, r10d
+	;mov r10d, 0x61
+	cmp eax, 0x61 ;r10d
 	je _A5 
 	
-	mov r10d, 0x62
-	cmp eax, r10d
+	;mov r10d, 0x62
+	cmp eax, 0x62 ; r10d
 	je _B5 
 	
-	mov r10d, 0x63
-	cmp eax, r10d 
+	;mov r10d, 0x63
+	cmp eax, 0x63 ; r10d 
 	je _C5 
 	
-	mov r10d, 0x64 
-	cmp eax, r10d
+	;mov r10d, 0x64 
+	cmp eax, 0x64 ;r10d
 	je _D5 
 	
-	mov r10d, 0x65
-	cmp eax, r10d
+	;mov r10d, 0x65
+	cmp eax, 0x65 ;r10d
 	je _E5 
 	
-	mov r10d, 0x66
-	cmp eax, r10d
+	;mov r10d, 0x66
+	cmp eax, 0x66 ;r10d
 	je _F5 
 ;------------------- This fix for {ABCDEF}
 	_A5:
-		mov r10d, 0x0A
-		mov eax, r10d
+		;mov r10d, 0x0A
+		mov eax, 0x0A ;r10d
 		ret 
 	_B5:
-		mov r10d, 0x0B
-		mov eax, r10d
+		;mov r10d, 0x0B
+		mov eax, 0x0B ; r10d
 		ret 
 	_C5:	
-		mov r10d, 0x0C
-		mov eax, r10d
+		;mov r10d, 0x0C
+		mov eax, 0x0C ; r10d
 		ret 
 	_D5:
-		mov r10d, 0x0D
-		mov eax, r10d			
+		;mov r10d, 0x0D
+		mov eax, 0x0D ; r10d			
 		ret
 	_E5:
-		mov r10d, 0x0E
-		mov eax, r10d
+		;mov r10d, 0x0E
+		mov eax, 0x0E ; r10d
 		ret 
 	_F5:
-		mov r10d, 0x0F
-		mov eax, r10d
+		;mov r10d, 0x0F
+		mov eax, 0x0F ; r10d
 		ret
 ;------------------- This fix for {0123456789}
 	_50:
-		mov r10d, 0x00
-		mov eax, r10d
+		;mov r10d, 0x00
+		mov eax, 0x00 ;r10d
 		ret 					
 	_51:
-		mov r10d, 0x01
-		mov eax, r10d
+		;mov r10d, 0x01
+		mov eax, 0x01 ; r10d
 		ret 
 	_52:	
-		mov r10d, 0x02
-		mov eax, r10d
+		;mov r10d, 0x02
+		mov eax, 0x02 ;r10d
 		ret 
 	_53:
-		mov r10d, 0x03
-		mov eax, r10d			
+		;mov r10d, 0x03
+		mov eax, 0x03 ; r10d			
 		ret
 	_54:
-		mov r10d, 0x04
-		mov eax, r10d
+		;mov r10d, 0x04
+		mov eax, 0x04 ; r10d
 		ret 
 	_55:
-		mov r10d, 0x05
-		mov eax, r10d
+		;mov r10d, 0x05
+		mov eax, 0x05 ; r10d
 		ret
 	_56:	
-		mov r10d, 0x06
-		mov eax, r10d
+		;mov r10d, 0x06
+		mov eax, 0x06 ; r10d
 		ret 
 	_57:
-		mov r10d, 0x07
-		mov eax, r10d			
+		; mov r10d, 0x07
+		mov eax, 0x07 ; r10d			
 		ret 
 	_58:
-		mov r10d, 0x08
-		mov eax, r10d
+		;mov r10d, 0x08
+		mov eax, 0x08 ; r10d
 		ret 
 	_59:
-		mov r10d, 0x09
-		mov eax, r10d
+		;mov r10d, 0x09
+		mov eax, 0x09 ;r10d
 		ret 
 ;.......................................................................
 
@@ -471,39 +471,39 @@ _Alu2:
 		;je _addiu
 
 	_OPcodeR:
-		mov eax, 0x20  ; add function
-		cmp dword [Function], eax
+		;mov eax, 0x20  ; add function
+		cmp dword [Function], 0x20 ; eax
 		;cmp r10d, e
 		je _add 									
 
-		mov eax, 0x24  ; and function
-		cmp dword [Function], eax
+		;mov eax, 0x24  ; and function
+		cmp dword [Function], 0x24 ; ax
 		je _and 										
 														
-		mov eax, 0x25  ; or function
-		cmp dword [Function], eax
+		;mov eax, 0x25  ; or function
+		cmp dword [Function], 0x25 ;eax
 		je _or 						
 
-		mov eax, 0x27  ; nor function
-		cmp dword [Function], eax
+		;mov eax, 0x27  ; nor function
+		cmp dword [Function], 0x27 ;  eax
 		je _nor 
 
-		mov eax, 0x00  ; shl function
-		cmp dword [Function], eax
+		;mov eax, 0x00  ; shl function
+		cmp dword [Function], 0x00 ;  eax
 		je _shl 			
 
-		mov eax, 0x02  ; shr function
-		cmp dword [Function], eax
+		;mov eax, 0x02  ; shr function
+		cmp dword [Function], 0x02 ; ax
 		je _shr
 
-		mov eax, 0x18  ; *mult function
-		cmp dword [Function], eax
+		;mov eax, 0x18  ; *mult function
+		cmp dword [Function], 0x18 ; eax
 		je _imul 
 	
 
 
 	_add:
-		impr_texto Op1, tamano_Op1 ; Indica al usuario que operacion se realiza
+		;impr_texto Op1, tamano_Op1 ; Indica al usuario que operacion se realiza
 		mov eax,		       dword [rsp+r14+8] ; +8, because call use rsp register	; Se pasan los datos a los registros que van a operar
 		mov edx,			   dword [rsp+r13+8]  ; %3] 		; SE DEBE MODIFICAR PARA QUE RECIBA INMEDIATO
 		add eax, 			   edx 						    ; Se realiza la operacion
@@ -511,21 +511,21 @@ _Alu2:
 		;mov r9d,             eax
 		ret 
 	_and:
-		impr_texto Op2, tamano_Op2
+		;impr_texto Op2, tamano_Op2
 		mov eax,			 dword [rsp+r14+8]			; getting data 
 		mov ebx,			 dword [rsp+r13+8]
 		and eax, 			 ebx
 		mov r9d,             eax
 		ret
 	_or:
-		impr_texto Op3,tamano_Op3
+		;impr_texto Op3,tamano_Op3
 		mov eax, 			 dword [rsp+r14+8]
 		mov ebx,             dword [rsp+r13+8]
 		or eax,              ebx
 		mov r9d,             eax
 		ret 
 	_nor:
-		impr_texto Op4,tamano_Op4
+		;impr_texto Op4,tamano_Op4
 		mov eax, 		     dword [rsp+r14+8]
 		mov ebx,             dword [rsp+r13+8]
 		or eax, 			 ebx
@@ -534,7 +534,7 @@ _Alu2:
 		ret 
 
 	_shl: ; ******   sll 
-		impr_texto Op5,tamano_Op5
+		;impr_texto Op5,tamano_Op5
 		mov eax,			 dword [rsp+r14+8]
 		mov ecx,			 dword [rsp+r13+8]
 		shl eax,             cl
@@ -542,7 +542,7 @@ _Alu2:
 		ret 
 
 	_shr: ; ******   srl
-		impr_texto Op6,tamano_Op6
+		;impr_texto Op6,tamano_Op6
 		mov eax,			 dword [rsp+r14+8]
 		mov ecx,			 dword [rsp+r13+8]
 		shr eax,			 cl
@@ -550,7 +550,7 @@ _Alu2:
 		ret 
 
 	_sub:
-		impr_texto Op7,tamano_Op7
+		;impr_texto Op7,tamano_Op7
 		mov eax,			 dword [rsp+r14+8]
 		mov ebx,			 dword [rsp+r13+8]
 		sub eax,			 ebx
@@ -558,7 +558,7 @@ _Alu2:
 		ret
 
 	_imul: ; *******
-		impr_texto Op8,tamano_Op8
+		;impr_texto Op8,tamano_Op8
 		mov eax,			 dword [rsp+r14+8]
 		mov ebx,			 dword [rsp+r13+8]
 		imul ebx
@@ -569,22 +569,14 @@ _Alu2:
 ; Pointer 	 $rs  ($r14)
 ; Pointer is $rt  ($r13)
 	_addi:
-		;impr_texto Op1, tamano_Op1
+		impr_texto Op1, tamano_Op1
 		mov eax, 	    	 dword [rsp+r14+8]    ; Register ( $rs ) Data 
 		mov ecx, 			 r9d ; dword [ImCtrl]     ; Immediate from Control 
 		add eax,    		 ecx                ; ImmediateCtrl
 		mov r9d,             eax
 		mov dword [rsp+r13+8], eax                ; addi into Reg Bank (addressed $rt) i-type
-		_3:
+		;_3:
 		ret 
-
-
-
-	; OpCode = 0 =>> R-type
-
-;%macro MasterControl 3
-;	call _2MasterControl
-;%endmacro	
 
 
 _MasterControl:	
@@ -595,103 +587,98 @@ _MasterControl:
 
 	cmp r15d, 				   0x0 		 ; OPCODE = 0 for R-type
 	je _ControlR      
-	jne _ControlI ;;
+	;jne ControlI
+	;jne _ControlI ;;
 	;cmp r15d, 				   0x02      ; OPCODE = 2 (j), J-type
 	;je _ControlJ
 	;cmp r15d, 				   0x03      ; OPCODE = 3 (jal), J-type
 	;je _ControlJ
 
-; 	jmp _ControlI                        ; else, I-type
-	ret 
-
-	; ESTA ES LA ETIQUETA QUE STA DANDO ERROR EN I 
-
-_ControlI:	 ; immediate (r9d) from deco
-	;mov dword [Function],   r10d
-   	mov dword [ImCtrl],     r9d       ; immediate (r9d)          ; Passing function 
-   	;mov dword [AluOp],      AluOP2    ;  ***
+ 	jmp _ControlI                        ; else, I-type
 
 
-	mov dword [RegDest],    eax
-	mov dword [Jump],       eax
-	mov dword [Branch],		ebx
-	mov dword [OpCode],     r15d
+	_ControlR: 
+		mov [RegDest],    ebx
+		mov [Jump],       eax
+		mov [Branch],	  eax
+		mov [MemRead],    eax
+		mov [MemtoReg],   eax
+		mov [OpCode],     r15d
+		mov [MemWrite],   ebx
+		mov [AluSrc],     eax				
+		mov [Function],   r10d
 
-	;cmp dword [OpCode],     0x23           ; OpCode = lw  (I-type)
-	;je MemoryRead
-	mov dword [MemRead],    eax
-	mov dword [MemtoReg],   eax
-	;jmp continueIflags1
+		;mov dword [AluOp], AluOP1     ; REvisar si esta es el OpCode*
 
-	;MemoryRead:
-	;	mov dword [MemRead],    ebx
-	;	mov dword [MemtoReg],   ebx
-	;	jmp continueIflags1
+		;cmp dword [Function],	0x18  ; mult funtion Mips
+		cmp r10d, 0x18
+		je Mult_Jr					  ; Mult & Jr set RW flag to 0 (don't write)
+		;cmp dword [Function], 	0x08  ; jr (jump register) funtion Mips
+		cmp r10d, 0x8
+		je Mult_Jr       
 
-	;continueIflags1:	
-	;	cmp dword [OpCode], 0x28           ; OpCode = sb 
-	;	je MemoryWrite
-	;	cmp dword [OpCode], 0x38           ; OpCode = sc 
-	;	je MemoryWrite
-	;	cmp dword [OpCode], 0x29           ; OpCode = sh
-	;	je MemoryWrite			
-	;	cmp dword [OpCode], 0x2b           ; OpCode = sw 
-	;	je MemoryWrite
+		mov dword [RegWrite],   ebx
+		ret ; jmp _endControlR
 
-	;	mov dword [MemWrite], ebx
-	;	jmp continueIflags2
+		Mult_Jr:
+			mov dword [RegWrite], eax
+			ret ; jmp _endControlR
 
-		;MemoryWrite:
+	_ControlI:	 
+
+		mov [RegDest], eax
+		mov [Jump],    eax
+		mov [Branch],  ebx  
+		mov [OpCode],  r15d
+
+		cmp r15d, 35
+		je MemoryRead
+		
+		mov [MemRead],    eax
+		mov [MemtoReg],   eax
+		jmp conti1		
+
+		MemoryRead:
+			mov [MemRead],    ebx
+			mov [MemtoReg],   ebx
+			jmp conti1
+
+		conti1:
+			cmp r15d, 0x28
+			je MemoryWrite 
+			cmp r15d, 0x38
+			je MemoryWrite 
+			cmp r15d, 0x29 
+			je MemoryWrite			
+			cmp r15d, 0x2b
+			je MemoryWrite
+
+			mov [MemWrite], ebx
+			jmp conti2
+
+		MemoryWrite:
 			mov [MemWrite], eax
 			mov [RegWrite], eax
 			mov [AluSrc],   ebx
-			jmp _endControlI
+			jmp salecontrol
 
-	;continueIflags2:
-		;mov dword [AluSrc],     ebx				
-		;cmp dword [OpCode],     0x04       ; OpCode = beq
-		;je RegistersWrite
-		;cmp dword [OpCode],     0x05       ; OpCode = bnq
-		;je RegistersWrite
+		conti2:
+			mov [AluSrc],     ebx				
+			cmp r15d, 0x04
+			je RegistWrite
+			cmp r15d, 0x05
+			je RegistWrite
+		
+			mov [RegWrite],      ebx
+		    jmp salecontrol
 
-		;mov [RegWrite],      ebx
-		;jmp _endControlI
+		RegistWrite:
+			mov [RegWrite],  eax
+			jmp salecontrol
 
-		;RegistersWrite:
-		;	mov [RegWrite],  eax
-		;	jmp _endControlI
+		salecontrol:
+			ret 
 
-_endControlI:
-	ret 
-
-
-_ControlR: 
-	mov dword [RegDest],    ebx
-	mov dword [Jump],       eax
-	mov dword [Branch],		eax
-	mov dword [MemRead],    eax
-	mov dword [MemtoReg],   eax
-	mov dword [OpCode],     r15d
-	mov dword [MemWrite],   ebx
-	mov dword [AluSrc],     eax				
-	mov dword [Function],   r10d
-
-	;mov dword [AluOp], AluOP1     ; REvisar si esta es el OpCode*
-
-	cmp dword [Function],	0x18  ; mult funtion Mips
-	je Mult_Jr					  ; Mult & Jr set RW flag to 0 (don't write)
-	cmp dword [Function], 	0x08  ; jr (jump register) funtion Mips
-	je Mult_Jr       
-
-	mov dword [RegWrite],   ebx
-	jmp _endControlR
-
-	Mult_Jr:
-		mov dword [RegWrite], eax
-		jmp _endControlR
-
-_endControlR:     
-	ret
 
 
 
@@ -810,11 +797,11 @@ section .bss
    AluOp:    resb 1 ;r11
    RegDst:   resb 1 ;r12
    Jump:     resb 1 ;r13
-   OpCode:   resb 1 ;r14 
-   Function: resb 1
+   OpCode:   resb 4 ;r14 
+   Function: resb 4
    ImCtrl:   resb 4 
    
-   Branch:   resb 1 
+   Branch:   resb 1
    MemRead:  resb 1
    MemWrite: resb 1
    RegDest:  resb 1 
@@ -823,8 +810,9 @@ section .bss
 
 section  .text
    global _start       
-   global _txt
-   global _shift
+   ;global _txt
+   ;global _shift
+
    ;global _1
    ;global _2
    ;lobal _3
@@ -909,16 +897,7 @@ _loadInstruction:
 
 
 _Reg:
-
-	;mov rbx, 0x2c 		      		; 01095020 INSTRUCCION QUE SE ESTA DECODIFICANDO 
 	
-	;mov rbx, 0x2c ;14 ;0x28                   ; 20080002
-	;DECO rbx 
-	;call _DECO
-	;call _MasterControl
-	;call _Alu2
-
-		
 	mov rbx, 0x2c          ; 20080003
 	call _DECO 
 	call _MasterControl
@@ -929,42 +908,20 @@ _Reg:
 	call _MasterControl
 	call _Alu2	
 
-	mov rbx, 0x34          ; 20080002
-	call _DECO 
-	_1:
-	call _MasterControl
-	_2:
-	call _Alu2	
-
-
-;-----------------------------------------
-	;mov rbx, 0x34          ; 01095020
+	;mov rbx, 0x34          ; 20070002
 	;call _DECO 
-	;mov dword [rsp+r13], 3         
-	;mov dword [rsp+r14], 2			; preloading because there is not I-Intruct yet
-
 	;call _MasterControl
 	;call _Alu2
+
+
+	mov rbx, 0x38          ; 01095020
+	call _DECO 
+	;_1:
+	call _MasterControl
+	;_2:
+	call _Alu2	
+
 _Reg1:
-
-	;mov rbx, 0x24                   ; 20080003
-;	DECO rbx 
-;	MasterControl r15d, r10d, r9d 
-	;call _Alu2
-
-		;mov rbx, 0x2c                   ; 01095020
-		;DECO rbx 
-		;MasterControl r15d, r10d, r9d 
-		;call _Alu2	
-
-		;DECO [rsp+rbx] rbx        			    ; I & R-Type Instructions
-		;mov dword [rsp+r13], 3         
-		;mov dword [rsp+r14], 2			; preloading because there is not I-Intruct yet
-		;ControlR r15d, r10d 
-
-		;ControlI r15d, r9d
-		;call _Alu2
-		;_4:
 		
 
 ;exit:                              
@@ -973,3 +930,4 @@ _Reg1:
    	mov rdi,       		 STDIN
     xor rbx,       		 rbx
     syscall
+
