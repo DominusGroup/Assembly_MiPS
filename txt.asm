@@ -397,6 +397,14 @@ _DECO:
 	mov r12, 			rax					     	  ; $r14 is the rt pointer
 	add r12, 			OFFSET_POINTER_REG 			  ; starting above memory 
 
+;---------------------- Mask & shift for Shamt 	
+	mov r8d, 			dword [rsp+rbx]					  ; getting instruction from memory
+	and r8d, 0000_0000_0000_0000_0000_0111_1100_0000b ; masking address $rd
+	mov rcx, 			6							  ; shifting 11 bits
+	mov edx,		    dword r8d
+	shr edx,			cl 
+	mov [Shamt],        edx
+
 ;---------------------- Mask & shift for FUNCTION 	
 	mov r8d, 			dword [rsp+rbx]					  ; getting instruction from memory
 	and r8d, 0000_0000_0000_0000_0000_0000_0011_1111b ; masking address $rd
@@ -471,89 +479,89 @@ _Alu2:
 		;je _addiu
 
 	_OPcodeR:
-		;mov eax, 0x20  ; add function
-		cmp dword [Function], 0x20 ; eax
-		;cmp r10d, e
+		cmp dword [Function], 0x00 ; shl function
+		je _shl 			
+ 
+		cmp dword [Function], 0x02 ; shr function
+		je _shr
+ 
+		cmp dword [Function], 0x18 ; *mult function
+		je _imul 
+
+		cmp dword [Function], 0x20 ; add function
 		je _add 									
 
-		;mov eax, 0x24  ; and function
-		cmp dword [Function], 0x24 ; ax
+		cmp dword [Function], 0x23 ; and function
+		je _sub 
+
+		cmp dword [Function], 0x24 ; and function
 		je _and 										
-														
-		;mov eax, 0x25  ; or function
-		cmp dword [Function], 0x25 ;eax
+									 
+		cmp dword [Function], 0x25 ; or function
 		je _or 						
-
-		;mov eax, 0x27  ; nor function
-		cmp dword [Function], 0x27 ;  eax
+ 
+		cmp dword [Function], 0x27 ; nor function
 		je _nor 
+ 
 
-		;mov eax, 0x00  ; shl function
-		cmp dword [Function], 0x00 ;  eax
-		je _shl 			
-
-		;mov eax, 0x02  ; shr function
-		cmp dword [Function], 0x02 ; ax
-		je _shr
-
-		;mov eax, 0x18  ; *mult function
-		cmp dword [Function], 0x18 ; eax
-		je _imul 
-	
+		jmp _endAlu
 
 
 	_add:
-		;impr_texto Op1, tamano_Op1 ; Indica al usuario que operacion se realiza
+		impr_texto Op1, tamano_Op1 ; Indica al usuario que operacion se realiza
 		mov eax,		       dword [rsp+r14+8] ; +8, because call use rsp register	; Se pasan los datos a los registros que van a operar
-		;mov edx,			   dword [rsp+r13+8] ; %3] 		; SE DEBE MODIFICAR PARA QUE RECIBA INMEDIATO
-		add eax, 			   dword [rsp+r13+8] ;edx 						    ; Se realiza la operacion
+		add eax, 			   dword [rsp+r13+8] ; Se realiza la operacion
 		mov dword [rsp+r12+8], eax
 		mov r9d,             eax
 		ret 
 	_and:
-		;impr_texto Op2, tamano_Op2
+		impr_texto Op2, tamano_Op2
 		mov eax,			 dword [rsp+r14+8]			; getting data 
-		;mov ebx,			 dword [rsp+r13+8]
-		and eax, 			 dword [rsp+r13+8] ; ebx
+		and eax, 			 dword [rsp+r13+8] 
+		mov dword [rsp+r12+8], eax
 		mov r9d,             eax
 		ret
 	_or:
-		;impr_texto Op3,tamano_Op3
+		impr_texto Op3,tamano_Op3
 		mov eax, 			 dword [rsp+r14+8]
-		;mov ebx,             dword [rsp+r13+8]
-		or eax,              dword [rsp+r13+8] ; ebx
+		or eax,              dword [rsp+r13+8] 
+		mov dword [rsp+r12+8], eax		
 		mov r9d,             eax
 		ret 
 	_nor:
-		;impr_texto Op4,tamano_Op4
+		impr_texto Op4,tamano_Op4
 		mov eax, 		     dword [rsp+r14+8]
-		;mov ebx,             dword [rsp+r13+8]
-		or eax, 			 dword [rsp+r13+8] ; ebx
+		or eax, 			 dword [rsp+r13+8] 
 		not eax
+		mov dword [rsp+r12+8], eax			
 		mov r9d,             eax
 		ret 
 
 	_shl: ; ******   sll 
-		;impr_texto Op5,tamano_Op5
-		mov eax,			 dword [rsp+r14+8]
+		impr_texto Op5,tamano_Op5
+		;mov eax,			 dword [rsp+r14+8]
 		;mov ecx,			 dword [rsp+r13+8] (?)
+		mov eax,             dword [rsp+r13+8] ; rt ! 
+		mov ecx, 			 dword [Shamt]
 		shl eax,             cl
+		mov dword [rsp+r12+8], eax		       ; output pointer is rd
 		mov r9d,             eax
 		ret 
 
 	_shr: ; ******   srl
 		;impr_texto Op6,tamano_Op6
-		mov eax,			 dword [rsp+r14+8]
-		;mov ecx,			 dword [rsp+r13+8]
+		mov eax,			 dword [rsp+r13+8]
+		mov ecx, 			 dword [Shamt]
 		shr eax,			 cl
+		mov dword [rsp+r12+8], eax		       ; output pointer is rd		
 		mov r9d,             eax
 		ret 
 
 	_sub:
-		;impr_texto Op7,tamano_Op7
+		impr_texto Op7,tamano_Op7
 		mov eax,			 dword [rsp+r14+8]
-		;mov ebx,			 dword [rsp+r13+8]
-		sub eax,			 dword [rsp+r13+8] ;ebx
+		sub eax,			 dword [rsp+r13+8] 
+		mov dword [rsp+r12+8], eax	
 		mov r9d,             eax
 		ret
 
@@ -579,6 +587,8 @@ _Alu2:
 		;_3:
 		ret 
 
+	_endAlu:
+		ret
 
 _MasterControl:	
 	; %1 = $r15    ( opcode )
@@ -807,6 +817,7 @@ section .bss
    OpCode:   resb 4 ;r14 
    Function: resb 4
    ImCtrl:   resb 4 
+   Shamt:    resb 4
    
    Branch:   resb 1
    MemRead:  resb 1
@@ -905,9 +916,6 @@ _loadInstruction:
 ;------------------------------- At this point -----------------------------------
 ;------------- Virtual memory $rsp contains addressed instructions ---------------
 
-	;mov rcx, 2  ; -1
-	;mov rbx, 0x30 ;   ; OFFSET_POINTER_REG 
-
 
 _Reg:	; SIGUIENTE PASO : HACER LOOP PARA LLAMAR INSTRUCCION A LA VEZ 
 	mov rdi, iMEM_BYTES/4 ;14      ; Number of words for the assignation ; 0xE ; iMEM_BYTES/4 ; 3
@@ -927,21 +935,6 @@ _PCLoop:
 	jne _PCLoop
 
 _Reg1:
-
-	;jns _Reg
-
-	;mov rbx, 0x30          ; 20080002
-	;call _DECO 
-	;call _MasterControl
-	;call _Alu2	
-
-	;mov rbx, 0x38          ; 01095020
-	;call _DECO 
-	;_1:
-	;call _MasterControl
-	;_2:
-	;call _Alu2	
-
 
 		
 
