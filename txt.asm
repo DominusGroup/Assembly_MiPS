@@ -505,30 +505,30 @@ _Alu2:
 	_add:
 		;impr_texto Op1, tamano_Op1 ; Indica al usuario que operacion se realiza
 		mov eax,		       dword [rsp+r14+8] ; +8, because call use rsp register	; Se pasan los datos a los registros que van a operar
-		mov edx,			   dword [rsp+r13+8]  ; %3] 		; SE DEBE MODIFICAR PARA QUE RECIBA INMEDIATO
-		add eax, 			   edx 						    ; Se realiza la operacion
+		;mov edx,			   dword [rsp+r13+8] ; %3] 		; SE DEBE MODIFICAR PARA QUE RECIBA INMEDIATO
+		add eax, 			   dword [rsp+r13+8] ;edx 						    ; Se realiza la operacion
 		mov dword [rsp+r12+8], eax
-		;mov r9d,             eax
+		mov r9d,             eax
 		ret 
 	_and:
 		;impr_texto Op2, tamano_Op2
 		mov eax,			 dword [rsp+r14+8]			; getting data 
-		mov ebx,			 dword [rsp+r13+8]
-		and eax, 			 ebx
+		;mov ebx,			 dword [rsp+r13+8]
+		and eax, 			 dword [rsp+r13+8] ; ebx
 		mov r9d,             eax
 		ret
 	_or:
 		;impr_texto Op3,tamano_Op3
 		mov eax, 			 dword [rsp+r14+8]
-		mov ebx,             dword [rsp+r13+8]
-		or eax,              ebx
+		;mov ebx,             dword [rsp+r13+8]
+		or eax,              dword [rsp+r13+8] ; ebx
 		mov r9d,             eax
 		ret 
 	_nor:
 		;impr_texto Op4,tamano_Op4
 		mov eax, 		     dword [rsp+r14+8]
-		mov ebx,             dword [rsp+r13+8]
-		or eax, 			 ebx
+		;mov ebx,             dword [rsp+r13+8]
+		or eax, 			 dword [rsp+r13+8] ; ebx
 		not eax
 		mov r9d,             eax
 		ret 
@@ -536,7 +536,7 @@ _Alu2:
 	_shl: ; ******   sll 
 		;impr_texto Op5,tamano_Op5
 		mov eax,			 dword [rsp+r14+8]
-		mov ecx,			 dword [rsp+r13+8]
+		;mov ecx,			 dword [rsp+r13+8] (?)
 		shl eax,             cl
 		mov r9d,             eax
 		ret 
@@ -544,7 +544,7 @@ _Alu2:
 	_shr: ; ******   srl
 		;impr_texto Op6,tamano_Op6
 		mov eax,			 dword [rsp+r14+8]
-		mov ecx,			 dword [rsp+r13+8]
+		;mov ecx,			 dword [rsp+r13+8]
 		shr eax,			 cl
 		mov r9d,             eax
 		ret 
@@ -552,16 +552,17 @@ _Alu2:
 	_sub:
 		;impr_texto Op7,tamano_Op7
 		mov eax,			 dword [rsp+r14+8]
-		mov ebx,			 dword [rsp+r13+8]
-		sub eax,			 ebx
+		;mov ebx,			 dword [rsp+r13+8]
+		sub eax,			 dword [rsp+r13+8] ;ebx
 		mov r9d,             eax
 		ret
 
 	_imul: ; *******
 		;impr_texto Op8,tamano_Op8
-		mov eax,			 dword [rsp+r14+8]
-		mov ebx,			 dword [rsp+r13+8]
-		imul ebx
+		;mov eax,			 dword [rsp+r14+8] ; (?)
+		;mov ebx,			 dword [rsp+r13+8]
+		mov eax,			 dword [rsp+r13+8]
+		imul eax ;ebx
 		mov r9d,             eax
 		ret 
 
@@ -571,8 +572,8 @@ _Alu2:
 	_addi:
 		impr_texto Op1, tamano_Op1
 		mov eax, 	    	 dword [rsp+r14+8]    ; Register ( $rs ) Data 
-		mov ecx, 			 r9d ; dword [ImCtrl]     ; Immediate from Control 
-		add eax,    		 ecx                ; ImmediateCtrl
+		;mov ecx, 			 r9d ; dword [ImCtrl]     ; Immediate from Control 
+		add eax,    		 r9d                 ; ImmediateCtrl
 		mov r9d,             eax
 		mov dword [rsp+r13+8], eax                ; addi into Reg Bank (addressed $rt) i-type
 		;_3:
@@ -583,7 +584,7 @@ _MasterControl:
 	; %1 = $r15    ( opcode )
 	; %2 = $r10    ( function )
 	mov eax, 			       0x0
-	mov ebx, 				   0x1
+	mov esi, 				   0x1
 
 	cmp r15d, 				   0x0 		 ; OPCODE = 0 for R-type
 	je _ControlR      
@@ -598,13 +599,13 @@ _MasterControl:
 
 
 	_ControlR: 
-		mov [RegDest],    ebx
+		mov [RegDest],    esi ; ebx
 		mov [Jump],       eax
 		mov [Branch],	  eax
 		mov [MemRead],    eax
 		mov [MemtoReg],   eax
 		mov [OpCode],     r15d
-		mov [MemWrite],   ebx
+		mov [MemWrite],   esi ; ebx
 		mov [AluSrc],     eax				
 		mov [Function],   r10d
 
@@ -617,7 +618,7 @@ _MasterControl:
 		cmp r10d, 0x8
 		je Mult_Jr       
 
-		mov dword [RegWrite],   ebx
+		mov dword [RegWrite],   esi ; ebx
 		ret ; jmp _endControlR
 
 		Mult_Jr:
@@ -628,7 +629,7 @@ _MasterControl:
 
 		mov [RegDest], eax
 		mov [Jump],    eax
-		mov [Branch],  ebx  
+		mov [Branch],  esi ; ebx  
 		mov [OpCode],  r15d
 
 		cmp r15d, 35
@@ -639,8 +640,8 @@ _MasterControl:
 		jmp conti1		
 
 		MemoryRead:
-			mov [MemRead],    ebx
-			mov [MemtoReg],   ebx
+			mov [MemRead],    esi ; ebx
+			mov [MemtoReg],   esi ; ebx
 			jmp conti1
 
 		conti1:
@@ -653,23 +654,23 @@ _MasterControl:
 			cmp r15d, 0x2b
 			je MemoryWrite
 
-			mov [MemWrite], ebx
+			mov [MemWrite], esi ; ebx
 			jmp conti2
 
 		MemoryWrite:
 			mov [MemWrite], eax
 			mov [RegWrite], eax
-			mov [AluSrc],   ebx
+			mov [AluSrc],   esi ; ebx
 			jmp salecontrol
 
 		conti2:
-			mov [AluSrc],     ebx				
+			mov [AluSrc],    esi ; ebx				
 			cmp r15d, 0x04
 			je RegistWrite
 			cmp r15d, 0x05
 			je RegistWrite
 		
-			mov [RegWrite],      ebx
+			mov [RegWrite],  esi ;     ebx
 		    jmp salecontrol
 
 		RegistWrite:
@@ -690,7 +691,8 @@ section .data
 ;-------------------  Memory Data -------------------------
   iMEM_BYTES:   equ 56    ; x/4 = words num       		; Instructions Memory allocation
   REG_BYTES:	equ 128   ; 32 dwords 
-  TOT_MEM:		equ 184   ; iMEM+REG_B
+  ADDR_BYTES:	equ 56
+  TOT_MEM:		equ 240 ; 184   ; iMEM+REG_B
 
   msg:          db " Memory Allocated! ", 10
   len:          equ $ - msg
@@ -699,7 +701,9 @@ section .data
   FILE_NAME:    db "code.txt", 0
   FILE_LENGTH:  equ 1300 				        		; length of inside text
   
-  OFFSET_POINTER_REG:  equ iMEM_BYTES 					; 1 dword = 4 bytes
+
+  OFFSET_POINTER_ADDRESS:  equ 184 ; iMEM_BYTES+REG_BYTES  
+  OFFSET_POINTER_REG:      equ iMEM_BYTES 					; 1 dword = 4 bytes
   						  								; 128bytes = 32 dwords
   	    				  								; offset for Registers Allocation
 
@@ -878,12 +882,15 @@ _PC:
 
 _loadAddress:
 	mov r15, 	    r13 
-	sub r13,        20						; 20 positions before Index starts the address
+	sub r13,        20						; 20 positions before Index, starts the address
 	GetFromTxt 		r13 					; output is $r12d
-	mov eax,        r12d
-	mov r14, 		rax					    ; $r14 is the Memory address pointer
+	;mov eax,        r12d
+	mov r14, 		r12    ; rax					    ; $r14 is the Memory address pointer
+	_3:
 	and r14,        0xFF
-	add r13,        20
+	;mov dword [rsp+r14+OFFSET_POINTER_ADDRESS], r12d
+	add r13,        20                      ; ( ; ) Position again 
+	_4:
 
 _loadInstruction:
 	sub r13,             	10 
@@ -898,33 +905,44 @@ _loadInstruction:
 ;------------------------------- At this point -----------------------------------
 ;------------- Virtual memory $rsp contains addressed instructions ---------------
 
+	;mov rcx, 2  ; -1
+	;mov rbx, 0x30 ;   ; OFFSET_POINTER_REG 
 
-_Reg:
-	
-	mov rbx, 0x2c          ; 20080003
+
+_Reg:	; SIGUIENTE PASO : HACER LOOP PARA LLAMAR INSTRUCCION A LA VEZ 
+	mov rdi, iMEM_BYTES/4 ;14      ; Number of words for the assignation ; 0xE ; iMEM_BYTES/4 ; 3
+	mov ebx, 0x4     ; 0x38 last word  ; 0x24  ; first instruct address +4 
+	;and ebx,  0xFF ; 
+
+_PCLoop:
+	add ebx,  0x4 
+	dec rdi
+
 	call _DECO 
 	call _MasterControl
 	call _Alu2
 
-	mov rbx, 0x30          ; 20080002
-	call _DECO 
-	call _MasterControl
-	call _Alu2	
-
-	;mov rbx, 0x34          ; 20070002
-	;call _DECO 
-	;call _MasterControl
-	;call _Alu2
-
-
-	mov rbx, 0x38          ; 01095020
-	call _DECO 
-	;_1:
-	call _MasterControl
-	;_2:
-	call _Alu2	
+	cmp rdi, 0x0
+	je _Reg1
+	jne _PCLoop
 
 _Reg1:
+
+	;jns _Reg
+
+	;mov rbx, 0x30          ; 20080002
+	;call _DECO 
+	;call _MasterControl
+	;call _Alu2	
+
+	;mov rbx, 0x38          ; 01095020
+	;call _DECO 
+	;_1:
+	;call _MasterControl
+	;_2:
+	;call _Alu2	
+
+
 		
 
 ;exit:                              
