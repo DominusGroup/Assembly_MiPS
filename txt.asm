@@ -189,134 +189,102 @@
 ;----------------------------------------------------
 _HexAsciiFixer: 
 ;------------------ Check which hex to fix {0123456789}
-	;mov r10d, 0x30 
-	cmp eax, 0x30 ; r10d 
+	cmp eax, 0x30 
 	je _50
 
-	;mov r10d, 0x31
-	cmp eax, 0x31 ; r10d 
+	cmp eax, 0x31 
 	je _51  
 	
-	;mov r10d, 0x32
-	cmp eax, 0x32 ; r10d
+	cmp eax, 0x32 
 	je _52 
 	
-	;mov r10d, 0x33
-	cmp eax, 0x33 ; r10d
+	cmp eax, 0x33 
 	je _53 
 	
-	;mov r10d, 0x34
-	cmp eax, 0x34 ; r10d
+	cmp eax, 0x34 
 	je _54 
 	
-	;mov r10d, 0x35
-	cmp eax, 0x35 ; r10d 
+	cmp eax, 0x35  
 	je _55 
 	
-	; mov r10d, 0x36
-	cmp eax, 0x36 ; r10d
+	cmp eax, 0x36 
 	je _56 
 
-	;mov r10d, 0x37
-	cmp eax, 0x37 ;r10d
+	cmp eax, 0x37 
 	je _57
 	
-	;mov r10d, 0x38
-	cmp eax, 0x38 ;r10d 
+	cmp eax, 0x38 
 	je _58 
 	
-	;mov r10d, 0x39
-	cmp eax, 0x39 ;r10d
+	cmp eax, 0x39
 	je _59 	
 ;------------------- Check which hex to fix {ABCDEF}
-	;mov r10d, 0x61
-	cmp eax, 0x61 ;r10d
+	cmp eax, 0x61 
 	je _A5 
 	
-	;mov r10d, 0x62
-	cmp eax, 0x62 ; r10d
+	cmp eax, 0x62 
 	je _B5 
 	
-	;mov r10d, 0x63
-	cmp eax, 0x63 ; r10d 
+	cmp eax, 0x63  
 	je _C5 
 	
-	;mov r10d, 0x64 
-	cmp eax, 0x64 ;r10d
+	cmp eax, 0x64 
 	je _D5 
 	
-	;mov r10d, 0x65
-	cmp eax, 0x65 ;r10d
+	cmp eax, 0x65 
 	je _E5 
 	
-	;mov r10d, 0x66
-	cmp eax, 0x66 ;r10d
+	cmp eax, 0x66 
 	je _F5 
 ;------------------- This fix for {ABCDEF}
 	_A5:
-		;mov r10d, 0x0A
-		mov eax, 0x0A ;r10d
+		mov eax, 0x0A 
 		ret 
 	_B5:
-		;mov r10d, 0x0B
-		mov eax, 0x0B ; r10d
+		mov eax, 0x0B
 		ret 
 	_C5:	
-		;mov r10d, 0x0C
-		mov eax, 0x0C ; r10d
+		mov eax, 0x0C
 		ret 
 	_D5:
-		;mov r10d, 0x0D
-		mov eax, 0x0D ; r10d			
+		mov eax, 0x0D			
 		ret
 	_E5:
-		;mov r10d, 0x0E
-		mov eax, 0x0E ; r10d
+		mov eax, 0x0E 
 		ret 
 	_F5:
-		;mov r10d, 0x0F
-		mov eax, 0x0F ; r10d
+		mov eax, 0x0F 
 		ret
 ;------------------- This fix for {0123456789}
 	_50:
-		;mov r10d, 0x00
-		mov eax, 0x00 ;r10d
+		mov eax, 0x00 
 		ret 					
 	_51:
-		;mov r10d, 0x01
-		mov eax, 0x01 ; r10d
+		mov eax, 0x01 
 		ret 
 	_52:	
-		;mov r10d, 0x02
-		mov eax, 0x02 ;r10d
+		mov eax, 0x02
 		ret 
 	_53:
-		;mov r10d, 0x03
-		mov eax, 0x03 ; r10d			
+		mov eax, 0x03			
 		ret
 	_54:
-		;mov r10d, 0x04
-		mov eax, 0x04 ; r10d
+		mov eax, 0x04 
 		ret 
 	_55:
-		;mov r10d, 0x05
-		mov eax, 0x05 ; r10d
+		mov eax, 0x05 
 		ret
 	_56:	
-		;mov r10d, 0x06
-		mov eax, 0x06 ; r10d
+		mov eax, 0x06 
 		ret 
 	_57:
-		; mov r10d, 0x07
-		mov eax, 0x07 ; r10d			
+		mov eax, 0x07 
 		ret 
 	_58:
-		;mov r10d, 0x08
-		mov eax, 0x08 ; r10d
+		mov eax, 0x08 
 		ret 
 	_59:
-		;mov r10d, 0x09
-		mov eax, 0x09 ;r10d
+		mov eax, 0x09 
 		ret 
 ;.......................................................................
 
@@ -466,6 +434,8 @@ _Alu2:
 	;mov eax, r15d ; dword [OpCode]
 
 	;cmp dword [OpCode], 0x00
+	mov [OpCode],     r15d	
+	mov [Function],   r10d	
 	cmp r15d, 0x00
 	je _OPcodeR
 	jne _OPcodeI
@@ -474,6 +444,21 @@ _Alu2:
 		;cmp dword [OpCode], 0x8   ; addi 
 		cmp r15d, 0x8
 		je _addi 
+
+		cmp r15d, 0xd ; ori opcode
+		je _ori 
+
+		cmp r15d, 0xc ; andi  
+		je _andi
+
+		cmp r15d, 0xa ; slti
+		je _slti
+
+		cmp r15d, 0xb
+		je _sltiu
+
+		cmp r15d, 0x4 ; beq
+		je _beq
 
 		;cmp dword [Function], 0x09      FALTA HACER ESTAS ETIQUETAS I
 		;je _addiu
@@ -491,9 +476,12 @@ _Alu2:
 		cmp dword [Function], 0x20 ; add function
 		je _add 									
 
-		cmp dword [Function], 0x23 ; and function
+		cmp dword [Function], 0x22 ; and function
 		je _sub 
 
+		cmp dword [Function], 0x23 ; subu function 
+		je _subu
+		
 		cmp dword [Function], 0x24 ; and function
 		je _and 										
 									 
@@ -502,7 +490,15 @@ _Alu2:
  
 		cmp dword [Function], 0x27 ; nor function
 		je _nor 
- 
+
+		cmp dword [Function], 0x2a ; slt function
+		je _slt 
+
+		cmp dword [Function], 0x2b ; sltu function
+		je _sltu 
+
+		cmp dword [Function], 0x21 ; addu function
+		je _addu 
 
 		jmp _endAlu
 
@@ -512,21 +508,53 @@ _Alu2:
 		mov eax,		       dword [rsp+r14+8] ; +8, because call use rsp register	; Se pasan los datos a los registros que van a operar
 		add eax, 			   dword [rsp+r13+8] ; Se realiza la operacion
 		mov dword [rsp+r12+8], eax
-		mov r9d,             eax
+		;mov r9d,             eax
 		ret 
+
+	_addu:		
+		mov eax,               dword [rsp+r13+8] ; rt
+		cmp eax,               0
+		jg _adduRtIsPositive                     ; Unsigned op
+		mov r9d,         -1  ; se carga el registro con -1 para multiplicar
+		imul r9d ; ecx             ; se multiplica por -1 para que el resultado sea positivo
+		;mov r9d,         eax ; guarda el valor modificado en el registro deseado
+		
+		_adduRtIsPositive:
+			mov r9d,         eax ; guarda el valor modificado en el registro deseado
+
+			mov eax,     dword [rsp+r14+8] ; 0xfffffff9; ; rs pointer
+			cmp eax,     0
+			jg _adduRsIsPositive
+			mov ebp,     -1
+			imul ebp
+		
+		_adduRsIsPositive:
+			add eax,     r9d
+			mov dword [rsp+r12+8], eax
+			ret 
+
+
+
 	_and:
 		impr_texto Op2, tamano_Op2
 		mov eax,			 dword [rsp+r14+8]			; getting data 
 		and eax, 			 dword [rsp+r13+8] 
 		mov dword [rsp+r12+8], eax
-		mov r9d,             eax
+		;mov r9d,             eax
 		ret
+
+	_andi: 
+		mov eax,             dword [rsp+r14+8]
+		and eax,             r9d ; Imm
+		mov dword [rsp+r13+8], eax
+		ret 
+
 	_or:
 		impr_texto Op3,tamano_Op3
 		mov eax, 			 dword [rsp+r14+8]
 		or eax,              dword [rsp+r13+8] 
 		mov dword [rsp+r12+8], eax		
-		mov r9d,             eax
+		;mov r9d,             eax
 		ret 
 	_nor:
 		impr_texto Op4,tamano_Op4
@@ -534,7 +562,7 @@ _Alu2:
 		or eax, 			 dword [rsp+r13+8] 
 		not eax
 		mov dword [rsp+r12+8], eax			
-		mov r9d,             eax
+		;mov r9d,             eax
 		ret 
 
 	_shl: ; ******   sll 
@@ -545,7 +573,7 @@ _Alu2:
 		mov ecx, 			 dword [Shamt]
 		shl eax,             cl
 		mov dword [rsp+r12+8], eax		       ; output pointer is rd
-		mov r9d,             eax
+		;mov r9d,             eax
 		ret 
 
 	_shr: ; ******   srl
@@ -554,7 +582,7 @@ _Alu2:
 		mov ecx, 			 dword [Shamt]
 		shr eax,			 cl
 		mov dword [rsp+r12+8], eax		       ; output pointer is rd		
-		mov r9d,             eax
+		;mov r9d,             eax
 		ret 
 
 	_sub:
@@ -562,8 +590,157 @@ _Alu2:
 		mov eax,			 dword [rsp+r14+8]
 		sub eax,			 dword [rsp+r13+8] 
 		mov dword [rsp+r12+8], eax	
-		mov r9d,             eax
+		;mov r9d,             eax
 		ret
+
+	_subu:
+		mov eax,         dword [rsp+r13+8] ; rt pointer	
+		cmp eax,         0
+		jg _subuRtIsPositive              	; Unsigned operation 
+		mov r9d,         -1  ; se carga el registro con -1 para multiplicar
+		imul r9d ; ecx             ; se multiplica por -1 para que el resultado sea positivo
+		;mov r9d,         eax ; guarda el valor modificado en el registro deseado
+		
+		_subuRtIsPositive:
+			mov r9d,         eax ; guarda el valor modificado en el registro deseado
+
+			mov eax,     dword [rsp+r14+8] ; rs pointer
+			cmp eax,     0
+			jg _subuRsIsPositive
+			mov ebp,     -1
+			imul ebp
+
+			;sub eax,     r9d 
+			;mov dword [rsp+r12+8], eax
+			;ret 
+		
+		_subuRsIsPositive:
+			sub eax,     r9d 
+			mov dword [rsp+r12+8], eax
+			ret 
+
+	_ori:
+		mov eax,         dword [rsp+r14+8]
+		or eax,          r9d  ; Imm
+		mov dword [rsp+r13+8], eax
+		ret
+
+
+	_beq: 
+		mov eax,         dword [rsp+r14+8]  ; [rs]
+		sub eax,         dword [rsp+r13+8]  ; [rt]
+
+		cmp eax,         0
+		je _BeqC
+		jne _BeqR
+
+		_BeqC:
+			mov eax,				    r9d  
+			mov dword [BranchAddress],  eax  ; Imm
+			ret 
+
+		_BeqR: 
+			mov dword [BranchAddress],  0x0  ; 0
+			ret 
+
+
+
+	_slt: 
+		;impr_texto Op15,tamano_Op15
+		mov eax,      dword [rsp+r14+8] ; rs pointer
+		cmp eax,      dword [rsp+r13+8] ; rt pointer
+		jl _Rd1
+
+		_Rd0:
+			mov eax,  0
+			mov dword [rsp+r12+8], eax
+			ret 
+
+		_Rd1:
+			mov eax,  1
+			mov dword [rsp+r12+8], eax
+			ret	
+
+
+
+	_slti:
+		mov eax,         dword [rsp+r14+8] ; rs pointer	
+		cmp eax,         r9d               ; cmp with imm 
+		jl _sltiSetLess
+
+		mov dword [rsp+r13+8],  0          ; [rs] = 0
+		ret
+
+		_sltiSetLess: 
+			mov dword [rsp+r13+8], 1       ; [rt] = 1
+			ret
+
+
+    _sltiu: ; ESTA TODAVIA NO FUNCIONA
+    	mov eax,         dword [rsp+r14+8]       ; [rs]
+    	cmp eax,         0
+		jg _sltiuSetLess
+		; Unsigned operation 
+		mov r10d,        -1  ; r10d reg because we don't need function
+		imul r10d             ; se multiplica por -1 para que el resultado sea positivo
+
+		_sltiuSetLess:
+			mov r8d,      eax			
+			continueSltiu0:
+				mov eax,       r9d	
+
+				cmp eax,      0
+				jg _continueSltiu
+
+				mov ebp,     -1
+				imul ebp            ; eax = imm
+		
+		_continueSltiu:
+			cmp eax,      r8d
+			jl _Rd0iu
+
+		_Rd0iu:
+			mov eax,  0
+			mov dword [rsp+r13+8], eax
+			ret 
+
+		_Rd1iu:
+			mov eax,  1
+			mov dword [rsp+r13+8], eax
+			ret	    	
+
+
+
+	_sltu:
+		mov eax,         dword [rsp+r13+8] ; rt pointer	
+		cmp eax,         0
+		jg _isPositive
+		; Unsigned operation 
+		mov r9d,         -1  ; se carga el registro con -1 para multiplicar
+		imul r9d ; ecx             ; se multiplica por -1 para que el resultado sea positivo
+
+		_isPositive:
+			mov r9d,         eax ; guarda el valor modificado en el registro deseado
+			mov eax,     dword [rsp+r14+8] ; rs pointer
+			cmp eax,     0
+			jg _continueSlt
+			mov ebp,     -1
+			imul ebp
+		
+		_continueSlt:
+			cmp eax,     r9d; ecx
+			jl _Rd1u
+
+		_Rd0u:
+			mov eax,  0
+			mov dword [rsp+r12+8], eax
+			ret 
+
+		_Rd1u:
+			mov eax,  1
+			mov dword [rsp+r12+8], eax
+			ret	
+
 
 	_imul: ; *******
 		;impr_texto Op8,tamano_Op8
@@ -571,7 +748,7 @@ _Alu2:
 		;mov ebx,			 dword [rsp+r13+8]
 		mov eax,			 dword [rsp+r13+8]
 		imul eax ;ebx
-		mov r9d,             eax
+		;mov r9d,             eax
 		ret 
 
 ;----------------- I-Type----------------------------
@@ -582,118 +759,13 @@ _Alu2:
 		mov eax, 	    	 dword [rsp+r14+8]    ; Register ( $rs ) Data 
 		;mov ecx, 			 r9d ; dword [ImCtrl]     ; Immediate from Control 
 		add eax,    		 r9d                 ; ImmediateCtrl
-		mov r9d,             eax
+		;mov r9d,             eax
 		mov dword [rsp+r13+8], eax                ; addi into Reg Bank (addressed $rt) i-type
 		;_3:
 		ret 
 
 	_endAlu:
 		ret
-
-_MasterControl:	
-	; %1 = $r15    ( opcode )
-	; %2 = $r10    ( function )
-	mov eax, 			       0x0
-	mov esi, 				   0x1
-
-	cmp r15d, 				   0x0 		 ; OPCODE = 0 for R-type
-	je _ControlR      
-	;jne ControlI
-	;jne _ControlI ;;
-	;cmp r15d, 				   0x02      ; OPCODE = 2 (j), J-type
-	;je _ControlJ
-	;cmp r15d, 				   0x03      ; OPCODE = 3 (jal), J-type
-	;je _ControlJ
-
- 	jmp _ControlI                        ; else, I-type
-
-
-	_ControlR: 
-		mov [RegDest],    esi ; ebx
-		mov [Jump],       eax
-		mov [Branch],	  eax
-		mov [MemRead],    eax
-		mov [MemtoReg],   eax
-		mov [OpCode],     r15d
-		mov [MemWrite],   esi ; ebx
-		mov [AluSrc],     eax				
-		mov [Function],   r10d
-
-		;mov dword [AluOp], AluOP1     ; REvisar si esta es el OpCode*
-
-		;cmp dword [Function],	0x18  ; mult funtion Mips
-		cmp r10d, 0x18
-		je Mult_Jr					  ; Mult & Jr set RW flag to 0 (don't write)
-		;cmp dword [Function], 	0x08  ; jr (jump register) funtion Mips
-		cmp r10d, 0x8
-		je Mult_Jr       
-
-		mov dword [RegWrite],   esi ; ebx
-		ret ; jmp _endControlR
-
-		Mult_Jr:
-			mov dword [RegWrite], eax
-			ret ; jmp _endControlR
-
-	_ControlI:	 
-
-		mov [RegDest], eax
-		mov [Jump],    eax
-		mov [Branch],  esi ; ebx  
-		mov [OpCode],  r15d
-
-		cmp r15d, 35
-		je MemoryRead
-		
-		mov [MemRead],    eax
-		mov [MemtoReg],   eax
-		jmp conti1		
-
-		MemoryRead:
-			mov [MemRead],    esi ; ebx
-			mov [MemtoReg],   esi ; ebx
-			jmp conti1
-
-		conti1:
-			cmp r15d, 0x28
-			je MemoryWrite 
-			cmp r15d, 0x38
-			je MemoryWrite 
-			cmp r15d, 0x29 
-			je MemoryWrite			
-			cmp r15d, 0x2b
-			je MemoryWrite
-
-			mov [MemWrite], esi ; ebx
-			jmp conti2
-
-		MemoryWrite:
-			mov [MemWrite], eax
-			mov [RegWrite], eax
-			mov [AluSrc],   esi ; ebx
-			jmp salecontrol
-
-		conti2:
-			mov [AluSrc],    esi ; ebx				
-			cmp r15d, 0x04
-			je RegistWrite
-			cmp r15d, 0x05
-			je RegistWrite
-		
-			mov [RegWrite],  esi ;     ebx
-		    jmp salecontrol
-
-		RegistWrite:
-			mov [RegWrite],  eax
-			jmp salecontrol
-
-		salecontrol:
-			ret 
-
-
-
-
-
 
 
 
@@ -824,6 +896,8 @@ section .bss
    MemWrite: resb 1
    RegDest:  resb 1 
 
+   BranchAddress: resb 4   
+
 
 
 section  .text
@@ -918,7 +992,7 @@ _loadInstruction:
 
 
 _Reg:	; SIGUIENTE PASO : HACER LOOP PARA LLAMAR INSTRUCCION A LA VEZ 
-	mov rdi, iMEM_BYTES/4 ;14      ; Number of words for the assignation ; 0xE ; iMEM_BYTES/4 ; 3
+	mov rdi, iMEM_BYTES;/4 ;14      ; Number of words for the assignation ; 0xE ; iMEM_BYTES/4 ; 3
 	mov ebx, 0x4     ; 0x38 last word  ; 0x24  ; first instruct address +4 
 	;and ebx,  0xFF ; 
 
@@ -927,7 +1001,7 @@ _PCLoop:
 	dec rdi
 
 	call _DECO 
-	call _MasterControl
+	;call _MasterControl
 	call _Alu2
 
 	cmp rdi, 0x0
