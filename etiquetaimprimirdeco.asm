@@ -26,7 +26,7 @@ _imprimirdeco:
 
     ; se mueven los contenidos de los registro a las variables en memoria
     ; para evitar modificar el registro a la hora de convertirlo en string y se hace mejor en la variable de memoria
-    mov[Opcode],r15d
+    ;las variables en memoria function, shamt y opcode ya se encuentran declaradas
     mov[RS],r14d
     mov[RT],r13d
     mov[RD],r12d
