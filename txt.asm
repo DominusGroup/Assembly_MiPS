@@ -443,10 +443,10 @@ _Alu2:
 
 	_OPcodeI:  
 		;cmp dword [OpCode], 0x8   ; addi 
-		cmp r15d, 0x8
+		cmp r15d, 0x8 ; addi
 		je _addi 
 
-		cmp r15d, 0xd ; ori opcode
+		cmp r15d, 0xd ; ori
 		je _ori 
 
 		cmp r15d, 0xc ; andi  
@@ -455,7 +455,7 @@ _Alu2:
 		cmp r15d, 0xa ; slti
 		je _slti
 
-		cmp r15d, 0xb
+		cmp r15d, 0xb 
 		je _sltiu
 
 		cmp r15d, 0x4 ; beq
@@ -463,6 +463,12 @@ _Alu2:
 
 		cmp r15d, 0x5 ; bne
 		je _bne
+
+		cmp r15d, 0x2 ; j
+		je _j 
+
+		cmp r15d, 0x3 ; jal
+		je _jal 
 
 		ret
 		;cmp dword [Function], 0x09      FALTA HACER ESTAS ETIQUETAS I
@@ -504,6 +510,10 @@ _Alu2:
 
 		cmp r10d, 0x21 ; addu function
 		je _addu 
+
+		cmp r10d, 0x8  ; jr function
+		je 	_jr
+		
 
 		jmp _endAlu
 
@@ -590,6 +600,12 @@ _Alu2:
 		;mov r9d,             eax
 		ret 
 
+	_jr:	 ; PC = R[rs]
+		mov ebx,             dword [rsp+r14+8] ; PC<--R[rs] 
+
+		ret 
+
+
 	_sub:
 		impr_texto Op7,tamano_Op7
 		mov eax,			 dword [rsp+r14+8]
@@ -643,6 +659,7 @@ _Alu2:
 
 		_BeqC:
 			add ebx,                    r9d 
+			_2:
 			;mov eax,				    r9d  
 			;mov dword [BranchAddress],  eax  ; Imm
 			ret 
@@ -668,6 +685,21 @@ _Alu2:
 		_bneC: 
 			;	mov dword [BranchAddress],  0x0  ; 0
 			ret 
+
+	_j:
+		mov ebx, 		r8d ; getting the jAddress
+		ret         
+
+	_jal: 
+		;add ebx, 8
+		;PC+8;sub ebx,  8  ; apuntando a la instruccion anterior (suponiendo que estan consecutivas, REVISAR)
+		mov dword [rsp+OFFSET_POINTER_REG+8 +124], ebx ; R[31] = PC+8
+											; R[31] => 31*4
+		add ebx, 8
+		_jal2:			
+			mov ebx,        r8d  
+		ret 
+
 
 
 
@@ -1025,13 +1057,13 @@ _Reg:	; SIGUIENTE PASO : HACER LOOP PARA LLAMAR INSTRUCCION A LA VEZ
 
 _PCLoop:
 	; add ebx, dword [BranchAddress]
-	add ebx,  0x4 
+	add ebx,                0x4 
 	dec rdi
 
 	call _DECO 
 	;call _MasterControl
 	call _Alu2
-	_2:
+	;_2:
 	cmp rdi, 0x0
 	je _Reg1
 	jne _PCLoop
