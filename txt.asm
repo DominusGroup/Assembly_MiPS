@@ -434,8 +434,9 @@ _Alu2:
 	;mov eax, r15d ; dword [OpCode]
 
 	;cmp dword [OpCode], 0x00
-	mov [OpCode],     r15d	
-	mov [Function],   r10d	
+	;mov dword [OpCode],      	 r15d	
+	;mov dword [Function],   	 r10d	
+	;mov dword [BranchAddress],   0x0   ; ~= 0 only if _beq
 	cmp r15d, 0x00
 	je _OPcodeR
 	jne _OPcodeI
@@ -460,44 +461,48 @@ _Alu2:
 		cmp r15d, 0x4 ; beq
 		je _beq
 
+		cmp r15d, 0x5 ; bne
+		je _bne
+
+		ret
 		;cmp dword [Function], 0x09      FALTA HACER ESTAS ETIQUETAS I
 		;je _addiu
 
 	_OPcodeR:
-		cmp dword [Function], 0x00 ; shl function
+		cmp r10d, 0x00 ; shl function
 		je _shl 			
  
-		cmp dword [Function], 0x02 ; shr function
+		cmp r10d, 0x02 ; shr function
 		je _shr
  
-		cmp dword [Function], 0x18 ; *mult function
+		cmp r10d, 0x18 ; *mult function
 		je _imul 
 
-		cmp dword [Function], 0x20 ; add function
+		cmp r10d, 0x20 ; add function
 		je _add 									
 
-		cmp dword [Function], 0x22 ; and function
+		cmp r10d, 0x22 ; and function
 		je _sub 
 
-		cmp dword [Function], 0x23 ; subu function 
+		cmp r10d, 0x23 ; subu function 
 		je _subu
 		
-		cmp dword [Function], 0x24 ; and function
+		cmp r10d, 0x24 ; and function
 		je _and 										
 									 
-		cmp dword [Function], 0x25 ; or function
+		cmp r10d, 0x25 ; or function
 		je _or 						
  
-		cmp dword [Function], 0x27 ; nor function
+		cmp r10d, 0x27 ; nor function
 		je _nor 
 
-		cmp dword [Function], 0x2a ; slt function
+		cmp r10d, 0x2a ; slt function
 		je _slt 
 
-		cmp dword [Function], 0x2b ; sltu function
+		cmp r10d, 0x2b ; sltu function
 		je _sltu 
 
-		cmp dword [Function], 0x21 ; addu function
+		cmp r10d, 0x21 ; addu function
 		je _addu 
 
 		jmp _endAlu
@@ -566,7 +571,7 @@ _Alu2:
 		ret 
 
 	_shl: ; ******   sll 
-		impr_texto Op5,tamano_Op5
+		;impr_texto Op5,tamano_Op5
 		;mov eax,			 dword [rsp+r14+8]
 		;mov ecx,			 dword [rsp+r13+8] (?)
 		mov eax,             dword [rsp+r13+8] ; rt ! 
@@ -629,18 +634,39 @@ _Alu2:
 	_beq: 
 		mov eax,         dword [rsp+r14+8]  ; [rs]
 		sub eax,         dword [rsp+r13+8]  ; [rt]
-
+		;mov eax,         ebx
+		;add ebx,         8 ;r9d
+		_1:
 		cmp eax,         0
 		je _BeqC
 		jne _BeqR
 
 		_BeqC:
-			mov eax,				    r9d  
-			mov dword [BranchAddress],  eax  ; Imm
+			add ebx,                    r9d 
+			;mov eax,				    r9d  
+			;mov dword [BranchAddress],  eax  ; Imm
 			ret 
 
 		_BeqR: 
-			mov dword [BranchAddress],  0x0  ; 0
+			;	mov dword [BranchAddress],  0x0  ; 0
+			ret 
+
+
+	_bne: 
+		mov eax,         dword [rsp+r14+8]  ; [rs]
+		sub eax,         dword [rsp+r13+8]  ; [rt]
+		cmp eax,         0
+		je _bneC
+		jne _bneR
+
+		_bneR:
+			add ebx,                    r9d 
+			;mov eax,				    r9d  
+			;mov dword [BranchAddress],  eax  ; Imm
+			ret 
+
+		_bneC: 
+			;	mov dword [BranchAddress],  0x0  ; 0
 			ret 
 
 
@@ -755,7 +781,7 @@ _Alu2:
 ; Pointer 	 $rs  ($r14)
 ; Pointer is $rt  ($r13)
 	_addi:
-		impr_texto Op1, tamano_Op1
+		;impr_texto Op1, tamano_Op1
 		mov eax, 	    	 dword [rsp+r14+8]    ; Register ( $rs ) Data 
 		;mov ecx, 			 r9d ; dword [ImCtrl]     ; Immediate from Control 
 		add eax,    		 r9d                 ; ImmediateCtrl
@@ -995,15 +1021,17 @@ _Reg:	; SIGUIENTE PASO : HACER LOOP PARA LLAMAR INSTRUCCION A LA VEZ
 	mov rdi, iMEM_BYTES;/4 ;14      ; Number of words for the assignation ; 0xE ; iMEM_BYTES/4 ; 3
 	mov ebx, 0x4     ; 0x38 last word  ; 0x24  ; first instruct address +4 
 	;and ebx,  0xFF ; 
+	;mov dword [BranchAddress], 0x0 
 
 _PCLoop:
+	; add ebx, dword [BranchAddress]
 	add ebx,  0x4 
 	dec rdi
 
 	call _DECO 
 	;call _MasterControl
 	call _Alu2
-
+	_2:
 	cmp rdi, 0x0
 	je _Reg1
 	jne _PCLoop
