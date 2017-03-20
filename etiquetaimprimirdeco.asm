@@ -222,4 +222,4 @@ section .bss
 
 
 
- call _DECO 
+ call _imprimirdeco:
