@@ -43,130 +43,139 @@ _imprimirdeco:
       
       ImprimeR:
       	
-      	mov rax,1							
-	    mov rdi,1							
+      		mov rax,1							
+	    	mov rdi,1							
 		mov rsi,cons_banner0				;Imprime:'La instruccion es de tipo R y posee el siguiente formato: '	
 		mov rdx,cons_tamano_banner0	
 		syscall								
 
-        mov rax,1							
-	    mov rdi,1							
+        	mov rax,1							
+	    	mov rdi,1							
 		mov rsi,cons_banner01				;Imprime:'OpCode: '
 		mov rdx,cons_tamano_banner01	
 		syscall								
         
-        convstr Opcode                       ;Convierte a String el contenido de la variable en memoria
-        imp Opcode                           ; Se muestra display del opcode
+        	convstr Opcode                       ;Convierte a String el contenido de la variable en memoria
+        	imp Opcode                           ; Se muestra display del opcode
 
 		mov rax,1							
-	    mov rdi,1							
+	    	mov rdi,1							
 		mov rsi,cons_banner02				
 		mov rdx,cons_tamano_banner02	
 		syscall		
-        convstr RS
-        imp RS
+        	
+		convstr RS
+        	imp RS
 
 		mov rax,1							
-	    mov rdi,1							
+	    	mov rdi,1							
 		mov rsi,cons_banner03				
 		mov rdx,cons_tamano_banner03	
 		syscall		
-        convstr RT
-        imp RT
+        	
+		convstr RT
+        	imp RT
 		
 		mov rax,1							
-	    mov rdi,1							
+	    	mov rdi,1							
 		mov rsi,cons_banner04				
 		mov rdx,cons_tamano_banner04	
 		syscall		
-        convstr RD
-        imp RD
+        	
+		convstr RD
+        	imp RD
 
 		mov rax,1							
-	    mov rdi,1							
+	    	mov rdi,1							
 		mov rsi,cons_banner05				
 		mov rdx,cons_tamano_banner05	
 		syscall		
-        convstr Shamt
-        imp Shamt
+        	
+		convstr Shamt
+        	imp Shamt
 
 
 		mov rax,1							
-	    mov rdi,1							
+	    	mov rdi,1							
 		mov rsi,cons_banner06				
 		mov rdx,cons_tamano_banner06	
 		syscall		
-        convstr Function
-        imp Function
+        	
+		convstr Function
+        	imp Function
 
         jmp Salidaimp
 
 
     ImprimeJ:
 
-        mov rax,1							
-	    mov rdi,1							
+        	mov rax,1							
+	    	mov rdi,1							
 		mov rsi,cons_banner2				
 		mov rdx,cons_tamano_banner2	
 		syscall								
 
-        mov rax,1							
-	    mov rdi,1							
+        	mov rax,1							
+	    	mov rdi,1							
 		mov rsi,cons_banner01				
 		mov rdx,cons_tamano_banner01	
 		syscall								
-        convstr Opcode
-        imp opcode
+        	
+		convstr Opcode
+        	imp opcode
 
 		mov rax,1							
-	    mov rdi,1							
+	    	mov rdi,1							
 		mov rsi,cons_banner08				
 		mov rdx,cons_tamano_banner08	
 		syscall		
-        convstr Address
-        imp Address
+        	
+		convstr Address
+        	imp Address
 
          jmp Salidaimp
 
     ImprimeI:
 
-      	mov rax,1							
-	    mov rdi,1							
+      		mov rax,1							
+	    	mov rdi,1							
 		mov rsi,cons_banner3				
 		mov rdx,cons_tamano_banner3	
 		syscall								
 
-        mov rax,1							
-	    mov rdi,1							
+        	mov rax,1							
+	    	mov rdi,1							
 		mov rsi,cons_banner01				
 		mov rdx,cons_tamano_banner01	
 		syscall								
-        convstr Opcode
-        imp opcode
+        	
+		convstr Opcode
+        	imp opcode
 
 		mov rax,1							
-	    mov rdi,1							
+	    	mov rdi,1							
 		mov rsi,cons_banner02				
 		mov rdx,cons_tamano_banner02	
 		syscall		
-        convstr RS
-        imp RS
+       	 	
+		convstr RS
+        	imp RS
 
 		mov rax,1							
-	    mov rdi,1							
+	    	mov rdi,1							
 		mov rsi,cons_banner03				
 		mov rdx,cons_tamano_banner03	
 		syscall		
-        convstr RT
-        imp RT
+        	convstr RT
+        	imp RT
 
 		mov rax,1							
-	    mov rdi,1							
+	    	mov rdi,1							
 		mov rsi,cons_banner07				
 		mov rdx,cons_tamano_banner07	
 		syscall		
-        convstr Immediate
-        imp Immediate
+        	convstr Immediate
+        	imp Immediate
 
          jmp Salidaimp
 
