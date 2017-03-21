@@ -446,6 +446,11 @@ _Alu2:
 		cmp r10d, 0x18 ; *mult function
 		je _imul 
 
+		;cmp r10d, 0x10 ; mfhi function
+		;je _mfhi
+		;cmp r10d, 0x12 ; mfhi function
+		;je _mflo
+
 		cmp r10d, 0x20 ; add function
 		je _add 									
 
@@ -745,19 +750,38 @@ _Alu2:
 ;			mov dword [rsp+r12+OFFSET_RSPCALL], eax
 ;			ret 
 
-		_Rd1u:
-			mov eax,  1
-			mov dword [rsp+r12+OFFSET_RSPCALL], eax
-			ret	
+;		_Rd1u:
+;			mov eax,  1
+;			mov dword [rsp+r12+OFFSET_RSPCALL], eax
+;			ret	
 
 
 	_imul: ; *******
 		;impr_texto Op8,tamano_Op8
 		;mov eax,			 dword [rsp+r14+8] ; (?)
 		;mov ebx,			 dword [rsp+r13+8]
+		mov r9d,             dword [rsp+r14+OFFSET_RSPCALL]
 		mov eax,			 dword [rsp+r13+OFFSET_RSPCALL]
-		imul eax ;ebx
+		_5:
+		imul r9 ;eax ;ebx
+		_continueImul:
+			mov rsi, rax
+		;mov [var_mfhi], rax
+		_6:
 		ret 
+
+;	_mfhi:
+;		mov rax, [var_mfhi] 
+;		shr rax, 32
+;		mov dword [rsp+r12+OFFSET_RSPCALL], eax
+;		_6:
+;		ret
+;	_mflo:
+;		mov rax, [var_mfhi]
+		;shr rax, 32
+;		mov dword [rsp+r12+OFFSET_RSPCALL], eax
+;		_7:
+;		ret		
 
 ;----------------- I-Type----------------------------
 ; Pointer 	 $rs  ($r14)
@@ -844,6 +868,7 @@ section .bss
 	Shamt:          resb 4
    	BranchAddress:  resb 4   
    	PlayHard: resb 4
+   	var_mfhi:       resb 8
 
 
 section  .text
@@ -933,8 +958,10 @@ _Reg:
 	mov ebx, 0x4     									; 0x38 last word  ; 0x24  ; first instruct address +4 
 	mov dword [rsp+OFFSET_POINTER_DATAMEM +24], 0xf     ; (29)*4 =116 , 
 												        ;manually load to dataMem
-
-;and ebx,  0xFF ; 
+    mov dword [rsp+OFFSET_POINTER_REG+12], 0xaaaabbbb	; posiciones 4 y 3
+    													; no se estan leyendo las 2primereas posiciones del bancoReg 											      
+    mov dword [rsp+OFFSET_POINTER_REG+8], 0xccccdddd ; +8 siempre !
+  ;and ebx,  0xFF ; 
 	;mov dword [BranchAddress], 0x0 
 
 _PCLoop:
