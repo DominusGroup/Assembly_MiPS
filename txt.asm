@@ -26,20 +26,19 @@
 	;------------------------------------------------
 	;------- Copy upper dword from TEXT Buffer ------
 	;------------------------------------------------
-	  	mov rax, 			qword [TEXT+%1+1]   	; [..] Instruction;
-	  	mov rdx, 			rax
+	  	;mov rax, 			qword [TEXT+%1+1]   	; [..] Instruction;
+	  	mov rdx, 			qword [TEXT+%1+1] ;rax
 	  	mov ecx, 			32						; Shift 32 bits
 	  	shr rdx, 			cl              		
-		xor rax, 			rax
-		mov eax, 			edx
+		;mov eax, 			edx
 
 	; The input text is hex in ASCII so you receive : 
 	; word format     :		$eax : 0011abcd_0011efgh_0110ijkl_0110mnño...   
 	; and you want it :     $rsp : abcd_efgh_ijkl_mnño...
 	;------------------------------------------------
 	       ; 20080003 >> for 3
-	  	mov r8d, 			eax 					; $aux1
-	  	mov r9d,            eax						; $r9d has the instruction to fix 
+	  	mov r8d, 			edx ;eax 					; $aux1
+	  	mov r9d,            edx ;eax						; $r9d has the instruction to fix 
 	  	and r8d, 			0x0F000000				; masking abcd
 
 		mov r10d,           r9d	
@@ -112,10 +111,10 @@
 	;------------------------------------------------
 	;------- Copy lower dword from TEXT Buffer ------
 	;------------------------------------------------
-		mov eax, 			dword [TEXT+r13+1]  	; Truncate Buffer
+		;mov eax, 			dword [TEXT+r13+1]  	; Truncate Buffer
 			; 20080003 >> es el 2
-		mov r8d, 			eax 	            	; $aux5 
-		mov r9d,            eax 	
+		mov r8d, 			dword [TEXT+r13+1] ;eax         	; $aux5 
+		mov r9d,            dword [TEXT+r13+1] ;eax 
 		and r8d,   			0x0000000F
 		
 		mov r10d,           r9d 
@@ -335,8 +334,8 @@ _DECO:
 	imul rdx, 			4 
 	sub rdx, 			4	
 
-	mov rax, 			rdx 
-	mov r14, 			rax                           ; $r13 is the rs pointer
+	;mov rax, 			rdx 
+	mov r14, 			rdx ;rax                           ; $r13 is the rs pointer
 	add r14, 			OFFSET_POINTER_REG	          ; adding memory offset to $r13 to start in Register Bank allocation 
 
 ;--------------------- Mask & shift for $rt 	
@@ -348,8 +347,8 @@ _DECO:
 	imul rdx, 			4  							  ; escale x4
 	sub rdx, 			4							  ; substract 4 to point propertly	
 
-	mov rax, 			rdx
-	mov r13, 			rax							  ; $r14 is the rt pointer
+	;mov rax, 			rdx
+	mov r13, 			rdx ;rax							  ; $r14 is the rt pointer
 	add r13, 			OFFSET_POINTER_REG            ; Jumping Memory allocation 
 
 ;---------------------- Mask & shift for $rd 	
@@ -361,8 +360,8 @@ _DECO:
 	imul rdx, 			4
 	sub rdx, 			4
 
-	mov rax, 			rdx
-	mov r12, 			rax					     	  ; $r14 is the rt pointer
+	;mov rax, 			rdx
+	mov r12, 			rdx ;rax					     	  ; $r14 is the rt pointer
 	add r12, 			OFFSET_POINTER_REG 			  ; starting above memory 
 
 ;---------------------- Mask & shift for Shamt 	
@@ -455,8 +454,8 @@ _Alu2:
 		cmp r15d, 0xa ; slti
 		je _slti
 
-		;cmp r15d, 0xb 
-		;je _sltiu
+		cmp r15d, 0xb 
+		je _sltiu
 
 		cmp r15d, 0x4 ; beq
 		je _beq
@@ -748,38 +747,38 @@ _Alu2:
 			ret
 
 
-;    _sltiu: ; ESTA TODAVIA NO FUNCIONA
-;    	mov eax,         dword [rsp+r14+8]       ; [rs]
-;    	cmp eax,         0
-;		jg _sltiuSetLess
+    _sltiu: ; ESTA TODAVIA NO FUNCIONA
+    	mov eax,         dword [rsp+r14+8]       ; [rs]
+    	cmp eax,         0
+		jg _sltiuSetLess
 		; Unsigned operation 
-;		mov r10d,        -1  ; r10d reg because we don't need function
-;		imul r10d             ; se multiplica por -1 para que el resultado sea positivo
+		mov r10d,        -1  ; r10d reg because we don't need function
+		imul r10d             ; se multiplica por -1 para que el resultado sea positivo
 
-;		_sltiuSetLess:
-;			mov r8d,      eax			
-;			continueSltiu0:
-;				mov eax,       r9d	
+		_sltiuSetLess:
+			mov r8d,      eax			
+			continueSltiu0:
+				mov eax,       r9d	
 
-;				cmp eax,      0
-;				jg _continueSltiu
+				cmp eax,      0
+				jg _continueSltiu
 
-;				mov ebp,     -1
-;				imul ebp            ; eax = imm
+				mov ebp,     -1
+				imul ebp            ; eax = imm
 		
-;		_continueSltiu:
-;			cmp eax,      r8d
-;			jl _Rd0iu
+		_continueSltiu:
+			cmp eax,      r8d
+			jl _Rd0iu
 
-;		_Rd0iu:
-;			mov eax,  0
-;			mov dword [rsp+r13+8], eax
-;			ret 
+		_Rd0iu:
+			mov eax,  0
+			mov dword [rsp+r13+8], eax
+			ret 
 
-;		_Rd1iu:
-;			mov eax,  1
-;			mov dword [rsp+r13+8], eax
-;			ret	    	
+		_Rd1iu:
+			mov eax,  1
+			mov dword [rsp+r13+8], eax
+			ret	    	
 
 
 
@@ -853,7 +852,7 @@ section .data
   fmtint:       db "%ld", 10, 0
 
   FILE_NAME:    db "code.txt", 0
-  FILE_LENGTH:  equ 1300 				        		; length of inside text
+  FILE_LENGTH:  equ 900 				        		; length of inside text
   
 
   OFFSET_POINTER_ADDRESS:  equ 184 ;   
@@ -900,74 +899,31 @@ section .data
   tamano_l3: equ $-l3
   num1: equ 0x1
 
-;--------------------- Control Data -------------------------
-;se definen las constantes que van a ser los 6 bits del opcode, de acuerdo a la instrucción, y son los que //se van a comparar con el opcode entrante para realizar los condicionales
-R: equ 0x00  ;// definicion de la constante del OPCode de las instrucciones tipo R
-;definiciones de la constante del OPCode de las instrucciones tipo i y j
-addi: equ 0x08
-addiu: equ 0x09
-andi: equ 0x0C
-beq: equ 0x04
-;bne: equ 0x05
-j: equ 0x02
-jal: equ 0x03
-lbu: equ 0x24
-lhu: equ 0x25
-lui: equ 0x25
-lw: equ 0x23
-sb: equ 0x28
-sh: equ 0x29
-slti: equ 0x0a
-sltiu: equ 0x0b
-sw: equ 0x2b
-
-
-
-; definicion de los valores que van a obtener las senales de control, segun la tabla de verdad
-AluOPx: equ 00000001b ; instruccion branch on equal
-AluOP1: equ  00000000b ; instruccion store word y load word ? 
-AluOP2: equ  00001000b ; instrucciones R ? 
-
-RegDST0: equ 00000000b ; segundo campo de 5 bits en la instrucción para lw
-RegDST1: equ 00000001b ; tercer campo de 5 bits en la instrucción para operaciones de tipo R
-
-Jump0: equ 00000000b ; Dirección de alguna instrucción de tipo I
-Jump1: equ 00000001b ; PC + 4
-
-AluScr0: equ 00000000b; (operaciones de tipo R)
-AluScr1: equ 00000001b ;Extension de signo(lw, sw)
-
-RegWrite0: equ 00000000b; (No permite escritura)
-RegWrite1: equ 00000001b; (Permite escritura)
-
-MemtoReg0: equ 00000000b; desde ALUoutput (para operaciones de tipo R);
-MemtoReg1: equ 00000001b; de MDR (para lw)
-;---------------------------------------------
 
 
 section .bss
 	FD_OUT: 	resb 1
 	FD_IN: 		resb 1
 	TEXT: 		resb 32
-	Num: 		resb 33 
+	;Num: 		resb 33 
 
 ;------------ Control -----------------
 ; se reserva 1 byte para cada una
-   AluSrc:   resb 1 ; r8
-   RegWrite: resb 1 ;r9
-   MemtoReg: resb 1 ;r10
-   AluOp:    resb 1 ;r11
-   RegDst:   resb 1 ;r12
-   Jump:     resb 1 ;r13
-   OpCode:   resb 4 ;r14 
-   Function: resb 4
-   ImCtrl:   resb 4 
+   ;AluSrc:   resb 1 ; r8
+   ;RegWrite: resb 1 ;r9
+   ;MemtoReg: resb 1 ;r10
+   ;AluOp:    resb 1 ;r11
+   ;RegDst:   resb 1 ;r12
+   ;Jump:     resb 1 ;r13
+   ;OpCode:   resb 4 ;r14 
+   ;Function: resb 4
+   ;ImCtrl:   resb 4 
    Shamt:    resb 4
    
-   Branch:   resb 1
-   MemRead:  resb 1
-   MemWrite: resb 1
-   RegDest:  resb 1 
+   ;Branch:   resb 1
+   ;MemRead:  resb 1
+   ;MemWrite: resb 1
+   ;RegDest:  resb 1 
 
    BranchAddress: resb 4   
 
