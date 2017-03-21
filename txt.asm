@@ -467,8 +467,8 @@ _Alu2:
 		cmp r10d, 0x2a ; slt function
 		je _slt 
 
-		cmp r10d, 0x2b ; sltu function
-		je _sltu 
+		;cmp r10d, 0x2b ; sltu function
+		;je _sltu 
 
 		cmp r10d, 0x21 ; addu function
 		je _addu 
@@ -481,13 +481,13 @@ _Alu2:
 
 	_add:
 		impr_texto Op1, tamano_Op1 ; Indica al usuario que operacion se realiza
-		mov eax,		       dword [rsp+r14+8] ; +8, because call use rsp register	; Se pasan los datos a los registros que van a operar
-		add eax, 			   dword [rsp+r13+8] ; Se realiza la operacion
-		mov dword [rsp+r12+8], eax
+		mov eax,		       dword [rsp+r14+OFFSET_RSPCALL] ; +8, because call use rsp register	; Se pasan los datos a los registros que van a operar
+		add eax, 			   dword [rsp+r13+OFFSET_RSPCALL] ; Se realiza la operacion
+		mov dword [rsp+r12+OFFSET_RSPCALL], eax
 		ret 
 
 	_addu:		
-		mov eax,               dword [rsp+r13+8] ; rt
+		mov eax,               dword [rsp+r13+OFFSET_RSPCALL] ; rt
 		cmp eax,               0
 		jg _adduRtIsPositive                     ; Unsigned op
 		mov r9d,         -1  					 ; se carga el registro con -1 para multiplicar
@@ -496,7 +496,7 @@ _Alu2:
 		_adduRtIsPositive:
 			mov r9d,         eax 				 ; guarda el valor modificado en el registro deseado
 
-			mov eax,     dword [rsp+r14+8] 		 ; rs pointer
+			mov eax,     dword [rsp+r14+OFFSET_RSPCALL] 		 ; rs pointer
 			cmp eax,     0
 			jg _adduRsIsPositive
 			mov ebp,     -1
@@ -504,77 +504,86 @@ _Alu2:
 		
 		_adduRsIsPositive:
 			add eax,     r9d
-			mov dword [rsp+r12+8], eax
+			mov dword [rsp+r12+OFFSET_RSPCALL], eax
 			ret 
   
 	_and:
 		impr_texto Op2, tamano_Op2
-		mov eax,			 dword [rsp+r14+8]	 ; getting data 
-		and eax, 			 dword [rsp+r13+8] 
-		mov dword [rsp+r12+8], eax
+		mov eax,			 dword [rsp+r14+OFFSET_RSPCALL]	 ; getting data 
+		and eax, 			 dword [rsp+r13+OFFSET_RSPCALL] 
+		mov dword [rsp+r12+OFFSET_RSPCALL], eax
 		ret
 
 	_andi: 
-		mov eax,             dword [rsp+r14+8]
+		mov eax,             dword [rsp+r14+OFFSET_RSPCALL]
 		and eax,             r9d                 ; Imm
-		mov dword [rsp+r13+8], eax
+		mov dword [rsp+r13+OFFSET_RSPCALL], eax
 		ret 
 
 	_or:
 		impr_texto Op3,tamano_Op3
-		mov eax, 			 dword [rsp+r14+8]
-		or eax,              dword [rsp+r13+8] 
-		mov dword [rsp+r12+8], eax		
+		mov eax, 			 dword [rsp+r14+OFFSET_RSPCALL]
+		or eax,              dword [rsp+r13+OFFSET_RSPCALL] 
+		mov dword [rsp+r12+OFFSET_RSPCALL], eax		
 		ret 
 	_nor:
 		impr_texto Op4,tamano_Op4
-		mov eax, 		     dword [rsp+r14+8]
-		or eax, 			 dword [rsp+r13+8] 
+		mov eax, 		     dword [rsp+r14+OFFSET_RSPCALL]
+		or eax, 			 dword [rsp+r13+OFFSET_RSPCALL] 
 		not eax
-		mov dword [rsp+r12+8], eax			 
+		mov dword [rsp+r12+OFFSET_RSPCALL], eax			 
 		ret 
 
 	_shl: ; ******   sll 
 		;impr_texto Op5,tamano_Op5 
-		mov eax,             dword [rsp+r13+8] ; rt ! 
+		mov eax,             dword [rsp+r13+OFFSET_RSPCALL] ; rt ! 
 		mov ecx, 			 dword [Shamt]
 		shl eax,             cl
-		mov dword [rsp+r12+8], eax		       ; output pointer is rd
+		mov dword [rsp+r12+OFFSET_RSPCALL], eax		       ; output pointer is rd
 		ret 
 
 	_shr: ; ******   srl
 		;impr_texto Op6,tamano_Op6
-		mov eax,			 dword [rsp+r13+8]
+		mov eax,			 dword [rsp+r13+OFFSET_RSPCALL]
 		mov ecx, 			 dword [Shamt]
 		shr eax,			 cl
-		mov dword [rsp+r12+8], eax		       ; output pointer is rd		
+		mov dword [rsp+r12+OFFSET_RSPCALL], eax		       ; output pointer is rd		
 		ret 
 
 	_jr:	 ; PC = R[rs]
-		mov ebx,             dword [rsp+r14+8] ; PC<--R[rs] 
+		mov ebx,             dword [rsp+r14+OFFSET_RSPCALL] ; PC<--R[rs] 
 		ret 
 
 	_lw:
-		mov eax,             dword [rsp+r14+8] ; [rs]
-
+		mov eax,             dword [rsp+r14+OFFSET_RSPCALL] ; [rs]
+		mov r8d, 4
 		add eax,             r9d               ; [rs] + Imm
-		imul eax, 4 						   ; (6)*4 = 24, byte adjust 
+		;imul eax, 4 						   ; (6)*4 = 24, byte adjust 
+		imul r8d 
+		_1:
 
-		mov r10d,            dword [rsp+OFFSET_POINTER_DATAMEM+rax+8]
-		mov dword [rsp+r13+8], r10d
+							         ; se multiplica por -1 para que el resultado sea positivo
+		 
+		_GoGetIt:
+			;mov dword [PlayHard],         eax 				 ; guarda el valor modificado en el registro deseado
+			
+			mov r10d,            dword [rsp+rax+OFFSET_RSPCALL+OFFSET_POINTER_DATAMEM]
+			mov dword [rsp+r13+OFFSET_RSPCALL], r10d ;eax
 		_2:
 		ret 
 
 
+
+
 	_sub:
 		impr_texto Op7,tamano_Op7
-		mov eax,			 dword [rsp+r14+8]
-		sub eax,			 dword [rsp+r13+8] 
-		mov dword [rsp+r12+8], eax	 
+		mov eax,			 dword [rsp+r14+OFFSET_RSPCALL]
+		sub eax,			 dword [rsp+r13+OFFSET_RSPCALL] 
+		mov dword [rsp+r12+OFFSET_RSPCALL], eax	 
 		ret
 
 	_subu:
-		mov eax,         dword [rsp+r13+8] 	   ; rt pointer	
+		mov eax,         dword [rsp+r13+OFFSET_RSPCALL] 	   ; rt pointer	
 		cmp eax,         0
 		jg _subuRtIsPositive              	   ; Unsigned operation 
 		mov r9d,         -1                    ; se carga el registro con -1 para multiplicar
@@ -584,7 +593,7 @@ _Alu2:
 		_subuRtIsPositive:
 			mov r9d,         eax 			    
 
-			mov eax,     dword [rsp+r14+8]     ; rs pointer
+			mov eax,     dword [rsp+r14+OFFSET_RSPCALL]     ; rs pointer
 			cmp eax,     0
 			jg _subuRsIsPositive
 			mov ebp,     -1
@@ -592,19 +601,19 @@ _Alu2:
  
 		_subuRsIsPositive:
 			sub eax,     r9d 
-			mov dword [rsp+r12+8], eax
+			mov dword [rsp+r12+OFFSET_RSPCALL], eax
 			ret 
 
 	_ori:
-		mov eax,         dword [rsp+r14+8]
+		mov eax,         dword [rsp+r14+OFFSET_RSPCALL]
 		or eax,          r9d  				   ; Imm
-		mov dword [rsp+r13+8], eax
+		mov dword [rsp+r13+OFFSET_RSPCALL], eax
 		ret
 
 
 	_beq: 
-		mov eax,         dword [rsp+r14+8]  ; [rs]
-		sub eax,         dword [rsp+r13+8]  ; [rt]
+		mov eax,         dword [rsp+r14+OFFSET_RSPCALL]  ; [rs]
+		sub eax,         dword [rsp+r13+OFFSET_RSPCALL]  ; [rt]
 
 		cmp eax,         0
 		je _BeqC
@@ -619,8 +628,8 @@ _Alu2:
 
 
 	_bne: 
-		mov eax,         dword [rsp+r14+8]  ; [rs]
-		sub eax,         dword [rsp+r13+8]  ; [rt]
+		mov eax,         dword [rsp+r14+OFFSET_RSPCALL]  ; [rs]
+		sub eax,         dword [rsp+r13+OFFSET_RSPCALL]  ; [rt]
 		cmp eax,         0
 		je _bneC
 		jne _bneR
@@ -639,7 +648,7 @@ _Alu2:
 	_jal: 
 		;add ebx, 8
 		;PC+8;sub ebx,  8  ; apuntando a la instruccion anterior (suponiendo que estan consecutivas, REVISAR)
-		mov dword [rsp+OFFSET_POINTER_REG+8 +124], ebx ; R[31] = PC+8
+		mov dword [rsp+OFFSET_POINTER_REG+OFFSET_RSPCALL +124], ebx ; R[31] = PC+8
 											; R[31] => 31*4 = 124
 		add ebx, 8
 		_jal2:			
@@ -648,35 +657,35 @@ _Alu2:
 
 	_slt: 
 		;impr_texto Op15,tamano_Op15
-		mov eax,      dword [rsp+r14+8] ; rs pointer
-		cmp eax,      dword [rsp+r13+8] ; rt pointer
+		mov eax,      dword [rsp+r14+OFFSET_RSPCALL] ; rs pointer
+		cmp eax,      dword [rsp+r13+OFFSET_RSPCALL] ; rt pointer
 		jl _Rd1
 
 		_Rd0:
 			mov eax,  0
-			mov dword [rsp+r12+8], eax
+			mov dword [rsp+r12+OFFSET_RSPCALL], eax
 			ret 
 
 		_Rd1:
 			mov eax,  1
-			mov dword [rsp+r12+8], eax
+			mov dword [rsp+r12+OFFSET_RSPCALL], eax
 			ret	
 
 	_slti:
-		mov eax,         dword [rsp+r14+8] ; rs pointer	
+		mov eax,         dword [rsp+r14+OFFSET_RSPCALL] ; rs pointer	
 		cmp eax,         r9d               ; cmp with imm 
 		jl _sltiSetLess
 
-		mov dword [rsp+r13+8],  0          ; [rs] = 0
+		mov dword [rsp+r13+OFFSET_RSPCALL],  0          ; [rs] = 0
 		ret
 
 		_sltiSetLess: 
-			mov dword [rsp+r13+8], 1       ; [rt] = 1
+			mov dword [rsp+r13+OFFSET_RSPCALL], 1       ; [rt] = 1
 			ret
 
 
     _sltiu: ; ESTA TODAVIA NO FUNCIONA
-    	mov eax,         dword [rsp+r14+8]       ; [rs]
+    	mov eax,         dword [rsp+r14+OFFSET_RSPCALL]       ; [rs]
     	cmp eax,         0
 		jg _sltiuSetLess
 		; Unsigned operation 
@@ -700,44 +709,44 @@ _Alu2:
 
 		_Rd0iu:
 			mov eax,  0
-			mov dword [rsp+r13+8], eax
+			mov dword [rsp+r13+OFFSET_RSPCALL], eax
 			ret 
 
 		_Rd1iu:
 			mov eax,  1
-			mov dword [rsp+r13+8], eax
+			mov dword [rsp+r13+OFFSET_RSPCALL], eax
 			ret	    	
 
 
 
-	_sltu:
-		mov eax,         dword [rsp+r13+8] ; rt pointer	
-		cmp eax,         0
-		jg _isPositive
+;	_sltu:
+;		mov eax,         dword [rsp+r13+OFFSET_RSPCALL] ; rt pointer	
+;		cmp eax,         0
+;		jg _isPositive
 		; Unsigned operation 
-		mov r9d,         -1                ; se carga el registro con -1 para multiplicar
-		imul r9d                           ; se multiplica por -1 para que el resultado sea positivo
+;		mov r9d,         -1                ; se carga el registro con -1 para multiplicar
+;		imul r9d                           ; se multiplica por -1 para que el resultado sea positivo
 
-		_isPositive:
-			mov r9d,         eax           ; guarda el valor modificado en el registro deseado
-			mov eax,     dword [rsp+r14+8] ; rs pointer
-			cmp eax,     0
-			jg _continueSlt
-			mov ebp,     -1
-			imul ebp
+;		_isPositive:
+;			mov r9d,         eax           ; guarda el valor modificado en el registro deseado
+;			mov eax,     dword [rsp+r14+OFFSET_RSPCALL] ; rs pointer
+;			cmp eax,     0
+;			jg _continueSlt
+;			mov ebp,     -1
+;			imul ebp
 		
-		_continueSlt:
-			cmp eax,     r9d       
-			jl _Rd1u
+;		_continueSlt:
+;			cmp eax,     r9d       
+;			jl _Rd1u
 
-		_Rd0u:
-			mov eax,  0
-			mov dword [rsp+r12+8], eax
-			ret 
+;		_Rd0u:
+;			mov eax,  0
+;			mov dword [rsp+r12+OFFSET_RSPCALL], eax
+;			ret 
 
 		_Rd1u:
 			mov eax,  1
-			mov dword [rsp+r12+8], eax
+			mov dword [rsp+r12+OFFSET_RSPCALL], eax
 			ret	
 
 
@@ -745,7 +754,7 @@ _Alu2:
 		;impr_texto Op8,tamano_Op8
 		;mov eax,			 dword [rsp+r14+8] ; (?)
 		;mov ebx,			 dword [rsp+r13+8]
-		mov eax,			 dword [rsp+r13+8]
+		mov eax,			 dword [rsp+r13+OFFSET_RSPCALL]
 		imul eax ;ebx
 		ret 
 
@@ -754,9 +763,9 @@ _Alu2:
 ; Pointer is $rt  ($r13)
 	_addi:
 		;impr_texto Op1, tamano_Op1
-		mov eax, 	    	 dword [rsp+r14+8]    ; Register ( $rs ) Data 
+		mov eax, 	    	 dword [rsp+r14+OFFSET_RSPCALL]    ; Register ( $rs ) Data 
 		add eax,    		 r9d                  ; ImmediateCtrl
-		mov dword [rsp+r13+8], eax                ; addi into Reg Bank (addressed $rt) i-type
+		mov dword [rsp+r13+OFFSET_RSPCALL], eax                ; addi into Reg Bank (addressed $rt) i-type
 		ret 
 
 	_endAlu:
@@ -766,21 +775,22 @@ _Alu2:
 
 section .data
 ;-------------------  Memory Data -------------------------
-  iMEM_BYTES:     equ 56                          ; x/4 = words num	; Instructions Memory allocation
-  REG_BYTES:	  equ 128   					  ; 32 dwords 
-  DATAMEM_BYTES:  equ 56
-  TOT_MEM:		  equ 240    ; iMEM+REG_B
+  iMEM_BYTES:     equ 400 ;600 ;56 ;400 ;                          ; x/4 = words num	; 100 dwords, Instructions Memory allocation 
+  REG_BYTES:	  equ 128              				   ; 32 dwords
+  DATAMEM_BYTES:  equ 400 ;56  ;400 
+  TOT_MEM:		  equ 928 ;1128 ;928 ;240 ; 928    ; iMEM+REG_B
 
   msg:          db " Memory Allocated! ", 10
   len:          equ $ - msg
   fmtint:       db "%ld", 10, 0
 
   FILE_NAME:    db "code.txt", 0
-  FILE_LENGTH:  equ 900 				        		; length of inside text
+  FILE_LENGTH:  equ 240 				        		; length of inside text
   
 
-  OFFSET_POINTER_ADDRESS:  equ 184 ;   
-  OFFSET_POINTER_DATAMEM:  equ 184 ; iMEM_BYTES+REG_BYTES
+  ;OFFSET_POINTER_ADDRESS:  equ 184 ; 
+  OFFSET_RSPCALL: equ 8  
+  OFFSET_POINTER_DATAMEM:  equ 528 ;728 ;528 ; 184  ;528;; iMEM_BYTES+REG_BYTES
   OFFSET_POINTER_REG:      equ iMEM_BYTES 				; 1 dword = 4 bytes
   						  								; 128bytes = 32 dwords
   	    				  								; offset for Registers Allocation
@@ -832,7 +842,7 @@ section .bss
 
 	Shamt:          resb 4
    	BranchAddress:  resb 4   
-
+   	PlayHard: resb 4
 
 
 section  .text
@@ -920,8 +930,8 @@ _loadInstruction:
 _Reg:	
 	mov rdi, iMEM_BYTES;/4 								; Number of words for the assignation ; 0xE ; iMEM_BYTES/4 ; 3
 	mov ebx, 0x4     									; 0x38 last word  ; 0x24  ; first instruct address +4 
-	mov dword [rsp+OFFSET_POINTER_DATAMEM +24], 0x1     ; (6)*4 =24, 
-												        ;manually load
+	mov dword [rsp+OFFSET_POINTER_DATAMEM +24], 0xf     ; (29)*4 =116 , 
+												        ;manually load to dataMem
 
 ;and ebx,  0xFF ; 
 	;mov dword [BranchAddress], 0x0 
