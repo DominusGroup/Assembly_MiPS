@@ -650,9 +650,10 @@ _Alu2:
 		;PC+8;sub ebx,  8  ; apuntando a la instruccion anterior (suponiendo que estan consecutivas, REVISAR)
 		mov dword [rsp+OFFSET_POINTER_REG+OFFSET_RSPCALL +124], ebx ; R[31] = PC+8
 											; R[31] => 31*4 = 124
-		add ebx, 8
-		_jal2:			
-			mov ebx,        r8d  
+		;add ebx, 8
+		;_jal2:			
+		mov ebx,        r9d  
+		add ebx, 4
 		ret 
 
 	_slt: 
