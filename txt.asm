@@ -455,8 +455,8 @@ _Alu2:
 		cmp r15d, 0xa ; slti
 		je _slti
 
-		cmp r15d, 0xb 
-		je _sltiu
+		;cmp r15d, 0xb 
+		;je _sltiu
 
 		cmp r15d, 0x4 ; beq
 		je _beq
@@ -469,6 +469,9 @@ _Alu2:
 
 		cmp r15d, 0x3 ; jal
 		je _jal 
+
+		cmp r15d, 0x23 ; lw
+		je _lw
 
 		ret
 		;cmp dword [Function], 0x09      FALTA HACER ESTAS ETIQUETAS I
@@ -605,6 +608,17 @@ _Alu2:
 
 		ret 
 
+	_lw:
+		mov eax,             dword [rsp+r14+8] ; [rs]
+
+		add eax,             r9d               ; [rs] + Imm
+		imul eax, 4 						   ; (6)*4 = 24, byte adjust 
+
+		mov r10d,            dword [rsp+OFFSET_POINTER_DATAMEM+rax+8]
+		mov dword [rsp+r13+8], r10d
+		_2:
+		ret 
+
 
 	_sub:
 		impr_texto Op7,tamano_Op7
@@ -652,14 +666,14 @@ _Alu2:
 		sub eax,         dword [rsp+r13+8]  ; [rt]
 		;mov eax,         ebx
 		;add ebx,         8 ;r9d
-		_1:
+		;_1:
 		cmp eax,         0
 		je _BeqC
 		jne _BeqR
 
 		_BeqC:
 			add ebx,                    r9d 
-			_2:
+			;_2:
 			;mov eax,				    r9d  
 			;mov dword [BranchAddress],  eax  ; Imm
 			ret 
@@ -734,38 +748,38 @@ _Alu2:
 			ret
 
 
-    _sltiu: ; ESTA TODAVIA NO FUNCIONA
-    	mov eax,         dword [rsp+r14+8]       ; [rs]
-    	cmp eax,         0
-		jg _sltiuSetLess
+;    _sltiu: ; ESTA TODAVIA NO FUNCIONA
+;    	mov eax,         dword [rsp+r14+8]       ; [rs]
+;    	cmp eax,         0
+;		jg _sltiuSetLess
 		; Unsigned operation 
-		mov r10d,        -1  ; r10d reg because we don't need function
-		imul r10d             ; se multiplica por -1 para que el resultado sea positivo
+;		mov r10d,        -1  ; r10d reg because we don't need function
+;		imul r10d             ; se multiplica por -1 para que el resultado sea positivo
 
-		_sltiuSetLess:
-			mov r8d,      eax			
-			continueSltiu0:
-				mov eax,       r9d	
+;		_sltiuSetLess:
+;			mov r8d,      eax			
+;			continueSltiu0:
+;				mov eax,       r9d	
 
-				cmp eax,      0
-				jg _continueSltiu
+;				cmp eax,      0
+;				jg _continueSltiu
 
-				mov ebp,     -1
-				imul ebp            ; eax = imm
+;				mov ebp,     -1
+;				imul ebp            ; eax = imm
 		
-		_continueSltiu:
-			cmp eax,      r8d
-			jl _Rd0iu
+;		_continueSltiu:
+;			cmp eax,      r8d
+;			jl _Rd0iu
 
-		_Rd0iu:
-			mov eax,  0
-			mov dword [rsp+r13+8], eax
-			ret 
+;		_Rd0iu:
+;			mov eax,  0
+;			mov dword [rsp+r13+8], eax
+;			ret 
 
-		_Rd1iu:
-			mov eax,  1
-			mov dword [rsp+r13+8], eax
-			ret	    	
+;		_Rd1iu:
+;			mov eax,  1
+;			mov dword [rsp+r13+8], eax
+;			ret	    	
 
 
 
@@ -831,7 +845,7 @@ section .data
 ;-------------------  Memory Data -------------------------
   iMEM_BYTES:   equ 56    ; x/4 = words num       		; Instructions Memory allocation
   REG_BYTES:	equ 128   ; 32 dwords 
-  ADDR_BYTES:	equ 56
+  DATAMEM_BYTES:	equ 56
   TOT_MEM:		equ 240 ; 184   ; iMEM+REG_B
 
   msg:          db " Memory Allocated! ", 10
@@ -842,7 +856,8 @@ section .data
   FILE_LENGTH:  equ 1300 				        		; length of inside text
   
 
-  OFFSET_POINTER_ADDRESS:  equ 184 ; iMEM_BYTES+REG_BYTES  
+  OFFSET_POINTER_ADDRESS:  equ 184 ;   
+  OFFSET_POINTER_DATAMEM:  equ 184 ; iMEM_BYTES+REG_BYTES
   OFFSET_POINTER_REG:      equ iMEM_BYTES 					; 1 dword = 4 bytes
   						  								; 128bytes = 32 dwords
   	    				  								; offset for Registers Allocation
@@ -1052,7 +1067,12 @@ _loadInstruction:
 _Reg:	; SIGUIENTE PASO : HACER LOOP PARA LLAMAR INSTRUCCION A LA VEZ 
 	mov rdi, iMEM_BYTES;/4 ;14      ; Number of words for the assignation ; 0xE ; iMEM_BYTES/4 ; 3
 	mov ebx, 0x4     ; 0x38 last word  ; 0x24  ; first instruct address +4 
-	;and ebx,  0xFF ; 
+	mov dword [rsp+OFFSET_POINTER_DATAMEM +24], 0x1  ; (6)*4 =24, 
+												;manually load
+
+
+
+;and ebx,  0xFF ; 
 	;mov dword [BranchAddress], 0x0 
 
 _PCLoop:
