@@ -15,6 +15,7 @@
 %endmacro
 ;------------------------- FIN DE MACRO --------------------------------
 
+
 ;-------------------------  MACRO #2  ----------------------------------
 ;Macro-2: Gets 8-bytes, from index into buffer.
 ;	Loads Address/Instruction into $r12d register 
@@ -26,19 +27,18 @@
 	;------------------------------------------------
 	;------- Copy upper dword from TEXT Buffer ------
 	;------------------------------------------------
-	  	;mov rax, 			qword [TEXT+%1+1]   	; [..] Instruction;
-	  	mov rdx, 			qword [TEXT+%1+1] ;rax
+
+	  	mov rdx, 			qword [TEXT+%1+1]       ; [..] Instruction;
 	  	mov ecx, 			32						; Shift 32 bits
 	  	shr rdx, 			cl              		
-		;mov eax, 			edx
 
 	; The input text is hex in ASCII so you receive : 
 	; word format     :		$eax : 0011abcd_0011efgh_0110ijkl_0110mnño...   
 	; and you want it :     $rsp : abcd_efgh_ijkl_mnño...
 	;------------------------------------------------
 	       ; 20080003 >> for 3
-	  	mov r8d, 			edx ;eax 					; $aux1
-	  	mov r9d,            edx ;eax						; $r9d has the instruction to fix 
+	  	mov r8d, 			edx 					; $aux1
+	  	mov r9d,            edx 					; $r9d has the instruction to fix 
 	  	and r8d, 			0x0F000000				; masking abcd
 
 		mov r10d,           r9d	
@@ -111,10 +111,10 @@
 	;------------------------------------------------
 	;------- Copy lower dword from TEXT Buffer ------
 	;------------------------------------------------
-		;mov eax, 			dword [TEXT+r13+1]  	; Truncate Buffer
+		;mov eax, 			dword [TEXT+r13+1]  	
 			; 20080003 >> es el 2
-		mov r8d, 			dword [TEXT+r13+1] ;eax         	; $aux5 
-		mov r9d,            dword [TEXT+r13+1] ;eax 
+		mov r8d, 			dword [TEXT+r13+1]     	; Truncate Buffer 
+		mov r9d,            dword [TEXT+r13+1]      ; $aux5
 		and r8d,   			0x0000000F
 		
 		mov r10d,           r9d 
@@ -181,6 +181,7 @@
 		
 		or r12d,			edx 					; $r12d contains the data 
 %endmacro
+
 
 ;----------------------------------------------------
 ;---------- Auxiliar for macros GetFromTxt-----------
@@ -261,7 +262,7 @@ _HexAsciiFixer:
 	_51:
 		mov eax, 0x01 
 		ret 
-	_52:	
+	_52:
 		mov eax, 0x02
 		ret 
 	_53:
@@ -273,7 +274,7 @@ _HexAsciiFixer:
 	_55:
 		mov eax, 0x05 
 		ret
-	_56:	
+	_56:
 		mov eax, 0x06 
 		ret 
 	_57:
@@ -302,8 +303,6 @@ _HexAsciiFixer:
 	; %6 = $r9  ( Immediate) 
 	; %7 = $r8  ( Address )
 
-;%macro DECO 1 ;$rbx is the instruction that will be decoded
-
 _DECO:
 	xor r8, r8 
 	xor r9, r9 
@@ -313,11 +312,8 @@ _DECO:
 	xor r14, r14
 	xor r15, r15 
 
-	;mov r10, 0x2c ; INSTRUCCION QUE SE ESTA DECODIFICANDO 
-
-	;add rbx, 8
 ;--------------------- Mask & shift for OPcode 	
-	mov r8d, 			dword [rsp+rbx] ;%1]					  ; getting instruction from memory; 
+	mov r8d, 			dword [rsp+rbx]      		  ; getting instruction from memory; 
 	and r8d, 1111_1100_0000_0000_0000_0000_0000_0000b ; masking address $rs 
 	mov rcx, 			26  						  ; shifting 26 bits
 	mov edx, 			dword r8d
@@ -326,7 +322,7 @@ _DECO:
 
 
 ;--------------------- Mask & shift for $rs 	
-	mov r8d, 			dword [rsp+rbx]					  ; getting instruction from memory; 
+	mov r8d, 			dword [rsp+rbx]				  ; getting instruction from memory; 
 	and r8d, 0000_0011_1110_0000_0000_0000_0000_0000b ; masking address $rs 
 	mov rcx, 			21  						  ; shifting 20 bits
 	mov edx, 			dword r8d
@@ -334,25 +330,23 @@ _DECO:
 	imul rdx, 			4 
 	sub rdx, 			4	
 
-	;mov rax, 			rdx 
-	mov r14, 			rdx ;rax                           ; $r13 is the rs pointer
+	mov r14, 			rdx                           ; $r13 is the rs pointer
 	add r14, 			OFFSET_POINTER_REG	          ; adding memory offset to $r13 to start in Register Bank allocation 
 
 ;--------------------- Mask & shift for $rt 	
-	mov r8d, 			dword [rsp+rbx]					  ; getting instruction from memory
+	mov r8d, 			dword [rsp+rbx]				  ; getting instruction from memory
 	and r8d, 0000_0000_0001_1111_0000_0000_0000_0000b ; masking address $rt
 	mov rcx, 			16       	    			  ; shifting 16 bits
 	mov edx, 			dword r8d
 	shr edx,			cl 
 	imul rdx, 			4  							  ; escale x4
 	sub rdx, 			4							  ; substract 4 to point propertly	
-
-	;mov rax, 			rdx
-	mov r13, 			rdx ;rax							  ; $r14 is the rt pointer
+ 
+	mov r13, 			rdx      				      ; $r14 is the rt pointer
 	add r13, 			OFFSET_POINTER_REG            ; Jumping Memory allocation 
 
 ;---------------------- Mask & shift for $rd 	
-	mov r8d, 			dword [rsp+rbx]					  ; getting instruction from memory
+	mov r8d, 			dword [rsp+rbx]				  ; getting instruction from memory
 	and r8d, 0000_0000_0000_0000_1111_1000_0000_0000b ; masking address $rd
 	mov rcx, 			11							  ; shifting 11 bits
 	mov edx,		    dword r8d
@@ -360,12 +354,11 @@ _DECO:
 	imul rdx, 			4
 	sub rdx, 			4
 
-	;mov rax, 			rdx
-	mov r12, 			rdx ;rax					     	  ; $r14 is the rt pointer
+	mov r12, 			rdx 				     	  ; $r14 is the rt pointer
 	add r12, 			OFFSET_POINTER_REG 			  ; starting above memory 
 
 ;---------------------- Mask & shift for Shamt 	
-	mov r8d, 			dword [rsp+rbx]					  ; getting instruction from memory
+	mov r8d, 			dword [rsp+rbx]				  ; getting instruction from memory
 	and r8d, 0000_0000_0000_0000_0000_0111_1100_0000b ; masking address $rd
 	mov rcx, 			6							  ; shifting 11 bits
 	mov edx,		    dword r8d
@@ -373,7 +366,7 @@ _DECO:
 	mov [Shamt],        edx
 
 ;---------------------- Mask & shift for FUNCTION 	
-	mov r8d, 			dword [rsp+rbx]					  ; getting instruction from memory
+	mov r8d, 			dword [rsp+rbx]				  ; getting instruction from memory
 	and r8d, 0000_0000_0000_0000_0000_0000_0011_1111b ; masking address $rd
 	mov rcx, 			0							  ; shifting 11 bits
 	mov edx,		    dword r8d
@@ -381,67 +374,35 @@ _DECO:
 	mov r10,            rdx
 
 ;---------------------- Mask & shift for Inmediate 	
-		;CERO 
-	mov r8d, 			dword [rsp+rbx]					  ; getting instruction from memory
+	mov r8d, 			dword [rsp+rbx]				  ; getting instruction from memory
 	and r8d, 0000_0000_0000_0000_1111_1111_1111_1111b ; masking address $rd
 	mov r9d,			r8d 
-	
-	;mov rcx, 			0							  ; shifting 11 bits
-	;mov edx,		    dword r8d
-	;shr edx,			cl 
-	;;mov r9,             rdx 
 
 ;---------------------- Mask & shift for Address 	
 	mov r8d, 			dword [rsp+rbx]				  ; getting instruction from memory
 	and r8d, 0000_0011_1111_1111_1111_1111_1111_1111b ; masking address $rd
-	;mov rcx, 			0							  ; shifting 11 bits
-	;mov edx,		    dword r8d
-	;shr edx,			cl 
-	;mov r8d,             rdx 
-
 
 	ret
-;%endmacro
 
 
 ;------------------------------------------------------------------------------
-;-------------------------------- ALU -----------------------------------------
+;------------------------------ Master ALU ------------------------------------
 ;------------------------------------------------------------------------------
-;%macro ALUx 4  
-
-;	call _Alu2
-	; %1 = [Opcode]   -------Control----- $r15    ( OPCODE )
-	; %2 = $r14       ------Reg. Bank---- [rs]    ( rs )
-	; %3 = $rax       ---------Mux------- [rax]   ( [rt]=r13 )
-	; %4 = [Function] --------Control----      ([Function]=r10 or [Immendiate]=r9) 
-	
-	;mov r9, 			 rax    					; FUNCT :registro que indica la operacion a realizar
-	
-	;mov r8d, 			 0      					; registro indice de operacion
-  
-	;r13  ; --- rs : registro que almacena el primer parametro
-	;r14  ; --- rt : registro que almacena el segundo parametro
-	;Se compara el registro r9 con el r8 para saber que operacion se desea realizar
-
-;;;;; Function or Immediate compare
-
-	;mov esi, %1
-	;call _addix
-	;jmp _addix
+	;--------- Input ---------
+	; %1 = $r15 ( OPCODE )
+	; %2 = $r14 ( rs )
+	; %3 = $r13 ( rt )
+	; %4 = $r12 ( rd )
+	; %5 = $r10 ( Function ) 
+	; %6 = $r9  ( Immediate) 
+	; %7 = $r8  ( Address )
 
 _Alu2: 
-	;mov eax, r15d ; dword [OpCode]
-
-	;cmp dword [OpCode], 0x00
-	;mov dword [OpCode],      	 r15d	
-	;mov dword [Function],   	 r10d	
-	;mov dword [BranchAddress],   0x0   ; ~= 0 only if _beq
 	cmp r15d, 0x00
 	je _OPcodeR
 	jne _OPcodeI
 
 	_OPcodeI:  
-		;cmp dword [OpCode], 0x8   ; addi 
 		cmp r15d, 0x8 ; addi
 		je _addi 
 
@@ -473,8 +434,7 @@ _Alu2:
 		je _lw
 
 		ret
-		;cmp dword [Function], 0x09      FALTA HACER ESTAS ETIQUETAS I
-		;je _addiu
+ 
 
 	_OPcodeR:
 		cmp r10d, 0x00 ; shl function
@@ -516,7 +476,6 @@ _Alu2:
 		cmp r10d, 0x8  ; jr function
 		je 	_jr
 		
-
 		jmp _endAlu
 
 
@@ -525,21 +484,19 @@ _Alu2:
 		mov eax,		       dword [rsp+r14+8] ; +8, because call use rsp register	; Se pasan los datos a los registros que van a operar
 		add eax, 			   dword [rsp+r13+8] ; Se realiza la operacion
 		mov dword [rsp+r12+8], eax
-		;mov r9d,             eax
 		ret 
 
 	_addu:		
 		mov eax,               dword [rsp+r13+8] ; rt
 		cmp eax,               0
 		jg _adduRtIsPositive                     ; Unsigned op
-		mov r9d,         -1  ; se carga el registro con -1 para multiplicar
-		imul r9d ; ecx             ; se multiplica por -1 para que el resultado sea positivo
-		;mov r9d,         eax ; guarda el valor modificado en el registro deseado
-		
+		mov r9d,         -1  					 ; se carga el registro con -1 para multiplicar
+		imul r9d 						         ; se multiplica por -1 para que el resultado sea positivo
+		 
 		_adduRtIsPositive:
-			mov r9d,         eax ; guarda el valor modificado en el registro deseado
+			mov r9d,         eax 				 ; guarda el valor modificado en el registro deseado
 
-			mov eax,     dword [rsp+r14+8] ; 0xfffffff9; ; rs pointer
+			mov eax,     dword [rsp+r14+8] 		 ; rs pointer
 			cmp eax,     0
 			jg _adduRsIsPositive
 			mov ebp,     -1
@@ -549,20 +506,17 @@ _Alu2:
 			add eax,     r9d
 			mov dword [rsp+r12+8], eax
 			ret 
-
-
-
+  
 	_and:
 		impr_texto Op2, tamano_Op2
-		mov eax,			 dword [rsp+r14+8]			; getting data 
+		mov eax,			 dword [rsp+r14+8]	 ; getting data 
 		and eax, 			 dword [rsp+r13+8] 
 		mov dword [rsp+r12+8], eax
-		;mov r9d,             eax
 		ret
 
 	_andi: 
 		mov eax,             dword [rsp+r14+8]
-		and eax,             r9d ; Imm
+		and eax,             r9d                 ; Imm
 		mov dword [rsp+r13+8], eax
 		ret 
 
@@ -571,26 +525,21 @@ _Alu2:
 		mov eax, 			 dword [rsp+r14+8]
 		or eax,              dword [rsp+r13+8] 
 		mov dword [rsp+r12+8], eax		
-		;mov r9d,             eax
 		ret 
 	_nor:
 		impr_texto Op4,tamano_Op4
 		mov eax, 		     dword [rsp+r14+8]
 		or eax, 			 dword [rsp+r13+8] 
 		not eax
-		mov dword [rsp+r12+8], eax			
-		;mov r9d,             eax
+		mov dword [rsp+r12+8], eax			 
 		ret 
 
 	_shl: ; ******   sll 
-		;impr_texto Op5,tamano_Op5
-		;mov eax,			 dword [rsp+r14+8]
-		;mov ecx,			 dword [rsp+r13+8] (?)
+		;impr_texto Op5,tamano_Op5 
 		mov eax,             dword [rsp+r13+8] ; rt ! 
 		mov ecx, 			 dword [Shamt]
 		shl eax,             cl
 		mov dword [rsp+r12+8], eax		       ; output pointer is rd
-		;mov r9d,             eax
 		ret 
 
 	_shr: ; ******   srl
@@ -599,12 +548,10 @@ _Alu2:
 		mov ecx, 			 dword [Shamt]
 		shr eax,			 cl
 		mov dword [rsp+r12+8], eax		       ; output pointer is rd		
-		;mov r9d,             eax
 		ret 
 
 	_jr:	 ; PC = R[rs]
 		mov ebx,             dword [rsp+r14+8] ; PC<--R[rs] 
-
 		ret 
 
 	_lw:
@@ -623,31 +570,26 @@ _Alu2:
 		impr_texto Op7,tamano_Op7
 		mov eax,			 dword [rsp+r14+8]
 		sub eax,			 dword [rsp+r13+8] 
-		mov dword [rsp+r12+8], eax	
-		;mov r9d,             eax
+		mov dword [rsp+r12+8], eax	 
 		ret
 
 	_subu:
-		mov eax,         dword [rsp+r13+8] ; rt pointer	
+		mov eax,         dword [rsp+r13+8] 	   ; rt pointer	
 		cmp eax,         0
-		jg _subuRtIsPositive              	; Unsigned operation 
-		mov r9d,         -1  ; se carga el registro con -1 para multiplicar
-		imul r9d ; ecx             ; se multiplica por -1 para que el resultado sea positivo
-		;mov r9d,         eax ; guarda el valor modificado en el registro deseado
+		jg _subuRtIsPositive              	   ; Unsigned operation 
+		mov r9d,         -1                    ; se carga el registro con -1 para multiplicar
+		imul r9d                               ; se multiplica por -1 para que el resultado sea positivo
+
 		
 		_subuRtIsPositive:
-			mov r9d,         eax ; guarda el valor modificado en el registro deseado
+			mov r9d,         eax 			    
 
-			mov eax,     dword [rsp+r14+8] ; rs pointer
+			mov eax,     dword [rsp+r14+8]     ; rs pointer
 			cmp eax,     0
 			jg _subuRsIsPositive
 			mov ebp,     -1
-			imul ebp
-
-			;sub eax,     r9d 
-			;mov dword [rsp+r12+8], eax
-			;ret 
-		
+			imul ebp 
+ 
 		_subuRsIsPositive:
 			sub eax,     r9d 
 			mov dword [rsp+r12+8], eax
@@ -655,7 +597,7 @@ _Alu2:
 
 	_ori:
 		mov eax,         dword [rsp+r14+8]
-		or eax,          r9d  ; Imm
+		or eax,          r9d  				   ; Imm
 		mov dword [rsp+r13+8], eax
 		ret
 
@@ -663,22 +605,16 @@ _Alu2:
 	_beq: 
 		mov eax,         dword [rsp+r14+8]  ; [rs]
 		sub eax,         dword [rsp+r13+8]  ; [rt]
-		;mov eax,         ebx
-		;add ebx,         8 ;r9d
-		;_1:
+
 		cmp eax,         0
 		je _BeqC
 		jne _BeqR
 
 		_BeqC:
 			add ebx,                    r9d 
-			;_2:
-			;mov eax,				    r9d  
-			;mov dword [BranchAddress],  eax  ; Imm
 			ret 
 
 		_BeqR: 
-			;	mov dword [BranchAddress],  0x0  ; 0
 			ret 
 
 
@@ -690,31 +626,25 @@ _Alu2:
 		jne _bneR
 
 		_bneR:
-			add ebx,                    r9d 
-			;mov eax,				    r9d  
-			;mov dword [BranchAddress],  eax  ; Imm
+			add ebx,                    r9d  
 			ret 
 
-		_bneC: 
-			;	mov dword [BranchAddress],  0x0  ; 0
+		_bneC:  
 			ret 
 
 	_j:
-		mov ebx, 		r8d ; getting the jAddress
+		mov ebx, 		r8d 				; getting the jAddress
 		ret         
 
 	_jal: 
 		;add ebx, 8
 		;PC+8;sub ebx,  8  ; apuntando a la instruccion anterior (suponiendo que estan consecutivas, REVISAR)
 		mov dword [rsp+OFFSET_POINTER_REG+8 +124], ebx ; R[31] = PC+8
-											; R[31] => 31*4
+											; R[31] => 31*4 = 124
 		add ebx, 8
 		_jal2:			
 			mov ebx,        r8d  
 		ret 
-
-
-
 
 	_slt: 
 		;impr_texto Op15,tamano_Op15
@@ -731,8 +661,6 @@ _Alu2:
 			mov eax,  1
 			mov dword [rsp+r12+8], eax
 			ret	
-
-
 
 	_slti:
 		mov eax,         dword [rsp+r14+8] ; rs pointer	
@@ -787,11 +715,11 @@ _Alu2:
 		cmp eax,         0
 		jg _isPositive
 		; Unsigned operation 
-		mov r9d,         -1  ; se carga el registro con -1 para multiplicar
-		imul r9d ; ecx             ; se multiplica por -1 para que el resultado sea positivo
+		mov r9d,         -1                ; se carga el registro con -1 para multiplicar
+		imul r9d                           ; se multiplica por -1 para que el resultado sea positivo
 
 		_isPositive:
-			mov r9d,         eax ; guarda el valor modificado en el registro deseado
+			mov r9d,         eax           ; guarda el valor modificado en el registro deseado
 			mov eax,     dword [rsp+r14+8] ; rs pointer
 			cmp eax,     0
 			jg _continueSlt
@@ -799,7 +727,7 @@ _Alu2:
 			imul ebp
 		
 		_continueSlt:
-			cmp eax,     r9d; ecx
+			cmp eax,     r9d       
 			jl _Rd1u
 
 		_Rd0u:
@@ -819,7 +747,6 @@ _Alu2:
 		;mov ebx,			 dword [rsp+r13+8]
 		mov eax,			 dword [rsp+r13+8]
 		imul eax ;ebx
-		;mov r9d,             eax
 		ret 
 
 ;----------------- I-Type----------------------------
@@ -828,11 +755,8 @@ _Alu2:
 	_addi:
 		;impr_texto Op1, tamano_Op1
 		mov eax, 	    	 dword [rsp+r14+8]    ; Register ( $rs ) Data 
-		;mov ecx, 			 r9d ; dword [ImCtrl]     ; Immediate from Control 
-		add eax,    		 r9d                 ; ImmediateCtrl
-		;mov r9d,             eax
+		add eax,    		 r9d                  ; ImmediateCtrl
 		mov dword [rsp+r13+8], eax                ; addi into Reg Bank (addressed $rt) i-type
-		;_3:
 		ret 
 
 	_endAlu:
@@ -842,10 +766,10 @@ _Alu2:
 
 section .data
 ;-------------------  Memory Data -------------------------
-  iMEM_BYTES:   equ 56    ; x/4 = words num       		; Instructions Memory allocation
-  REG_BYTES:	equ 128   ; 32 dwords 
-  DATAMEM_BYTES:	equ 56
-  TOT_MEM:		equ 240 ; 184   ; iMEM+REG_B
+  iMEM_BYTES:     equ 56                          ; x/4 = words num	; Instructions Memory allocation
+  REG_BYTES:	  equ 128   					  ; 32 dwords 
+  DATAMEM_BYTES:  equ 56
+  TOT_MEM:		  equ 240    ; iMEM+REG_B
 
   msg:          db " Memory Allocated! ", 10
   len:          equ $ - msg
@@ -857,7 +781,7 @@ section .data
 
   OFFSET_POINTER_ADDRESS:  equ 184 ;   
   OFFSET_POINTER_DATAMEM:  equ 184 ; iMEM_BYTES+REG_BYTES
-  OFFSET_POINTER_REG:      equ iMEM_BYTES 					; 1 dword = 4 bytes
+  OFFSET_POINTER_REG:      equ iMEM_BYTES 				; 1 dword = 4 bytes
   						  								; 128bytes = 32 dwords
   	    				  								; offset for Registers Allocation
 
@@ -902,45 +826,18 @@ section .data
 
 
 section .bss
-	FD_OUT: 	resb 1
-	FD_IN: 		resb 1
-	TEXT: 		resb 32
-	;Num: 		resb 33 
+	FD_OUT: 	    resb 1
+	FD_IN: 		    resb 1
+	TEXT: 		    resb 32
 
-;------------ Control -----------------
-; se reserva 1 byte para cada una
-   ;AluSrc:   resb 1 ; r8
-   ;RegWrite: resb 1 ;r9
-   ;MemtoReg: resb 1 ;r10
-   ;AluOp:    resb 1 ;r11
-   ;RegDst:   resb 1 ;r12
-   ;Jump:     resb 1 ;r13
-   ;OpCode:   resb 4 ;r14 
-   ;Function: resb 4
-   ;ImCtrl:   resb 4 
-   Shamt:    resb 4
-   
-   ;Branch:   resb 1
-   ;MemRead:  resb 1
-   ;MemWrite: resb 1
-   ;RegDest:  resb 1 
-
-   BranchAddress: resb 4   
+	Shamt:          resb 4
+   	BranchAddress:  resb 4   
 
 
 
 section  .text
    global _start       
-   ;global _txt
-   ;global _shift
 
-   ;global _1
-   ;global _2
-   ;lobal _3
-   ;global _4
-   ;global _5
-   ;global _6
-   ;global _7
 
 _start:                     			; tell linker entry point
 
@@ -998,8 +895,8 @@ _loadAddress:
 	mov r15, 	    r13 
 	sub r13,        20						; 20 positions before Index, starts the address
 	GetFromTxt 		r13 					; output is $r12d
-	;mov eax,        r12d
-	mov r14, 		r12    ; rax					    ; $r14 is the Memory address pointer
+
+	mov r14, 		r12 				    ; $r14 is the Memory address pointer
 	_3:
 	and r14,        0xFF
 	;mov dword [rsp+r14+OFFSET_POINTER_ADDRESS], r12d
@@ -1020,13 +917,11 @@ _loadInstruction:
 ;------------- Virtual memory $rsp contains addressed instructions ---------------
 
 
-_Reg:	; SIGUIENTE PASO : HACER LOOP PARA LLAMAR INSTRUCCION A LA VEZ 
-	mov rdi, iMEM_BYTES;/4 ;14      ; Number of words for the assignation ; 0xE ; iMEM_BYTES/4 ; 3
-	mov ebx, 0x4     ; 0x38 last word  ; 0x24  ; first instruct address +4 
-	mov dword [rsp+OFFSET_POINTER_DATAMEM +24], 0x1  ; (6)*4 =24, 
-												;manually load
-
-
+_Reg:	
+	mov rdi, iMEM_BYTES;/4 								; Number of words for the assignation ; 0xE ; iMEM_BYTES/4 ; 3
+	mov ebx, 0x4     									; 0x38 last word  ; 0x24  ; first instruct address +4 
+	mov dword [rsp+OFFSET_POINTER_DATAMEM +24], 0x1     ; (6)*4 =24, 
+												        ;manually load
 
 ;and ebx,  0xFF ; 
 	;mov dword [BranchAddress], 0x0 
@@ -1037,7 +932,6 @@ _PCLoop:
 	dec rdi
 
 	call _DECO 
-	;call _MasterControl
 	call _Alu2
 	;_2:
 	cmp rdi, 0x0
@@ -1046,10 +940,8 @@ _PCLoop:
 
 _Reg1:
 
-		
-
-;exit:                              
-	_end:
+                             
+_end:
  	mov rax,       		 SYS_EXIT
    	mov rdi,       		 STDIN
     xor rbx,       		 rbx
