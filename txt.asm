@@ -8,12 +8,30 @@
 ;-----------------------------------------------------------------------
 %macro impr_texto 2 	;recibe 2 parametros
 	mov rax, 1	;sys_write
-	mov rdi, 1	;std_out
+	;mov rdi, 1	;std_out
 	mov rsi, %1	;primer parametro: Texto
 	mov rdx, %2	;segundo parametro: Tamano texto
 	syscall
 %endmacro
 ;------------------------- FIN DE MACRO --------------------------------
+;macro para convertir variable en memoria a string y que pueda ser impreso en pantalla
+%macro convstr 1;  ;Opcode = %1 
+  	mov rax, [%1]
+	add rax, 48 ;'0'
+	mov [%1], rax
+%endmacro
+
+;mov dword [rsp+address], arg1 
+
+
+%macro imp 1;
+	mov rax, SYS_WRITE
+	;mov ebx, STDOUT
+	mov rsi, %1
+	mov rdx, 2 ;1
+	syscall ;int 0x80
+%endmacro
+
 
 
 ;-------------------------  MACRO #2  ----------------------------------
@@ -28,13 +46,17 @@
 	;------- Copy upper dword from TEXT Buffer ------
 	;------------------------------------------------
 
-	  	mov rdx, 			qword [TEXT+%1+1]       ; [..] Instruction;
+	  	mov rdx, 		    %1 ;  qword [Ascii2Hex]		; qword [TEXT+%1+1]       ; [..] Instruction;
 	  	mov ecx, 			32						; Shift 32 bits
 	  	shr rdx, 			cl              		
 
 	; The input text is hex in ASCII so you receive : 
 	; word format     :		$eax : 0011abcd_0011efgh_0110ijkl_0110mnño...   
 	; and you want it :     $rsp : abcd_efgh_ijkl_mnño...
+
+
+		 
+
 	;------------------------------------------------
 	       ; 20080003 >> for 3
 	  	mov r8d, 			edx 					; $aux1
@@ -107,16 +129,18 @@
 		
 		or r12d,			edx 					; Partial data	 
 	;................................................
-
+		 
 	;------------------------------------------------
 	;------- Copy lower dword from TEXT Buffer ------
 	;------------------------------------------------
 		;mov eax, 			dword [TEXT+r13+1]  	
 			; 20080003 >> es el 2
-		mov r8d, 			dword [TEXT+r13+1]     	; Truncate Buffer 
-		mov r9d,            dword [TEXT+r13+1]      ; $aux5
-		and r8d,   			0x0000000F
-		
+		mov rax,            %1	   ;dword [Ascii2Hex]		
+		mov r8d, 			eax              ; dword [TEXT+r13+1]     	; Truncate Buffer 
+		mov r9d,            eax              ; dword [TEXT+r13+1]      ; $aux5
+
+
+		and r8d,   			0x0000000F		
 		mov r10d,           r9d 
 		and r10d,   		0x000000FF 				; masking 
 		shr r10d, 			0  	
@@ -180,6 +204,7 @@
 	  	shr edx, 			cl              		; dh, cl
 		
 		or r12d,			edx 					; $r12d contains the data 
+		 
 %endmacro
 
 
@@ -189,6 +214,8 @@
 ;----------------------------------------------------
 _HexAsciiFixer: 
 ;------------------ Check which hex to fix {0123456789}
+	 
+
 	cmp eax, 0x30 
 	je _50
 
@@ -289,6 +316,140 @@ _HexAsciiFixer:
 ;.......................................................................
 
 
+Hex2Ascii:
+	mov r14,   r15 ;[string]
+	and r14, 0x0000000f;mascara, para extraer los ultimos bits
+	cmp r14, 0x00000009
+	jbe esn1;  salta si es numero
+	ja ess1; salta si es string
+
+esn1:
+	add r14, 0x30 
+	jmp segundo
+ ess1:
+	add r14, 0x37 
+	
+
+;_______________________________________________________________________
+segundo:
+	shl r14, 56
+	mov [regout], r14
+	mov r14, r15 ;[string]
+	shr r14, 4
+	and r14, 0x0000000f;mascara, para extraer los ultimos bits
+	cmp r14, 0x00000009
+	jbe esn2;  salta si es numero
+	ja ess2; salta si es string
+
+esn2:
+	add r14, 0x30 
+	jmp tercero
+ ess2:
+	add r14, 0x37
+	
+;________________________________________
+tercero:
+	shl r14, 48
+	or [regout], r14
+	mov r14,     r15    ;[string]
+	shr r14, 8
+	and r14, 0x0000000f;mascara, para extraer los ultimos bits
+	cmp r14, 0x00000009
+	jbe esn3;  salta si es numero
+	ja ess3; salta si es string
+
+esn3:
+	add r14, 0x30 
+	jmp cuarto
+ ess3:
+	add r14, 0x37
+
+cuarto:
+	shl r14, 40
+	or [regout], r14
+	mov r14,     r15     ; [string]
+	shr r14, 12
+	and r14, 0x0000000f;mascara, para extraer los ultimos bits
+	cmp r14, 0x00000009
+	jbe esn4;  salta si es numero
+	ja ess4; salta si es string
+
+esn4:
+	add r14, 0x30 
+	jmp quinto
+ ess4:
+	add r14, 0x37
+
+quinto:
+	shl r14, 32
+	or [regout], r14
+	mov r14,     r15   ;[string]
+	shr r14, 16
+	and r14, 0x0000000f;mascara, para extraer los ultimos bits
+	cmp r14, 0x00000009
+	jbe esn5;  salta si es numero
+	ja ess5; salta si es string
+
+esn5:
+	add r14, 0x30 
+	jmp sexto
+ ess5:
+	add r14, 0x37
+sexto:
+	shl r14, 24
+	or [regout], r14
+	mov r14,     r15   ;[string]
+	shr r14, 20
+	and r14, 0x0000000f;mascara, para extraer los ultimos bits
+	cmp r14, 0x00000009
+	jbe esn6;  salta si es numero
+	ja ess6; salta si es string
+
+esn6:
+	add r14, 0x30 
+	jmp setimo
+ ess6:
+	add r14, 0x37
+
+setimo:
+	shl r14, 16
+	or [regout], r14
+	mov r14,     r15  ;[string]
+	shr r14, 24
+	and r14, 0x0000000f;mascara, para extraer los ultimos bits
+	cmp r14, 0x00000009
+	jbe esn7;  salta si es numero
+	ja ess7; salta si es string
+
+esn7:
+	add r14, 0x30 
+	jmp octavo
+ ess7:
+	add r14, 0x37
+octavo:
+
+	shl r14, 8
+	or [regout], r14
+	mov r14,     r15 ; [string]
+	shr r14, 28
+	and r14, 0x0000000f;mascara, para extraer los ultimos bits
+	cmp r14, 0x00000009
+	jbe esn8;  salta si es numero
+	ja ess8; salta si es string
+
+esn8:
+	add r14, 0x00000030; lo convierte en numero ascii
+	jmp saledec
+ ess8:
+	add r14, 0x00000037; lo conv en letra
+;________________________________________
+saledec:
+	
+	or [regout], r14
+	mov r13, [regout]
+ 	ret
+
+
 ;-----------------------------------------------------------------------
 ;------------------------ Instruction Decoder --------------------------
 ;-----------------------------------------------------------------------
@@ -319,7 +480,6 @@ _DECO:
 	mov edx, 			dword r8d
 	shr edx,			cl 							  ; $rdx is the output ( OPCODE )
 	mov r15,            rdx
-
 
 ;--------------------- Mask & shift for $rs 	
 	mov r8d, 			dword [rsp+rbx]				  ; getting instruction from memory; 
@@ -385,6 +545,80 @@ _DECO:
 	ret
 
 
+;------------------------------ Prints ----------------------------------------
+;etiqueta para imprimir
+;;_imprimirdeco:
+	; %1 = $r15 ( OPCODE )
+	; %2 = $r14 ( rs )
+	; %3 = $r13 ( rt )
+	; %4 = $r12 ( rd )
+	; %5 = $r10 ( Function ) 
+	; %6 = $r9  ( Immediate) 
+	; %7 = $r8  ( Address )
+
+
+	;mov eax,        51
+	;sub eax, OFFSET_POINTER_REG
+ ;;   mov eax,  dword [rsp+OFFSET_POINTER_DATAMEM +24 +8]; [string];  ;[RS] ;,   [rsp+OFFSET_POINTER_REG+OFFSET_RSPCALL] ;  First Registers from Bank Reg
+   	;add eax,    48 ;    55 ;48 ;71 ;62 ;71 ;71 ;55 
+	;mov [RS],       eax
+
+	;impr_texto fmtint, 1
+;	_acb:
+;		mov rax, 1	;sys_write
+		;mov rdi,1	;std_out
+;		mov rsi, fmtint2 ;primer parametro: Texto
+;		mov rdx, 1	    ;segundo parametro: Tamano texto
+;		syscall
+
+
+;	ret 
+
+
+    ;mov [Opcode],   r15d
+;	mov [Function], r10d 
+
+    ;mov [RS],       eax
+;    mov [RT],       r13d
+;    mov [RD],       r12d
+;    mov [Address],  r8d
+;    mov [Immediate],r9d	
+;    cmp r15d, 		0x0 		 ; OPCODE = 0 for R-type
+;	je _ImprimeR      
+	;cmp r15d, 				   0x02      ; OPCODE = 2 (j), J-type
+	;je ImprimeJ
+	;cmp r15d, 				   0x03      ; OPCODE = 3 (jal), J-type
+	;je ImprimeJ
+	;jne ImprimeI
+;	ret 
+
+
+
+ 	;ret 
+
+
+      
+    ;_ImprimeR:
+      	
+      	;impr_texto cons_banner0, cons_tamano_banner0
+		;impr_texto cons_banner01, cons_tamano_banner01
+		;impr_texto cons_banner02, cons_tamano_banner02
+
+;		convstr RS
+;		mov rax, [RS]
+;		_8:
+;		imp RS
+;		mov rax, [RS]
+;		_9:
+
+
+
+    ;Salidaimp:
+   		;ret 
+
+
+
+
 ;------------------------------------------------------------------------------
 ;------------------------------ Master ALU ------------------------------------
 ;------------------------------------------------------------------------------
@@ -398,6 +632,9 @@ _DECO:
 	; %7 = $r8  ( Address )
 
 _Alu2: 
+	;mov [Opcode], r15d
+	;mov [Function], r10d 
+
 	cmp r15d, 0x00
 	je _OPcodeR
 	jne _OPcodeI
@@ -406,23 +643,23 @@ _Alu2:
 		cmp r15d, 0x8 ; addi
 		je _addi 
 
-		cmp r15d, 0xd ; ori
-		je _ori 
+;		cmp r15d, 0xd ; ori
+;		je _ori 
 
 		cmp r15d, 0xc ; andi  
 		je _andi
 
-		cmp r15d, 0xa ; slti
-		je _slti
+		;cmp r15d, 0xa ; slti
+		;je _slti
 
-		cmp r15d, 0xb 
-		je _sltiu
+		;cmp r15d, 0xb 
+		;je _sltiu
 
-		cmp r15d, 0x4 ; beq
-		je _beq
+;		cmp r15d, 0x4 ; beq
+;		je _beq
 
-		cmp r15d, 0x5 ; bne
-		je _bne
+;		cmp r15d, 0x5 ; bne
+;		je _bne
 
 		cmp r15d, 0x2 ; j
 		je _j 
@@ -437,11 +674,11 @@ _Alu2:
  
 
 	_OPcodeR:
-		cmp r10d, 0x00 ; shl function
-		je _shl 			
+;		cmp r10d, 0x00 ; shl function
+;		je _shl 			
  
-		cmp r10d, 0x02 ; shr function
-		je _shr
+;		cmp r10d, 0x02 ; shr function
+;		je _shr
  
 		cmp r10d, 0x18 ; *mult function
 		je _imul 
@@ -454,23 +691,23 @@ _Alu2:
 		cmp r10d, 0x20 ; add function
 		je _add 									
 
-		cmp r10d, 0x22 ; and function
+		cmp r10d, 0x22 ; sub function
 		je _sub 
 
-		cmp r10d, 0x23 ; subu function 
-		je _subu
+;		cmp r10d, 0x23 ; subu function 
+;		je _subu
 		
-		cmp r10d, 0x24 ; and function
-		je _and 										
+;		cmp r10d, 0x24 ; and function
+;		je _and 										
 									 
 		cmp r10d, 0x25 ; or function
 		je _or 						
  
-		cmp r10d, 0x27 ; nor function
-		je _nor 
+;		cmp r10d, 0x27 ; nor function
+;		je _nor 
 
-		cmp r10d, 0x2a ; slt function
-		je _slt 
+		;cmp r10d, 0x2a ; slt function
+		;je _slt 
 
 		;cmp r10d, 0x2b ; sltu function
 		;je _sltu 
@@ -512,12 +749,12 @@ _Alu2:
 			mov dword [rsp+r12+OFFSET_RSPCALL], eax
 			ret 
   
-	_and:
-		impr_texto Op2, tamano_Op2
-		mov eax,			 dword [rsp+r14+OFFSET_RSPCALL]	 ; getting data 
-		and eax, 			 dword [rsp+r13+OFFSET_RSPCALL] 
-		mov dword [rsp+r12+OFFSET_RSPCALL], eax
-		ret
+;	_and:
+;		impr_texto Op2, tamano_Op2
+;		mov eax,			 dword [rsp+r14+OFFSET_RSPCALL]	 ; getting data 
+;		and eax, 			 dword [rsp+r13+OFFSET_RSPCALL] 
+;		mov dword [rsp+r12+OFFSET_RSPCALL], eax
+;		ret
 
 	_andi: 
 		mov eax,             dword [rsp+r14+OFFSET_RSPCALL]
@@ -531,29 +768,29 @@ _Alu2:
 		or eax,              dword [rsp+r13+OFFSET_RSPCALL] 
 		mov dword [rsp+r12+OFFSET_RSPCALL], eax		
 		ret 
-	_nor:
-		impr_texto Op4,tamano_Op4
-		mov eax, 		     dword [rsp+r14+OFFSET_RSPCALL]
-		or eax, 			 dword [rsp+r13+OFFSET_RSPCALL] 
-		not eax
-		mov dword [rsp+r12+OFFSET_RSPCALL], eax			 
-		ret 
+;	_nor:
+;		impr_texto Op4,tamano_Op4
+;		mov eax, 		     dword [rsp+r14+OFFSET_RSPCALL]
+;		or eax, 			 dword [rsp+r13+OFFSET_RSPCALL] 
+;		not eax
+;		mov dword [rsp+r12+OFFSET_RSPCALL], eax			 
+;		ret 
 
-	_shl: ; ******   sll 
-		;impr_texto Op5,tamano_Op5 
-		mov eax,             dword [rsp+r13+OFFSET_RSPCALL] ; rt ! 
-		mov ecx, 			 dword [Shamt]
-		shl eax,             cl
-		mov dword [rsp+r12+OFFSET_RSPCALL], eax		       ; output pointer is rd
-		ret 
+;	_shl: ; ******   sll 
+;		;impr_texto Op5,tamano_Op5 
+;		mov eax,             dword [rsp+r13+OFFSET_RSPCALL] ; rt ! 
+;		mov ecx, 			 dword [Shamt]
+;		shl eax,             cl
+;		mov dword [rsp+r12+OFFSET_RSPCALL], eax		       ; output pointer is rd
+;		ret 
 
-	_shr: ; ******   srl
-		;impr_texto Op6,tamano_Op6
-		mov eax,			 dword [rsp+r13+OFFSET_RSPCALL]
-		mov ecx, 			 dword [Shamt]
-		shr eax,			 cl
-		mov dword [rsp+r12+OFFSET_RSPCALL], eax		       ; output pointer is rd		
-		ret 
+;	_shr: ; ******   srl
+;		;impr_texto Op6,tamano_Op6
+;		mov eax,			 dword [rsp+r13+OFFSET_RSPCALL]
+;		mov ecx, 			 dword [Shamt]
+;		shr eax,			 cl
+;		mov dword [rsp+r12+OFFSET_RSPCALL], eax		       ; output pointer is rd		
+;		ret 
 
 	_jr:	 ; PC = R[rs]
 		mov ebx,             dword [rsp+r14+OFFSET_RSPCALL] ; PC<--R[rs] 
@@ -565,7 +802,7 @@ _Alu2:
 		add eax,             r9d               ; [rs] + Imm
 		;imul eax, 4 						   ; (6)*4 = 24, byte adjust 
 		imul r8d 
-		_1:
+ 
 
 							         ; se multiplica por -1 para que el resultado sea positivo
 		 
@@ -574,7 +811,7 @@ _Alu2:
 			
 			mov r10d,            dword [rsp+rax+OFFSET_RSPCALL+OFFSET_POINTER_DATAMEM]
 			mov dword [rsp+r13+OFFSET_RSPCALL], r10d ;eax
-		_2:
+	 
 		ret 
 
 
@@ -584,67 +821,69 @@ _Alu2:
 		impr_texto Op7,tamano_Op7
 		mov eax,			 dword [rsp+r14+OFFSET_RSPCALL]
 		sub eax,			 dword [rsp+r13+OFFSET_RSPCALL] 
-		mov dword [rsp+r12+OFFSET_RSPCALL], eax	 
+		
+		_sub2:
+			mov dword [rsp+r12+OFFSET_RSPCALL], eax	 
 		ret
 
-	_subu:
-		mov eax,         dword [rsp+r13+OFFSET_RSPCALL] 	   ; rt pointer	
-		cmp eax,         0
-		jg _subuRtIsPositive              	   ; Unsigned operation 
-		mov r9d,         -1                    ; se carga el registro con -1 para multiplicar
-		imul r9d                               ; se multiplica por -1 para que el resultado sea positivo
+;	_subu:
+;		mov eax,         dword [rsp+r13+OFFSET_RSPCALL] 	   ; rt pointer	
+;		cmp eax,         0
+;		jg _subuRtIsPositive              	   ; Unsigned operation 
+;		mov r9d,         -1                    ; se carga el registro con -1 para multiplicar
+;		imul r9d                               ; se multiplica por -1 para que el resultado sea positivo
 
 		
-		_subuRtIsPositive:
-			mov r9d,         eax 			    
+;		_subuRtIsPositive:
+;			mov r9d,         eax 			    
 
-			mov eax,     dword [rsp+r14+OFFSET_RSPCALL]     ; rs pointer
-			cmp eax,     0
-			jg _subuRsIsPositive
-			mov ebp,     -1
-			imul ebp 
+;			mov eax,     dword [rsp+r14+OFFSET_RSPCALL]     ; rs pointer
+;			cmp eax,     0
+;			jg _subuRsIsPositive
+;			mov ebp,     -1
+;			imul ebp 
  
-		_subuRsIsPositive:
-			sub eax,     r9d 
-			mov dword [rsp+r12+OFFSET_RSPCALL], eax
-			ret 
+;		_subuRsIsPositive:
+;			sub eax,     r9d 
+;			mov dword [rsp+r12+OFFSET_RSPCALL], eax
+;			ret 
 
-	_ori:
-		mov eax,         dword [rsp+r14+OFFSET_RSPCALL]
-		or eax,          r9d  				   ; Imm
-		mov dword [rsp+r13+OFFSET_RSPCALL], eax
-		ret
-
-
-	_beq: 
-		mov eax,         dword [rsp+r14+OFFSET_RSPCALL]  ; [rs]
-		sub eax,         dword [rsp+r13+OFFSET_RSPCALL]  ; [rt]
-
-		cmp eax,         0
-		je _BeqC
-		jne _BeqR
-
-		_BeqC:
-			add ebx,                    r9d 
-			ret 
-
-		_BeqR: 
-			ret 
+;	_ori:
+;		mov eax,         dword [rsp+r14+OFFSET_RSPCALL]
+;		or eax,          r9d  				   ; Imm
+;		mov dword [rsp+r13+OFFSET_RSPCALL], eax
+;		ret
 
 
-	_bne: 
-		mov eax,         dword [rsp+r14+OFFSET_RSPCALL]  ; [rs]
-		sub eax,         dword [rsp+r13+OFFSET_RSPCALL]  ; [rt]
-		cmp eax,         0
-		je _bneC
-		jne _bneR
+;	_beq: 
+;		mov eax,         dword [rsp+r14+OFFSET_RSPCALL]  ; [rs]
+;		sub eax,         dword [rsp+r13+OFFSET_RSPCALL]  ; [rt]
 
-		_bneR:
-			add ebx,                    r9d  
-			ret 
+;		cmp eax,         0
+;		je _BeqC
+;		jne _BeqR
 
-		_bneC:  
-			ret 
+;		_BeqC:
+;			add ebx,                    r9d 
+;			ret 
+
+;		_BeqR: 
+;			ret 
+
+
+;	_bne: 
+;		mov eax,         dword [rsp+r14+OFFSET_RSPCALL]  ; [rs]
+;		sub eax,         dword [rsp+r13+OFFSET_RSPCALL]  ; [rt]
+;		cmp eax,         0
+;		je _bneC
+;		jne _bneR
+
+;		_bneR:
+;			add ebx,                    r9d  
+;			ret 
+
+;		_bneC:  
+;			ret 
 
 	_j:
 		mov ebx, 		r8d 				; getting the jAddress
@@ -661,67 +900,67 @@ _Alu2:
 		add ebx, 4
 		ret 
 
-	_slt: 
+;	_slt: 
 		;impr_texto Op15,tamano_Op15
-		mov eax,      dword [rsp+r14+OFFSET_RSPCALL] ; rs pointer
-		cmp eax,      dword [rsp+r13+OFFSET_RSPCALL] ; rt pointer
-		jl _Rd1
+;		mov eax,      dword [rsp+r14+OFFSET_RSPCALL] ; rs pointer
+;		cmp eax,      dword [rsp+r13+OFFSET_RSPCALL] ; rt pointer
+;		jl _Rd1
 
-		_Rd0:
-			mov eax,  0
-			mov dword [rsp+r12+OFFSET_RSPCALL], eax
-			ret 
+;		_Rd0:
+;			mov eax,  0
+;			mov dword [rsp+r12+OFFSET_RSPCALL], eax
+;			ret 
 
-		_Rd1:
-			mov eax,  1
-			mov dword [rsp+r12+OFFSET_RSPCALL], eax
-			ret	
+;		_Rd1:
+;			mov eax,  1
+;			mov dword [rsp+r12+OFFSET_RSPCALL], eax
+;			ret	
 
-	_slti:
-		mov eax,         dword [rsp+r14+OFFSET_RSPCALL] ; rs pointer	
-		cmp eax,         r9d               ; cmp with imm 
-		jl _sltiSetLess
+;	_slti:
+;		mov eax,         dword [rsp+r14+OFFSET_RSPCALL] ; rs pointer	
+;		cmp eax,         r9d               ; cmp with imm 
+;		jl _sltiSetLess
 
-		mov dword [rsp+r13+OFFSET_RSPCALL],  0          ; [rs] = 0
-		ret
+;		mov dword [rsp+r13+OFFSET_RSPCALL],  0          ; [rs] = 0
+;		ret
 
-		_sltiSetLess: 
-			mov dword [rsp+r13+OFFSET_RSPCALL], 1       ; [rt] = 1
-			ret
+;		_sltiSetLess: 
+;			mov dword [rsp+r13+OFFSET_RSPCALL], 1       ; [rt] = 1
+;			ret
 
 
-    _sltiu: ; ESTA TODAVIA NO FUNCIONA
-    	mov eax,         dword [rsp+r14+OFFSET_RSPCALL]       ; [rs]
-    	cmp eax,         0
-		jg _sltiuSetLess
+;    _sltiu: ; ESTA TODAVIA NO FUNCIONA
+;    	mov eax,         dword [rsp+r14+OFFSET_RSPCALL]       ; [rs]
+;    	cmp eax,         0
+;		jg _sltiuSetLess
 		; Unsigned operation 
-		mov r10d,        -1  ; r10d reg because we don't need function
-		imul r10d             ; se multiplica por -1 para que el resultado sea positivo
+;		mov r10d,        -1  ; r10d reg because we don't need function
+;		imul r10d             ; se multiplica por -1 para que el resultado sea positivo
 
-		_sltiuSetLess:
-			mov r8d,      eax			
-			continueSltiu0:
-				mov eax,       r9d	
+;		_sltiuSetLess:
+;			mov r8d,      eax			
+;			continueSltiu0:
+;				mov eax,       r9d	
 
-				cmp eax,      0
-				jg _continueSltiu
+;				cmp eax,      0
+;				jg _continueSltiu
 
-				mov ebp,     -1
-				imul ebp            ; eax = imm
+;				mov ebp,     -1
+;				imul ebp            ; eax = imm
 		
-		_continueSltiu:
-			cmp eax,      r8d
-			jl _Rd0iu
+;		_continueSltiu:
+;			cmp eax,      r8d
+;			jl _Rd0iu
 
-		_Rd0iu:
-			mov eax,  0
-			mov dword [rsp+r13+OFFSET_RSPCALL], eax
-			ret 
+;		_Rd0iu:
+;			mov eax,  0
+;			mov dword [rsp+r13+OFFSET_RSPCALL], eax
+;			ret 
 
-		_Rd1iu:
-			mov eax,  1
-			mov dword [rsp+r13+OFFSET_RSPCALL], eax
-			ret	    	
+;		_Rd1iu:
+;			mov eax,  1
+;			mov dword [rsp+r13+OFFSET_RSPCALL], eax
+;			ret	    	
 
 
 
@@ -762,26 +1001,14 @@ _Alu2:
 		;mov ebx,			 dword [rsp+r13+8]
 		mov r9d,             dword [rsp+r14+OFFSET_RSPCALL]
 		mov eax,			 dword [rsp+r13+OFFSET_RSPCALL]
-		_5:
+		 
 		imul r9 ;eax ;ebx
 		_continueImul:
 			mov rsi, rax
 		;mov [var_mfhi], rax
-		_6:
+		 
 		ret 
-
-;	_mfhi:
-;		mov rax, [var_mfhi] 
-;		shr rax, 32
-;		mov dword [rsp+r12+OFFSET_RSPCALL], eax
-;		_6:
-;		ret
-;	_mflo:
-;		mov rax, [var_mfhi]
-		;shr rax, 32
-;		mov dword [rsp+r12+OFFSET_RSPCALL], eax
-;		_7:
-;		ret		
+	
 
 ;----------------- I-Type----------------------------
 ; Pointer 	 $rs  ($r14)
@@ -800,17 +1027,23 @@ _Alu2:
 
 section .data
 ;-------------------  Memory Data -------------------------
-  iMEM_BYTES:     equ 400 ;600 ;56 ;400 ;                          ; x/4 = words num	; 100 dwords, Instructions Memory allocation 
+  iMEM_BYTES:     equ 56 ; 400 ;600 ;56 ;400 ;                          ; x/4 = words num	; 100 dwords, Instructions Memory allocation 
   REG_BYTES:	  equ 128              				   ; 32 dwords
-  DATAMEM_BYTES:  equ 400 ;56  ;400 
-  TOT_MEM:		  equ 928 ;1128 ;928 ;240 ; 928    ; iMEM+REG_B
+  DATAMEM_BYTES:  equ 56 ; 400 ;56  ;400 
+  TOT_MEM:		  equ 240 ; 928 ;1128 ;928 ;240 ; 928    ; iMEM+REG_B
+ 
 
   msg:          db " Memory Allocated! ", 10
   len:          equ $ - msg
-  fmtint:       db "%ld", 10, 0
+  fmtint:       equ $RS ; $string ; $RS ;, 10, 0
+  fmtint2:      equ $string ;
+  fmtint4:      equ $string2 
+  fmtint3:      equ $regout
+;  strlen:       equ $-string ;fmtint2 
+
 
   FILE_NAME:    db "code.txt", 0
-  FILE_LENGTH:  equ 240 				        		; length of inside text
+  FILE_LENGTH:  equ 200 				        		; length of inside text
   
 
   ;OFFSET_POINTER_ADDRESS:  equ 184 ; 
@@ -858,8 +1091,44 @@ section .data
   tamano_l3: equ $-l3
   num1: equ 0x1
 
+;----------------- Prints ----------------------------
+	cons_banner0: db 0xa, ' La instruccion es de tipo R y posee el siguiente formato:  ', 0xa		
+	cons_tamano_banner0: equ $-cons_banner0				
+
+	cons_banner01: db 0xa, ' Opcode: ', 0xa 			
+	cons_tamano_banner01: equ $-cons_banner01		
+
+	cons_banner02: db 0xa, 'RS: ', 0xa			
+	cons_tamano_banner02: equ $-cons_banner02		
+
+	cons_banner03: db 0xa, 'RT: ', 0xa			
+	cons_tamano_banner03: equ $-cons_banner03	
+
+	cons_banner04: db 'RD: 0xa, ', 0xa			
+	cons_tamano_banner04: equ $-cons_banner04
+
+    cons_banner05: db 0xa, 'Shamt: ', 0xa			
+	cons_tamano_banner05: equ $-cons_banner05
+
+	cons_banner06: db 0xa, 'Function: ', 0xa			
+	cons_tamano_banner06: equ $-cons_banner06
+
+	cons_banner07: db 0xa, 'Immediate: ', 0xa			
+	cons_tamano_banner07: equ $-cons_banner07
+
+	cons_banner08: db 0xa, 'Address: ', 0xa			
+	cons_tamano_banner08: equ $-cons_banner08
+
+	cons_banner2: db 0xa, 'La instruccion es de tipo I y posee el siguiente formato: ', 0xa			
+	cons_tamano_banner2: equ $-cons_banner2		
+
+	cons_banner3: db 0xa, 'La instruccion es de tipo J y posee el siguiente formato: ', 0xa			
+	cons_tamano_banner3: equ $-cons_banner3		
 
 
+	string:    db 8
+	Ascii2Hex: db 8 ; 32
+ 
 section .bss
 	FD_OUT: 	    resb 1
 	FD_IN: 		    resb 1
@@ -868,8 +1137,27 @@ section .bss
 	Shamt:          resb 4
    	BranchAddress:  resb 4   
    	PlayHard: resb 4
-   	var_mfhi:       resb 8
+;   	var_mfhi:       resb 8
+	RT: resb 1
+ 	RS: resb 1
+ 	RD: resb 1
+ 	Address: resb 4
+ 	Immediate: resb 2
+ 	Opcode: resb 1
+ 	Function: resb 1
 
+;	regimp: resb 8
+	regout: resb 8
+
+	contador: resb 8
+
+	
+	string2: resb 8  
+	strMem:  resb 8 
+	;arg1: resb 1 
+	;arg2: resb 4
+	;arg3: resb 4 
+	;arg4: resb 4	
 
 section  .text
    global _start       
@@ -877,11 +1165,71 @@ section  .text
 
 _start:                     			; tell linker entry point
 
-	xor rcx, 			rcx 
-	sub rsp, 			TOT_MEM         ; number of memory bytes allocation		
+_Reg0:
+
+	pop rcx ;argc
+	;cmp rcx, 4 ;if no arguments, then
+	;jl _end ;noArgs ;error.
+	pop rcx ;argv[0] (program name)
+
+	pop_arg1:
+		pop rcx ; 1st arg
+		mov r15,  [rcx]
+		mov [string2], r15  
+		mov [string], r15 
+
+
+;		mov qword [strMem], r15 
+
+	;   mov eax, 			dword [rsp+OFFSET_POINTER_REG+8] 
+	;	mov [string2],       eax
+		;mov eax, [strMem]
+;		mov [string], r15 ;eax 
+
+
+
  
- ;%macros OpenFile 
+	  ;  	impr_texto fmtint4, 8
+
+
+
+;	    mov qword [string2], r15
+
+		; 
+
+		;mov [string2], r12
+
+
+
+;		call Hex2Ascii
+;		impr_texto fmtint3, 8
+			
+
+;	pop_arg2:
+;		pop rcx ; 1st arg
+;		mov [arg2], rcx
+;		impr_texto [arg2], 8
+;	pop_arg3:
+;		pop rcx ; 1st arg
+;		mov [arg3], rcx
+;		impr_texto [arg3], 8
+;	pop_arg4:
+;		pop rcx ; 1st arg
+;		mov [arg4], rcx
+;		impr_texto [arg4], 8
+;		mov rax, rcx
+	
+
+_MIPS:
+
+	xor rcx, 			rcx 
+	xor r12, r12
+	sub rsp, 			TOT_MEM         ; number of memory bytes allocation		
+      
+
+	
 _txt:
+
 ;------- open file for reading
 	mov rax, 	  		SYS_OPEN		            
 	mov rdi, 	  		FILE_NAME
@@ -909,14 +1257,21 @@ _txt:
 ;------------------ At this point -------------------------
 ;----------- $rsi have txt instructions -------------------
 
+
 	xor r13, r13
 	xor r14, r14
 	xor rax, rax 
 	
 
+
+
+
+
 ;------------- Loads Instruction into Memory --------------
 ;------------------------- PC -----------------------------
-_PC:  
+_PC: 
+
+
 	mov al, 		byte [TEXT+r13]		    ; 19 is a constant to find Index(;) 
 	inc 			r13						; in format [yyyyyyyy] xxxxxxxx;
 
@@ -930,19 +1285,25 @@ _PC:
 _loadAddress:
 	mov r15, 	    r13 
 	sub r13,        20						; 20 positions before Index, starts the address
-	GetFromTxt 		r13 					; output is $r12d
+
+	mov rax,               qword [TEXT+r13+1]
+	mov qword [Ascii2Hex], rax
+	GetFromTxt 		[Ascii2Hex]    ; r13 					; output is $r12d
 
 	mov r14, 		r12 				    ; $r14 is the Memory address pointer
-	_3:
+	 
 	and r14,        0xFF
 	;mov dword [rsp+r14+OFFSET_POINTER_ADDRESS], r12d
 	add r13,        20                      ; ( ; ) Position again 
-	_4:
+	 
 
 _loadInstruction:
 	sub r13,             	10 
 	xor r12d,            	r12d
-	GetFromTxt r13 							; output is $r12d
+
+	mov rax,                qword [TEXT+r13+1]
+	mov qword [Ascii2Hex],  rax	
+	GetFromTxt              [Ascii2Hex]      ;                r13 							; output is $r12d
 
 	mov dword [rsp+r14], 	r12d 			; Saves addressed Intruction into Memory
 													
@@ -951,34 +1312,90 @@ _loadInstruction:
 	jmp _PC
 ;------------------------------- At this point -----------------------------------
 ;------------- Virtual memory $rsp contains addressed instructions ---------------
-
+ 
 
 _Reg:	
-	mov rdi, iMEM_BYTES;/4 								; Number of words for the assignation ; 0xE ; iMEM_BYTES/4 ; 3
-	mov ebx, 0x4     									; 0x38 last word  ; 0x24  ; first instruct address +4 
-	mov dword [rsp+OFFSET_POINTER_DATAMEM +24], 0xf     ; (29)*4 =116 , 
-												        ;manually load to dataMem
-    mov dword [rsp+OFFSET_POINTER_REG+12], 0xaaaabbbb	; posiciones 4 y 3
-    													; no se estan leyendo las 2primereas posiciones del bancoReg 											      
-    mov dword [rsp+OFFSET_POINTER_REG+8], 0xccccdddd ; +8 siempre !
-  ;and ebx,  0xFF ; 
-	;mov dword [BranchAddress], 0x0 
+	GetFromTxt [string2] ;r15   ; Ascii to HEX ; out=r12
+	mov r15, r12 
 
+	mov dword [rsp+OFFSET_POINTER_REG+0], r15d	
+	mov dword [rsp+OFFSET_POINTER_REG+4], r15d
+	mov dword [rsp+OFFSET_POINTER_REG+8], r15d
+	mov dword [rsp+OFFSET_POINTER_REG+12], r15d
+	mov dword [rsp+OFFSET_POINTER_REG+16], r15d	
+
+
+
+
+
+	mov rcx, iMEM_BYTES;/4 								; Number of words for the assignation ; 0xE ; iMEM_BYTES/4 ; 3
+	mov ebx, 0x4     									; 0x38 last word  ; 0x24  ; first instruct address +4 
+	
+	;mov eax, [arg1]
+	;mov dword [rsp+OFFSET_POINTER_DATAMEM +28], eax ;0xf     ; (29)*4 =116 , 
+												        ;manually load to dataMem
+    ;mov dword [rsp+OFFSET_POINTER_REG+12], 0xaaaabbbb	; posiciones 4 y 3
+    													; no se estan leyendo las 2primereas posiciones del bancoReg 											      
+	
 _PCLoop:
 	; add ebx, dword [BranchAddress]
 	add ebx,                0x4 
-	dec rdi
+	dec rcx ;rdi
+	mov [contador],         rcx
 
 	call _DECO 
+    ;call _imprimirdeco 
 	call _Alu2
-	;_2:
-	cmp rdi, 0x0
+
+	mov rcx, [contador]
+
+	cmp rcx, 0x0
 	je _Reg1
 	jne _PCLoop
 
-_Reg1:
+_Reg1: 
 
-                             
+	mov r15d, dword [rsp+OFFSET_POINTER_REG-8]
+	call Hex2Ascii	  ; in r15 
+  	impr_texto fmtint3, 8
+
+	mov r15d, dword [rsp+OFFSET_POINTER_REG-4]
+	call Hex2Ascii	  ; in r15 
+  	impr_texto fmtint3, 8
+
+	mov r15d, dword [rsp+OFFSET_POINTER_REG+0]
+	call Hex2Ascii	  ; in r15 
+  	impr_texto fmtint3, 8
+
+	mov r15d, dword [rsp+OFFSET_POINTER_REG+4]
+	call Hex2Ascii	  ; in r15 
+  	impr_texto fmtint3, 8
+
+	mov r15d, dword [rsp+OFFSET_POINTER_REG+8]
+	call Hex2Ascii	  ; in r15 
+  	impr_texto fmtint3, 8
+
+	mov r15d, dword [rsp+OFFSET_POINTER_REG+12]
+	call Hex2Ascii	  ; in r15 
+  	impr_texto fmtint3, 8
+ 
+
+ 	mov r15d, dword [rsp+OFFSET_POINTER_REG+16]
+	call Hex2Ascii	  ; in r15 
+  	impr_texto fmtint3, 8
+
+	mov r15d, dword [rsp+OFFSET_POINTER_REG+20]
+	call Hex2Ascii	  ; in r15 
+  	impr_texto fmtint3, 8
+
+	mov r15d, dword [rsp+OFFSET_POINTER_REG+24]
+	call Hex2Ascii	  ; in r15 
+  	impr_texto fmtint3, 8
+
+	mov r15d, dword [rsp+OFFSET_POINTER_REG+28]
+	call Hex2Ascii	  ; in r15 
+  	impr_texto fmtint3, 8
+
 _end:
  	mov rax,       		 SYS_EXIT
    	mov rdi,       		 STDIN
