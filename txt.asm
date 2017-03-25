@@ -1027,20 +1027,19 @@ _Alu2:
 
 section .data
 ;-------------------  Memory Data -------------------------
-  iMEM_BYTES:     equ 56 ; 400 ;600 ;56 ;400 ;                          ; x/4 = words num	; 100 dwords, Instructions Memory allocation 
+  iMEM_BYTES:     equ 400 ;600 ;56 ;400 ;                          ; x/4 = words num	; 100 dwords, Instructions Memory allocation 
   REG_BYTES:	  equ 128              				   ; 32 dwords
-  DATAMEM_BYTES:  equ 56 ; 400 ;56  ;400 
-  TOT_MEM:		  equ 240 ; 928 ;1128 ;928 ;240 ; 928    ; iMEM+REG_B
+  DATAMEM_BYTES:  equ 400 ;56  ;400 
+  TOT_MEM:		  equ 928 ;1128 ;928 ;240 ; 928    ; iMEM+REG_B
  
 
   msg:          db " Memory Allocated! ", 10
   len:          equ $ - msg
   fmtint:       equ $RS ; $string ; $RS ;, 10, 0
   fmtint2:      equ $string ;
-  fmtint4:      equ $string2 
+ ; fmtint4:      equ $string2 
   fmtint3:      equ $regout
-;  strlen:       equ $-string ;fmtint2 
-
+  
 
   FILE_NAME:    db "code.txt", 0
   FILE_LENGTH:  equ 200 				        		; length of inside text
@@ -1136,8 +1135,8 @@ section .bss
 
 	Shamt:          resb 4
    	BranchAddress:  resb 4   
-   	PlayHard: resb 4
-;   	var_mfhi:       resb 8
+ 
+ 
 	RT: resb 1
  	RS: resb 1
  	RD: resb 1
@@ -1145,19 +1144,16 @@ section .bss
  	Immediate: resb 2
  	Opcode: resb 1
  	Function: resb 1
-
-;	regimp: resb 8
+ 
 	regout: resb 8
 
-	contador: resb 8
-
-	
-	string2: resb 8  
-	strMem:  resb 8 
-	;arg1: resb 1 
-	;arg2: resb 4
-	;arg3: resb 4 
-	;arg4: resb 4	
+	contador: resb 8 
+	 
+ 
+	arg1: resb 8 
+	arg2: resb 8
+	arg3: resb 8 
+	arg4: resb 8	
 
 section  .text
    global _start       
@@ -1174,50 +1170,25 @@ _Reg0:
 
 	pop_arg1:
 		pop rcx ; 1st arg
-		mov r15,  [rcx]
-		mov [string2], r15  
-		mov [string], r15 
+		mov r15,     [rcx]
+		mov [arg1],  r15  
 
+	pop_arg2:
+		pop rcx ; 2nd arg
+		mov r15,     [rcx]
+		mov [arg2],  r15
+		;impr_texto [arg2], 8
+	pop_arg3:
+		pop rcx ; 1st arg
+		mov r15,     [rcx]
+		mov [arg3],  r15 
+		;impr_texto [arg3], 8
+	pop_arg4:
+		pop rcx ; 1st arg
+		mov r15,     [rcx]
+		mov [arg4],  r15 
+    	;impr_texto [arg4], 8
 
-;		mov qword [strMem], r15 
-
-	;   mov eax, 			dword [rsp+OFFSET_POINTER_REG+8] 
-	;	mov [string2],       eax
-		;mov eax, [strMem]
-;		mov [string], r15 ;eax 
-
-
-
- 
-	  ;  	impr_texto fmtint4, 8
-
-
-
-;	    mov qword [string2], r15
-
-		; 
-
-		;mov [string2], r12
-
-
-
-;		call Hex2Ascii
-;		impr_texto fmtint3, 8
-			
-
-;	pop_arg2:
-;		pop rcx ; 1st arg
-;		mov [arg2], rcx
-;		impr_texto [arg2], 8
-;	pop_arg3:
-;		pop rcx ; 1st arg
-;		mov [arg3], rcx
-;		impr_texto [arg3], 8
-;	pop_arg4:
-;		pop rcx ; 1st arg
-;		mov [arg4], rcx
-;		impr_texto [arg4], 8
-;		mov rax, rcx
 	
 
 _MIPS:
@@ -1315,16 +1286,22 @@ _loadInstruction:
  
 
 _Reg:	
-	GetFromTxt [string2] ;r15   ; Ascii to HEX ; out=r12
-	mov r15, r12 
+	GetFromTxt [arg1] ;r15   ; Ascii to HEX ; out=r12
+	mov r15,   r12 
+	mov dword [rsp+OFFSET_POINTER_REG+16],  r15d	; R[4]
 
-	mov dword [rsp+OFFSET_POINTER_REG+0], r15d	
-	mov dword [rsp+OFFSET_POINTER_REG+4], r15d
-	mov dword [rsp+OFFSET_POINTER_REG+8], r15d
-	mov dword [rsp+OFFSET_POINTER_REG+12], r15d
-	mov dword [rsp+OFFSET_POINTER_REG+16], r15d	
+	GetFromTxt [arg2]
+	mov r15,   r12 
+	mov dword [rsp+OFFSET_POINTER_REG+20],  r15d    ; R[5]
 
+	GetFromTxt [arg3]
+	mov r15,   r12 	
+	mov dword [rsp+OFFSET_POINTER_REG+24],  r15d    ; R[6]
 
+	GetFromTxt [arg4]
+	mov r15,   r12 	
+	mov dword [rsp+OFFSET_POINTER_REG+28], r15d     ; R[7]
+	
 
 
 
@@ -1355,13 +1332,6 @@ _PCLoop:
 
 _Reg1: 
 
-	mov r15d, dword [rsp+OFFSET_POINTER_REG-8]
-	call Hex2Ascii	  ; in r15 
-  	impr_texto fmtint3, 8
-
-	mov r15d, dword [rsp+OFFSET_POINTER_REG-4]
-	call Hex2Ascii	  ; in r15 
-  	impr_texto fmtint3, 8
 
 	mov r15d, dword [rsp+OFFSET_POINTER_REG+0]
 	call Hex2Ascii	  ; in r15 
@@ -1393,6 +1363,14 @@ _Reg1:
   	impr_texto fmtint3, 8
 
 	mov r15d, dword [rsp+OFFSET_POINTER_REG+28]
+	call Hex2Ascii	  ; in r15 
+  	impr_texto fmtint3, 8
+
+	mov r15d, dword [rsp+OFFSET_POINTER_REG+32]
+	call Hex2Ascii	  ; in r15 
+  	impr_texto fmtint3, 8
+
+	mov r15d, dword [rsp+OFFSET_POINTER_REG+36]
 	call Hex2Ascii	  ; in r15 
   	impr_texto fmtint3, 8
 
