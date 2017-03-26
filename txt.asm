@@ -14,24 +14,27 @@
 	syscall
 %endmacro
 ;------------------------- FIN DE MACRO --------------------------------
-;macro para convertir variable en memoria a string y que pueda ser impreso en pantalla
-%macro convstr 1;  ;Opcode = %1 
-  	mov rax, [%1]
-	add rax, 48 ;'0'
-	mov [%1], rax
-%endmacro
+ 
+ %macro Writetxt 2  ;ACTULIZAR LENGTH
+;------- open file for writing
+	mov rax, 	  		SYS_OPEN		            
+	mov rdi, 	  		OUTPUT_FILE_NAME
+	mov rsi, 	  		STDERR    ; STDOUT      		; for read only access
+	syscall  
+	mov [FD_OUT],  		rax
+ 
+ ;------ write in txt 
+	mov rax, 	  		SYS_WRITE    	; sys_write
+	mov rdi, 	  		[FD_OUT]
+	mov rsi,            %1              ; Buffer output 
+	mov rdx, 	  	    %2 ;1               ; Data length 
+	syscall 
 
-;mov dword [rsp+address], arg1 
+;------- close the file 
+	mov rax,      		SYS_CLOSE 
+	mov rdi,      		[FD_OUT]
 
-
-%macro imp 1;
-	mov rax, SYS_WRITE
-	;mov ebx, STDOUT
-	mov rsi, %1
-	mov rdx, 2 ;1
-	syscall ;int 0x80
-%endmacro
-
+%endmacro	
 
 
 ;-------------------------  MACRO #2  ----------------------------------
@@ -1044,21 +1047,24 @@ section .data
   TOT_MEM:		  equ 928 ;1128 ;928 ;240 ; 928    ; iMEM+REG_B
  
 
-  msg:          db " Memory Allocated! ", 10
-  len:          equ $ - msg
-  fmtint:       equ $RS ; $string ; $RS ;, 10, 0
-  fmtint2:      equ $string ;
-  enterNow:        equ $enter
- ; fmtint4:      equ $string2 
-  fmtint3:      equ $regout
+  msg:            db " Memory Allocated! ", 10
+  len:            equ $ - msg
+  fmtint:         equ $RS ; $string ; $RS ;, 10, 0
+  fmtint2:        equ $string ;
+  enterNow:       equ $enter
+ ; fmtint4:       equ $string2 
+  fmtint3:        equ $regout
   
+  
+  OUTPUT_FILE_NAME:    db "Resultados.txt", 0 ; nombre de archivo a escribir
+  OUTPUT_FILE_LENGTH:  equ 21
 
-  FILE_NAME:    db "code.txt", 0
-  FILE_LENGTH:  equ 21 ;40 ;200 				        		; length of inside text
+  FILE_NAME:      db "code.txt", 0
+  FILE_LENGTH:    equ 21 ;40 ;200 				        		; length of inside text
   
 
   ;OFFSET_POINTER_ADDRESS:  equ 184 ; 
-  OFFSET_RSPCALL: equ 8  
+  OFFSET_RSPCALL:          equ 8  
   OFFSET_POINTER_DATAMEM:  equ 528 ;728 ;528 ; 184  ;528;; iMEM_BYTES+REG_BYTES
   OFFSET_POINTER_REG:      equ 400 ; iMEM_BYTES 				; 1 dword = 4 bytes
   						  		 						; 128bytes = 32 dwords
@@ -1348,15 +1354,19 @@ _Reg1:
 	mov r10, 0xa 
 	mov [enter], r10  
 
+
 	mov r15d, dword [rsp+OFFSET_POINTER_REG-4] ; "This is the first position"
-	call Hex2Ascii	  ; in r15 
+	call Hex2Ascii	  ; in r15 ; out [regout]
+
   	impr_texto fmtint3, 8
    	impr_texto enterNow, 1
+   	
 
 	mov r15d, dword [rsp+OFFSET_POINTER_REG] ;  
 	call Hex2Ascii	  ; in r15 
   	impr_texto fmtint3, 8
    	impr_texto enterNow, 1
+	;Writetxt fmtint3, 8  
 
  	mov r15d, dword [rsp+OFFSET_POINTER_REG+4];+OFFSET_RSPCALL]
 	call Hex2Ascii	  ; in r15 
@@ -1407,6 +1417,9 @@ _Reg1:
 	call Hex2Ascii	  ; in r15 
   	impr_texto fmtint3, 8
   	impr_texto enterNow, 1  	
+
+	Writetxt fmtint3, 8
+	;impr_texto enterNow, 1  	
 
 _end:
  	mov rax,       		 SYS_EXIT
