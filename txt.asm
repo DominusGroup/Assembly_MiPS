@@ -45,7 +45,7 @@
 	;------------------------------------------------
 	;------- Copy upper dword from TEXT Buffer ------
 	;------------------------------------------------
-
+		xor r12,            r12 
 	  	mov rdx, 		    %1 ;  qword [Ascii2Hex]		; qword [TEXT+%1+1]       ; [..] Instruction;
 	  	mov ecx, 			32						; Shift 32 bits
 	  	shr rdx, 			cl              		
@@ -317,6 +317,8 @@ _HexAsciiFixer:
 
 
 Hex2Ascii:
+	xor rax,      rax
+	mov [regout], rax
 	mov r14,   r15 ;[string]
 	and r14, 0x0000000f;mascara, para extraer los ultimos bits
 	cmp r14, 0x00000009
@@ -485,12 +487,17 @@ _DECO:
 	mov r8d, 			dword [rsp+rbx]				  ; getting instruction from memory; 
 	and r8d, 0000_0011_1110_0000_0000_0000_0000_0000b ; masking address $rs 
 	mov rcx, 			21  						  ; shifting 20 bits
-	mov edx, 			dword r8d
+	mov edx, 			r8d
 	shr edx,			cl 	
-	imul rdx, 			4 
-	sub rdx, 			4	
+	imul rdx,            4
+	;mov rax,            rdx
+	;imul 4 
+	;_continueRS:
+	;	mov r14,        eax 
+	;	sub r14, 		4	
+	
 
-	mov r14, 			rdx                           ; $r13 is the rs pointer
+	mov r14, 			rdx                           ; $r14 is the rs pointer
 	add r14, 			OFFSET_POINTER_REG	          ; adding memory offset to $r13 to start in Register Bank allocation 
 
 ;--------------------- Mask & shift for $rt 	
@@ -500,9 +507,10 @@ _DECO:
 	mov edx, 			dword r8d
 	shr edx,			cl 
 	imul rdx, 			4  							  ; escale x4
-	sub rdx, 			4							  ; substract 4 to point propertly	
- 
-	mov r13, 			rdx      				      ; $r14 is the rt pointer
+;	sub rdx, 			4							  ; substract 4 to point propertly	
+	;add rbx, 4
+
+	mov r13, 			rdx      				      ; $r13 is the rt pointer
 	add r13, 			OFFSET_POINTER_REG            ; Jumping Memory allocation 
 
 ;---------------------- Mask & shift for $rd 	
@@ -511,8 +519,9 @@ _DECO:
 	mov rcx, 			11							  ; shifting 11 bits
 	mov edx,		    dword r8d
 	shr edx,			cl 
-	imul rdx, 			4
-	sub rdx, 			4
+	imul rdx, 		  	4
+;	sub rdx, 			4
+	;add rbx, 4
 
 	mov r12, 			rdx 				     	  ; $r14 is the rt pointer
 	add r12, 			OFFSET_POINTER_REG 			  ; starting above memory 
@@ -697,8 +706,8 @@ _Alu2:
 ;		cmp r10d, 0x23 ; subu function 
 ;		je _subu
 		
-;		cmp r10d, 0x24 ; and function
-;		je _and 										
+		cmp r10d, 0x24 ; and function
+		je _and 										
 									 
 		cmp r10d, 0x25 ; or function
 		je _or 						
@@ -723,9 +732,10 @@ _Alu2:
 
 	_add:
 		impr_texto Op1, tamano_Op1 ; Indica al usuario que operacion se realiza
-		mov eax,		       dword [rsp+r14+OFFSET_RSPCALL] ; +8, because call use rsp register	; Se pasan los datos a los registros que van a operar
-		add eax, 			   dword [rsp+r13+OFFSET_RSPCALL] ; Se realiza la operacion
-		mov dword [rsp+r12+OFFSET_RSPCALL], eax
+		mov eax,		       dword [rsp+r14+OFFSET_RSPCALL-4] ; +8, because call use rsp register	; Se pasan los datos a los registros que van a operar
+		add eax, 			   dword [rsp+r13+OFFSET_RSPCALL-4] ; Se realiza la operacion
+		mov dword [rsp+r12+OFFSET_RSPCALL-4], eax
+		;mov dword [rsp+r12], eax 
 		ret 
 
 	_addu:		
@@ -749,12 +759,12 @@ _Alu2:
 			mov dword [rsp+r12+OFFSET_RSPCALL], eax
 			ret 
   
-;	_and:
-;		impr_texto Op2, tamano_Op2
-;		mov eax,			 dword [rsp+r14+OFFSET_RSPCALL]	 ; getting data 
-;		and eax, 			 dword [rsp+r13+OFFSET_RSPCALL] 
-;		mov dword [rsp+r12+OFFSET_RSPCALL], eax
-;		ret
+	_and:
+		impr_texto Op2, tamano_Op2
+		mov eax,			 dword [rsp+r14+OFFSET_RSPCALL -4]	 ; getting data 
+		and eax, 			 dword [rsp+r13+OFFSET_RSPCALL -4] 
+		mov dword [rsp+r12+OFFSET_RSPCALL -4], eax
+		ret
 
 	_andi: 
 		mov eax,             dword [rsp+r14+OFFSET_RSPCALL]
@@ -819,11 +829,11 @@ _Alu2:
 
 	_sub:
 		impr_texto Op7,tamano_Op7
-		mov eax,			 dword [rsp+r14+OFFSET_RSPCALL]
-		sub eax,			 dword [rsp+r13+OFFSET_RSPCALL] 
+		mov eax,			 dword [rsp+r14+OFFSET_RSPCALL -4]
+		sub eax,			 dword [rsp+r13+OFFSET_RSPCALL -4] 
 		
 		_sub2:
-			mov dword [rsp+r12+OFFSET_RSPCALL], eax	 
+			mov dword [rsp+r12+OFFSET_RSPCALL -4], eax	 
 		ret
 
 ;	_subu:
@@ -1030,6 +1040,7 @@ section .data
   iMEM_BYTES:     equ 400 ;600 ;56 ;400 ;                          ; x/4 = words num	; 100 dwords, Instructions Memory allocation 
   REG_BYTES:	  equ 128              				   ; 32 dwords
   DATAMEM_BYTES:  equ 400 ;56  ;400 
+  
   TOT_MEM:		  equ 928 ;1128 ;928 ;240 ; 928    ; iMEM+REG_B
  
 
@@ -1037,19 +1048,20 @@ section .data
   len:          equ $ - msg
   fmtint:       equ $RS ; $string ; $RS ;, 10, 0
   fmtint2:      equ $string ;
+  enterNow:        equ $enter
  ; fmtint4:      equ $string2 
   fmtint3:      equ $regout
   
 
   FILE_NAME:    db "code.txt", 0
-  FILE_LENGTH:  equ 200 				        		; length of inside text
+  FILE_LENGTH:  equ 21 ;40 ;200 				        		; length of inside text
   
 
   ;OFFSET_POINTER_ADDRESS:  equ 184 ; 
   OFFSET_RSPCALL: equ 8  
   OFFSET_POINTER_DATAMEM:  equ 528 ;728 ;528 ; 184  ;528;; iMEM_BYTES+REG_BYTES
-  OFFSET_POINTER_REG:      equ iMEM_BYTES 				; 1 dword = 4 bytes
-  						  								; 128bytes = 32 dwords
+  OFFSET_POINTER_REG:      equ 400 ; iMEM_BYTES 				; 1 dword = 4 bytes
+  						  		 						; 128bytes = 32 dwords
   	    				  								; offset for Registers Allocation
 
   SYS_EXIT: 	equ 60
@@ -1149,11 +1161,13 @@ section .bss
 
 	contador: resb 8 
 	 
- 
+ 	enter: resb 1
 	arg1: resb 8 
 	arg2: resb 8
 	arg3: resb 8 
 	arg4: resb 8	
+
+;	Banco_Registros:  resb 128 
 
 section  .text
    global _start       
@@ -1167,7 +1181,7 @@ _Reg0:
 	;cmp rcx, 4 ;if no arguments, then
 	;jl _end ;noArgs ;error.
 	pop rcx ;argv[0] (program name)
-
+		
 	pop_arg1:
 		pop rcx ; 1st arg
 		mov r15,     [rcx]
@@ -1179,7 +1193,7 @@ _Reg0:
 		mov [arg2],  r15
 		;impr_texto [arg2], 8
 	pop_arg3:
-		pop rcx ; 1st arg
+		pop rcx ; 3th arg
 		mov r15,     [rcx]
 		mov [arg3],  r15 
 		;impr_texto [arg3], 8
@@ -1233,10 +1247,7 @@ _txt:
 	xor r14, r14
 	xor rax, rax 
 	
-
-
-
-
+ 
 
 ;------------- Loads Instruction into Memory --------------
 ;------------------------- PC -----------------------------
@@ -1285,29 +1296,32 @@ _loadInstruction:
 ;------------- Virtual memory $rsp contains addressed instructions ---------------
  
 
-_Reg:	
+_Reg: 
+
+; Initialization of Arguments Registers
 	GetFromTxt [arg1] ;r15   ; Ascii to HEX ; out=r12
 	mov r15,   r12 
-	mov dword [rsp+OFFSET_POINTER_REG+16],  r15d	; R[4]
+	mov dword [rsp+OFFSET_POINTER_REG+16 -4],   r15d     ; R[4]   
 
 	GetFromTxt [arg2]
 	mov r15,   r12 
-	mov dword [rsp+OFFSET_POINTER_REG+20],  r15d    ; R[5]
+	mov dword [rsp+OFFSET_POINTER_REG+20 -4],   r15d     ; R[5]
 
 	GetFromTxt [arg3]
 	mov r15,   r12 	
-	mov dword [rsp+OFFSET_POINTER_REG+24],  r15d    ; R[6]
+	mov dword [rsp+OFFSET_POINTER_REG+24 -4],   r15d     ; R[6]
 
 	GetFromTxt [arg4]
 	mov r15,   r12 	
-	mov dword [rsp+OFFSET_POINTER_REG+28], r15d     ; R[7]
+    mov dword [rsp+OFFSET_POINTER_REG+28 -4],   r15d     ; R[7],        4* 7 =28 -4 = 24  
 	
 
 
-
+_Reg001:
 	mov rcx, iMEM_BYTES;/4 								; Number of words for the assignation ; 0xE ; iMEM_BYTES/4 ; 3
 	mov ebx, 0x4     									; 0x38 last word  ; 0x24  ; first instruct address +4 
 	
+	jmp _PCLoop
 	;mov eax, [arg1]
 	;mov dword [rsp+OFFSET_POINTER_DATAMEM +28], eax ;0xf     ; (29)*4 =116 , 
 												        ;manually load to dataMem
@@ -1331,48 +1345,68 @@ _PCLoop:
 	jne _PCLoop
 
 _Reg1: 
+	mov r10, 0xa 
+	mov [enter], r10  
 
-
-	mov r15d, dword [rsp+OFFSET_POINTER_REG+0]
+	mov r15d, dword [rsp+OFFSET_POINTER_REG-4] ; "This is the first position"
 	call Hex2Ascii	  ; in r15 
   	impr_texto fmtint3, 8
+   	impr_texto enterNow, 1
 
-	mov r15d, dword [rsp+OFFSET_POINTER_REG+4]
+	mov r15d, dword [rsp+OFFSET_POINTER_REG] ;  
 	call Hex2Ascii	  ; in r15 
   	impr_texto fmtint3, 8
+   	impr_texto enterNow, 1
 
-	mov r15d, dword [rsp+OFFSET_POINTER_REG+8]
+ 	mov r15d, dword [rsp+OFFSET_POINTER_REG+4];+OFFSET_RSPCALL]
+	call Hex2Ascii	  ; in r15 
+  	impr_texto fmtint3, 8_
+  	impr_texto enterNow, 1
+
+	mov r15d, dword [rsp+OFFSET_POINTER_REG+8];+OFFSET_RSPCALL]
 	call Hex2Ascii	  ; in r15 
   	impr_texto fmtint3, 8
+  	impr_texto enterNow, 1
 
-	mov r15d, dword [rsp+OFFSET_POINTER_REG+12]
+	mov r15d, dword [rsp+OFFSET_POINTER_REG+12];+OFFSET_RSPCALL]
 	call Hex2Ascii	  ; in r15 
   	impr_texto fmtint3, 8
- 
+  	impr_texto enterNow, 1
 
- 	mov r15d, dword [rsp+OFFSET_POINTER_REG+16]
+	mov r15d, dword [rsp+OFFSET_POINTER_REG+16];+OFFSET_RSPCALL]
 	call Hex2Ascii	  ; in r15 
   	impr_texto fmtint3, 8
+  	impr_texto enterNow, 1
 
-	mov r15d, dword [rsp+OFFSET_POINTER_REG+20]
+	mov r15d, dword [rsp+OFFSET_POINTER_REG +20];+OFFSET_RSPCALL]
 	call Hex2Ascii	  ; in r15 
   	impr_texto fmtint3, 8
+  	impr_texto enterNow, 1
 
-	mov r15d, dword [rsp+OFFSET_POINTER_REG+24]
+	mov r15d, dword [rsp+OFFSET_POINTER_REG+24];+OFFSET_RSPCALL]
 	call Hex2Ascii	  ; in r15 
   	impr_texto fmtint3, 8
+  	impr_texto enterNow, 1
 
-	mov r15d, dword [rsp+OFFSET_POINTER_REG+28]
+	mov r15d, dword [rsp+OFFSET_POINTER_REG +28];+OFFSET_RSPCALL]
 	call Hex2Ascii	  ; in r15 
   	impr_texto fmtint3, 8
+  	impr_texto enterNow, 1
 
-	mov r15d, dword [rsp+OFFSET_POINTER_REG+32]
+	mov r15d, dword [rsp+OFFSET_POINTER_REG+32];+OFFSET_RSPCALL]
 	call Hex2Ascii	  ; in r15 
   	impr_texto fmtint3, 8
-
-	mov r15d, dword [rsp+OFFSET_POINTER_REG+36]
+  	impr_texto enterNow, 1
+	
+	mov r15d, dword [rsp+OFFSET_POINTER_REG+36];+OFFSET_RSPCALL]
 	call Hex2Ascii	  ; in r15 
   	impr_texto fmtint3, 8
+  	impr_texto enterNow, 1  	
+
+	mov r15d, dword [rsp+OFFSET_POINTER_REG+40];+OFFSET_RSPCALL]
+	call Hex2Ascii	  ; in r15 
+  	impr_texto fmtint3, 8
+  	impr_texto enterNow, 1  	
 
 _end:
  	mov rax,       		 SYS_EXIT
