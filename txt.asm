@@ -15,6 +15,36 @@
 %endmacro
 ;------------------------- FIN DE MACRO --------------------------------
  
+
+%macro FillBuffer 0
+;------- open file for reading
+	mov rax, 	  		SYS_OPEN		            
+	mov rdi, 	  		FILE_NAME
+	mov rsi, 	  		STDIN      		; for read only access
+	syscall  
+	mov [FD_IN],  		rax
+
+;------- read from file
+	mov rax, 	  		SYS_READ    	; sys_read
+	mov rdi, 	  		[FD_IN]
+	mov rsi,            TEXT
+	mov rdx, 	  		FILE_LENGTH   	; Data length 
+	syscall
+
+;------- close the file 
+	mov rax,      		SYS_CLOSE 
+	mov rdi,      		[FD_IN]
+
+;------- print info  
+	mov rax,      		SYS_WRITE 
+	mov rdi,      		STDOUT
+	mov rsi,      		TEXT			; The Buffer TEXT
+	mov rdx,      		FILE_LENGTH     ; Data length 
+	syscall	
+;------------------ At this point -------------------------
+;----------- $rsi have txt instructions -------------------	
+%endmacro
+
  %macro Writetxt 2  ;ACTULIZAR LENGTH
 ;------- open file for writing
 	mov rax, 	  		SYS_OPEN		            
@@ -319,142 +349,249 @@ _HexAsciiFixer:
 ;.......................................................................
 
 
+
+_Instruction2Memory: 
+
+	mov al, 		byte [TEXT+r13]		    ; 19 is a constant to find Index(;) 
+	inc 			r13						; in format [yyyyyyyy] xxxxxxxx;
+
+	cmp r13, 		FILE_LENGTH  			; Break condition
+	je 				_Return  
+
+	cmp al, 		0x3b 				    ; 0x3b => Index ( ; ) 
+	je              _loadAddress  			
+	jne             _Instruction2Memory					
+
+_loadAddress:
+	mov r15, 	    r13 
+	sub r13,        20						; 20 positions before Index, starts the address
+
+	mov rax,               qword [TEXT+r13+1]
+	mov qword [Ascii2Hex], rax
+	GetFromTxt 		[Ascii2Hex]    ; r13 					; output is $r12d
+
+	mov r14, 		r12 				    ; $r14 is the Memory address pointer
+	 
+	and r14,        0xFF
+	;mov dword [rsp+r14+OFFSET_POINTER_ADDRESS], r12d
+	add r13,        20                      ; ( ; ) Position again 
+	 
+
+_loadInstruction:
+	sub r13,             	10 
+	xor r12d,            	r12d
+
+	mov rax,                qword [TEXT+r13+1]
+	mov qword [Ascii2Hex],  rax	
+	GetFromTxt              [Ascii2Hex]      ;                r13 							; output is $r12d
+
+	mov dword [rsp+r14], 	r12d 			; Saves addressed Intruction into Memory
+													
+	mov r13,            	r15 
+	xor r12d,           	r12d
+	jmp _Instruction2Memory
+
+_Return:
+	ret	
+;------------------------------- At this point -----------------------------------
+;------------- Virtual memory $rsp contains addressed instructions ---------------
+
+
+
+_ArgumentsRegInit:
+;------------------- Initialization of Arguments Registers -----------------------
+
+	GetFromTxt [arg1] 									 ; Ascii to HEX ; out=r12
+	mov r15,   r12 
+	mov dword [rsp+OFFSET_POINTER_REG+OFFSET_RSPCALL+16 -4],   r15d     ; R[4]   
+
+	GetFromTxt [arg2]
+	mov r15,   r12 
+	mov dword [rsp+OFFSET_POINTER_REG+OFFSET_RSPCALL+20 -4],   r15d     ; R[5]
+
+	GetFromTxt [arg3]
+	mov r15,   r12 	
+	mov dword [rsp+OFFSET_POINTER_REG+OFFSET_RSPCALL+24 -4],   r15d     ; R[6]
+
+	GetFromTxt [arg4]
+	mov r15,   r12 	
+    mov dword [rsp+OFFSET_POINTER_REG+OFFSET_RSPCALL+28 -4],   r15d     ; R[7],        4* 7 =28 -4 = 24  
+	
+	ret
+
+
+
 Hex2Ascii:
 	xor rax,      rax
 	mov [regout], rax
-	mov r14,   r15 ;[string]
-	and r14, 0x0000000f;mascara, para extraer los ultimos bits
-	cmp r14, 0x00000009
+
+	mov rax,      [string]   ; r15 
+	and rax, 0x0000000f;mascara, para extraer los ultimos bits
+	cmp rax, 0x00000009
 	jbe esn1;  salta si es numero
 	ja ess1; salta si es string
 
 esn1:
-	add r14, 0x30 
+	add rax, 0x30 
 	jmp segundo
  ess1:
-	add r14, 0x37 
+	add rax, 0x37 
 	
 
 ;_______________________________________________________________________
 segundo:
-	shl r14, 56
-	mov [regout], r14
-	mov r14, r15 ;[string]
-	shr r14, 4
-	and r14, 0x0000000f;mascara, para extraer los ultimos bits
-	cmp r14, 0x00000009
+	shl rax, 56
+	mov [regout], rax
+	mov rax,      [string]   ; r15 
+	shr rax, 4
+	and rax, 0x0000000f;mascara, para extraer los ultimos bits
+	cmp rax, 0x00000009
 	jbe esn2;  salta si es numero
 	ja ess2; salta si es string
 
 esn2:
-	add r14, 0x30 
+	add rax, 0x30 
 	jmp tercero
  ess2:
-	add r14, 0x37
+	add rax, 0x37
 	
 ;________________________________________
 tercero:
-	shl r14, 48
-	or [regout], r14
-	mov r14,     r15    ;[string]
-	shr r14, 8
-	and r14, 0x0000000f;mascara, para extraer los ultimos bits
-	cmp r14, 0x00000009
+	shl rax, 48
+	or [regout],  rax
+	mov rax,      [string]   ; r15 
+	shr rax, 8
+	and rax, 0x0000000f;mascara, para extraer los ultimos bits
+	cmp rax, 0x00000009
 	jbe esn3;  salta si es numero
 	ja ess3; salta si es string
 
 esn3:
-	add r14, 0x30 
+	add rax, 0x30 
 	jmp cuarto
  ess3:
-	add r14, 0x37
+	add rax, 0x37
 
 cuarto:
-	shl r14, 40
-	or [regout], r14
-	mov r14,     r15     ; [string]
-	shr r14, 12
-	and r14, 0x0000000f;mascara, para extraer los ultimos bits
-	cmp r14, 0x00000009
+	shl rax, 40
+	or [regout],  rax
+	mov rax,      [string]   ; r15 
+	shr rax, 12
+	and rax, 0x0000000f;mascara, para extraer los ultimos bits
+	cmp rax, 0x00000009
 	jbe esn4;  salta si es numero
 	ja ess4; salta si es string
 
 esn4:
-	add r14, 0x30 
+	add rax, 0x30 
 	jmp quinto
  ess4:
-	add r14, 0x37
+	add rax, 0x37
 
 quinto:
-	shl r14, 32
-	or [regout], r14
-	mov r14,     r15   ;[string]
-	shr r14, 16
-	and r14, 0x0000000f;mascara, para extraer los ultimos bits
-	cmp r14, 0x00000009
+	shl rax, 32
+	or [regout],  rax
+	mov rax,      [string]   ; r15 
+	shr rax, 16
+	and rax, 0x0000000f;mascara, para extraer los ultimos bits
+	cmp rax, 0x00000009
 	jbe esn5;  salta si es numero
 	ja ess5; salta si es string
 
 esn5:
-	add r14, 0x30 
+	add rax, 0x30 
 	jmp sexto
  ess5:
-	add r14, 0x37
+	add rax, 0x37
 sexto:
-	shl r14, 24
-	or [regout], r14
-	mov r14,     r15   ;[string]
-	shr r14, 20
-	and r14, 0x0000000f;mascara, para extraer los ultimos bits
-	cmp r14, 0x00000009
+	shl rax, 24
+	or [regout],  rax
+	mov rax,      [string]   ; r15 
+	shr rax, 20
+	and rax, 0x0000000f;mascara, para extraer los ultimos bits
+	cmp rax, 0x00000009
 	jbe esn6;  salta si es numero
 	ja ess6; salta si es string
 
 esn6:
-	add r14, 0x30 
+	add rax, 0x30 
 	jmp setimo
  ess6:
-	add r14, 0x37
+	add rax, 0x37
 
 setimo:
-	shl r14, 16
-	or [regout], r14
-	mov r14,     r15  ;[string]
-	shr r14, 24
-	and r14, 0x0000000f;mascara, para extraer los ultimos bits
-	cmp r14, 0x00000009
+	shl rax, 16
+	or [regout],  rax
+	mov rax,      [string]   ; r15 
+	shr rax, 24
+	and rax, 0x0000000f;mascara, para extraer los ultimos bits
+	cmp rax, 0x00000009
 	jbe esn7;  salta si es numero
 	ja ess7; salta si es string
 
 esn7:
-	add r14, 0x30 
+	add rax, 0x30 
 	jmp octavo
  ess7:
-	add r14, 0x37
+	add rax, 0x37
 octavo:
 
-	shl r14, 8
-	or [regout], r14
-	mov r14,     r15 ; [string]
-	shr r14, 28
-	and r14, 0x0000000f;mascara, para extraer los ultimos bits
-	cmp r14, 0x00000009
+	shl rax, 8
+	or [regout],  rax
+	mov rax,      [string]   ; r15 
+	shr rax, 28
+	and rax, 0x0000000f;mascara, para extraer los ultimos bits
+	cmp rax, 0x00000009
 	jbe esn8;  salta si es numero
 	ja ess8; salta si es string
 
 esn8:
-	add r14, 0x00000030; lo convierte en numero ascii
+	add rax, 0x00000030; lo convierte en numero ascii
 	jmp saledec
  ess8:
-	add r14, 0x00000037; lo conv en letra
+	add rax, 0x00000037; lo conv en letra
 ;________________________________________
 saledec:
 	
-	or [regout], r14
-	mov r13, [regout]
+	or [regout], rax
+;	mov r13, [regout]
  	ret
 
 
+
+%macro PrintR 0
+		; Tipo R 
+		impr_texto cons_banner0, cons_tamano_banner0
+		; Opcode
+		impr_texto cons_banner01, cons_tamano_banner01
+
+		; RS 
+		impr_texto cons_banner02, cons_tamano_banner02
+		
+		mov eax,                      [RS]
+;		sub eax,					  OFFSET_POINTER_REG
+;		div eax,                      4
+
+		mov [string],                 eax
+		call Hex2Ascii	  ; in [string] ; out [regout]
+
+  		impr_texto fmtint3, 	      8
+   		impr_texto enterNow,          1
+		
+
+		; RT
+		impr_texto cons_banner03, cons_tamano_banner03
+		; RD
+		impr_texto cons_banner04, cons_tamano_banner04
+		; Shamt
+		impr_texto cons_banner05, cons_tamano_banner05
+		; Function
+		impr_texto cons_banner06, cons_tamano_banner06
+		
+
+
+
+%endmacro
 ;-----------------------------------------------------------------------
 ;------------------------ Instruction Decoder --------------------------
 ;-----------------------------------------------------------------------
@@ -492,6 +629,9 @@ _DECO:
 	mov rcx, 			21  						  ; shifting 20 bits
 	mov edx, 			r8d
 	shr edx,			cl 	
+
+	mov [RS], 			rdx 
+	
 	imul rdx,            4
 	;mov rax,            rdx
 	;imul 4 
@@ -559,7 +699,7 @@ _DECO:
 
 ;------------------------------ Prints ----------------------------------------
 ;etiqueta para imprimir
-;;_imprimirdeco:
+;_imprimirdeco:
 	; %1 = $r15 ( OPCODE )
 	; %2 = $r14 ( rs )
 	; %3 = $r13 ( rt )
@@ -567,6 +707,14 @@ _DECO:
 	; %5 = $r10 ( Function ) 
 	; %6 = $r9  ( Immediate) 
 	; %7 = $r8  ( Address )
+
+
+;---
+; 	mov [string],           r14d 
+ ;   call Hex2Ascii          ; in = [string] out = [regout]
+  ;	impr_texto fmtint3,     8
+;  	impr_texto enterNow, 1	
+;---
 
 
 	;mov eax,        51
@@ -648,7 +796,7 @@ _Alu2:
 	;mov [Function], r10d 
 
 	cmp r15d, 0x00
-	je _OPcodeR
+	je  _OPcodeR
 	jne _OPcodeI
 
 	_OPcodeI:  
@@ -686,6 +834,10 @@ _Alu2:
  
 
 	_OPcodeR:
+
+
+
+
 ;		cmp r10d, 0x00 ; shl function
 ;		je _shl 			
  
@@ -730,11 +882,14 @@ _Alu2:
 		cmp r10d, 0x8  ; jr function
 		je 	_jr
 		
+
+
 		jmp _endAlu
 
 
 	_add:
 		impr_texto Op1, tamano_Op1 ; Indica al usuario que operacion se realiza
+		PrintR                                                     ; Print Instruction parameters
 		mov eax,		       dword [rsp+r14+OFFSET_RSPCALL-4] ; +8, because call use rsp register	; Se pasan los datos a los registros que van a operar
 		add eax, 			   dword [rsp+r13+OFFSET_RSPCALL-4] ; Se realiza la operacion
 		mov dword [rsp+r12+OFFSET_RSPCALL-4], eax
@@ -1055,6 +1210,7 @@ section .data
  ; fmtint4:       equ $string2 
   fmtint3:        equ $regout
   
+  RS1:			  equ $RS
   
   OUTPUT_FILE_NAME:    db "Resultados.txt", 0 ; nombre de archivo a escribir
   OUTPUT_FILE_LENGTH:  equ 21
@@ -1088,7 +1244,7 @@ section .data
 ;------------------- Alu -----------------------------
   l1: db 'Inicio del Programa',0xa
   tamano_l1: equ $-l1
-  Op1: db 'Se realiza un add',0xa
+  Op1: db 'Se realiza un add ',0xa
   tamano_Op1: equ $-Op1
   Op2: db 'Se realiza un and',0xa
   tamano_Op2: equ $-Op2
@@ -1109,37 +1265,37 @@ section .data
   num1: equ 0x1
 
 ;----------------- Prints ----------------------------
-	cons_banner0: db 0xa, ' La instruccion es de tipo R y posee el siguiente formato:  ', 0xa		
+	cons_banner0: db 0xa, 'La instruccion es de tipo R y posee el siguiente formato : ', 0xa 		
 	cons_tamano_banner0: equ $-cons_banner0				
 
-	cons_banner01: db 0xa, ' Opcode: ', 0xa 			
+	cons_banner01: db 0xa, 'Opcode : ' 			
 	cons_tamano_banner01: equ $-cons_banner01		
 
-	cons_banner02: db 0xa, 'RS: ', 0xa			
+	cons_banner02: db 0xa, 'RS : '			
 	cons_tamano_banner02: equ $-cons_banner02		
 
-	cons_banner03: db 0xa, 'RT: ', 0xa			
+	cons_banner03: db 0xa, 'RT : '			
 	cons_tamano_banner03: equ $-cons_banner03	
 
-	cons_banner04: db 'RD: 0xa, ', 0xa			
+	cons_banner04: db 0xa, 'RD : '			
 	cons_tamano_banner04: equ $-cons_banner04
 
-    cons_banner05: db 0xa, 'Shamt: ', 0xa			
+    cons_banner05: db 0xa, 'Shamt : '
 	cons_tamano_banner05: equ $-cons_banner05
 
-	cons_banner06: db 0xa, 'Function: ', 0xa			
+	cons_banner06: db 0xa, 'Function : ', 0xa 
 	cons_tamano_banner06: equ $-cons_banner06
 
-	cons_banner07: db 0xa, 'Immediate: ', 0xa			
+	cons_banner07: db 0xa, 'Immediate : '			
 	cons_tamano_banner07: equ $-cons_banner07
 
-	cons_banner08: db 0xa, 'Address: ', 0xa			
+	cons_banner08: db 0xa, 'Address : '			
 	cons_tamano_banner08: equ $-cons_banner08
 
-	cons_banner2: db 0xa, 'La instruccion es de tipo I y posee el siguiente formato: ', 0xa			
+	cons_banner2: db 0xa, 'La instruccion es de tipo I y posee el siguiente formato : '
 	cons_tamano_banner2: equ $-cons_banner2		
 
-	cons_banner3: db 0xa, 'La instruccion es de tipo J y posee el siguiente formato: ', 0xa			
+	cons_banner3: db 0xa, 'La instruccion es de tipo J y posee el siguiente formato : '			
 	cons_tamano_banner3: equ $-cons_banner3		
 
 
@@ -1156,7 +1312,7 @@ section .bss
  
  
 	RT: resb 1
- 	RS: resb 1
+ 	RS: resb 8 ;1
  	RD: resb 1
  	Address: resb 4
  	Immediate: resb 2
@@ -1221,30 +1377,7 @@ _MIPS:
 	
 _txt:
 
-;------- open file for reading
-	mov rax, 	  		SYS_OPEN		            
-	mov rdi, 	  		FILE_NAME
-	mov rsi, 	  		STDIN      		; for read only access
-	syscall  
-	mov [FD_IN],  		rax
-
-;------- read from file
-	mov rax, 	  		SYS_READ    	; sys_read
-	mov rdi, 	  		[FD_IN]
-	mov rsi,            TEXT
-	mov rdx, 	  		FILE_LENGTH   	; Data length 
-	syscall
-
-;------- close the file 
-	mov rax,      		SYS_CLOSE 
-	mov rdi,      		[FD_IN]
-
-;------- print info  
-	mov rax,      		SYS_WRITE 
-	mov rdi,      		STDOUT
-	mov rsi,      		TEXT			; The Buffer TEXT
-	mov rdx,      		FILE_LENGTH     ; Data length 
-	syscall	
+	FillBuffer
 ;------------------ At this point -------------------------
 ;----------- $rsi have txt instructions -------------------
 
@@ -1252,97 +1385,47 @@ _txt:
 	xor r13, r13
 	xor r14, r14
 	xor rax, rax 
-	
- 
+
 
 ;------------- Loads Instruction into Memory --------------
 ;------------------------- PC -----------------------------
-_PC: 
 
+	call _Instruction2Memory
 
-	mov al, 		byte [TEXT+r13]		    ; 19 is a constant to find Index(;) 
-	inc 			r13						; in format [yyyyyyyy] xxxxxxxx;
-
-	cmp r13, 		FILE_LENGTH  			; Break condition
-	je 				_Reg  
-
-	cmp al, 		0x3b 				    ; 0x3b => Index ( ; ) 
-	je              _loadAddress  			
-	jne             _PC					
-
-_loadAddress:
-	mov r15, 	    r13 
-	sub r13,        20						; 20 positions before Index, starts the address
-
-	mov rax,               qword [TEXT+r13+1]
-	mov qword [Ascii2Hex], rax
-	GetFromTxt 		[Ascii2Hex]    ; r13 					; output is $r12d
-
-	mov r14, 		r12 				    ; $r14 is the Memory address pointer
-	 
-	and r14,        0xFF
-	;mov dword [rsp+r14+OFFSET_POINTER_ADDRESS], r12d
-	add r13,        20                      ; ( ; ) Position again 
-	 
-
-_loadInstruction:
-	sub r13,             	10 
-	xor r12d,            	r12d
-
-	mov rax,                qword [TEXT+r13+1]
-	mov qword [Ascii2Hex],  rax	
-	GetFromTxt              [Ascii2Hex]      ;                r13 							; output is $r12d
-
-	mov dword [rsp+r14], 	r12d 			; Saves addressed Intruction into Memory
-													
-	mov r13,            	r15 
-	xor r12d,           	r12d
-	jmp _PC
 ;------------------------------- At this point -----------------------------------
 ;------------- Virtual memory $rsp contains addressed instructions ---------------
  
 
-_Reg: 
+;------------------- Initialization of Arguments Registers -----------------------
+	call _ArgumentsRegInit
 
-; Initialization of Arguments Registers
-	GetFromTxt [arg1] ;r15   ; Ascii to HEX ; out=r12
-	mov r15,   r12 
-	mov dword [rsp+OFFSET_POINTER_REG+16 -4],   r15d     ; R[4]   
 
-	GetFromTxt [arg2]
-	mov r15,   r12 
-	mov dword [rsp+OFFSET_POINTER_REG+20 -4],   r15d     ; R[5]
 
-	GetFromTxt [arg3]
-	mov r15,   r12 	
-	mov dword [rsp+OFFSET_POINTER_REG+24 -4],   r15d     ; R[6]
-
-	GetFromTxt [arg4]
-	mov r15,   r12 	
-    mov dword [rsp+OFFSET_POINTER_REG+28 -4],   r15d     ; R[7],        4* 7 =28 -4 = 24  
-	
 
 
 _Reg001:
-	mov rcx, iMEM_BYTES;/4 								; Number of words for the assignation ; 0xE ; iMEM_BYTES/4 ; 3
+	mov rcx, iMEM_BYTES  								; Number of words for the assignation ;  
 	mov ebx, 0x4     									; 0x38 last word  ; 0x24  ; first instruct address +4 
 	
 	jmp _PCLoop
 	;mov eax, [arg1]
 	;mov dword [rsp+OFFSET_POINTER_DATAMEM +28], eax ;0xf     ; (29)*4 =116 , 
 												        ;manually load to dataMem
-    ;mov dword [rsp+OFFSET_POINTER_REG+12], 0xaaaabbbb	; posiciones 4 y 3
-    													; no se estan leyendo las 2primereas posiciones del bancoReg 											      
-	
+
+
 _PCLoop:
-	; add ebx, dword [BranchAddress]
+
 	add ebx,                0x4 
-	dec rcx ;rdi
+	dec rcx  
 	mov [contador],         rcx
 
 	call _DECO 
-    ;call _imprimirdeco 
-	call _Alu2
+;    call _imprimirdeco 
+;    mov [RS],               r12    
+
+    call _Alu2
+    
+
 
 	mov rcx, [contador]
 
@@ -1355,68 +1438,89 @@ _Reg1:
 	mov [enter], r10  
 
 
-	mov r15d, dword [rsp+OFFSET_POINTER_REG-4] ; "This is the first position"
-	call Hex2Ascii	  ; in r15 ; out [regout]
+;	mov r15d, dword [rsp+OFFSET_POINTER_REG-4] ; "This is the first position"
+	
+	mov eax, 			     dword [rsp+OFFSET_POINTER_REG-4]	
+	mov [string],            eax 
+	call Hex2Ascii	  ; in [string] ; out [regout]
 
   	impr_texto fmtint3, 8
    	impr_texto enterNow, 1
    	
 
-	mov r15d, dword [rsp+OFFSET_POINTER_REG] ;  
+	;mov r15d, dword [rsp+OFFSET_POINTER_REG] 
+	mov eax, 			dword [rsp+OFFSET_POINTER_REG]	
+	mov [string],       eax 	
 	call Hex2Ascii	  ; in r15 
   	impr_texto fmtint3, 8
    	impr_texto enterNow, 1
 	;Writetxt fmtint3, 8  
 
- 	mov r15d, dword [rsp+OFFSET_POINTER_REG+4];+OFFSET_RSPCALL]
-	call Hex2Ascii	  ; in r15 
-  	impr_texto fmtint3, 8_
-  	impr_texto enterNow, 1
-
-	mov r15d, dword [rsp+OFFSET_POINTER_REG+8];+OFFSET_RSPCALL]
+ 	;mov r15d, dword [rsp+OFFSET_POINTER_REG+4]
+	mov eax, 			dword [rsp+OFFSET_POINTER_REG+4]	
+	mov [string],       eax  	
 	call Hex2Ascii	  ; in r15 
   	impr_texto fmtint3, 8
   	impr_texto enterNow, 1
 
-	mov r15d, dword [rsp+OFFSET_POINTER_REG+12];+OFFSET_RSPCALL]
+	;mov r15d, dword [rsp+OFFSET_POINTER_REG+8]
+	mov eax, 			dword [rsp+OFFSET_POINTER_REG+8]	
+	mov [string],       eax 	
 	call Hex2Ascii	  ; in r15 
   	impr_texto fmtint3, 8
   	impr_texto enterNow, 1
 
-	mov r15d, dword [rsp+OFFSET_POINTER_REG+16];+OFFSET_RSPCALL]
+	;mov r15d, dword [rsp+OFFSET_POINTER_REG+12]
+	mov eax, 			dword [rsp+OFFSET_POINTER_REG+12]	
+	mov [string],       eax 
 	call Hex2Ascii	  ; in r15 
   	impr_texto fmtint3, 8
   	impr_texto enterNow, 1
 
-	mov r15d, dword [rsp+OFFSET_POINTER_REG +20];+OFFSET_RSPCALL]
+	;mov r15d, dword [rsp+OFFSET_POINTER_REG+16]
+	mov eax, 			dword [rsp+OFFSET_POINTER_REG+16]	
+	mov [string],       eax 	
 	call Hex2Ascii	  ; in r15 
   	impr_texto fmtint3, 8
   	impr_texto enterNow, 1
 
-	mov r15d, dword [rsp+OFFSET_POINTER_REG+24];+OFFSET_RSPCALL]
+	;mov r15d, dword [rsp+OFFSET_POINTER_REG +20]
+	mov eax, 			dword [rsp+OFFSET_POINTER_REG+20]	
+	mov [string],       eax 	
 	call Hex2Ascii	  ; in r15 
   	impr_texto fmtint3, 8
   	impr_texto enterNow, 1
 
-	mov r15d, dword [rsp+OFFSET_POINTER_REG +28];+OFFSET_RSPCALL]
+	;mov r15d, dword [rsp+OFFSET_POINTER_REG+24]
+	mov eax, 			dword [rsp+OFFSET_POINTER_REG+24]	
+	mov [string],       eax 	
 	call Hex2Ascii	  ; in r15 
   	impr_texto fmtint3, 8
   	impr_texto enterNow, 1
 
-	mov r15d, dword [rsp+OFFSET_POINTER_REG+32];+OFFSET_RSPCALL]
+	;mov r15d, dword [rsp+OFFSET_POINTER_REG +24]
+	mov eax, 			dword [rsp+OFFSET_POINTER_REG+28]	
+	mov [string],       eax 
+	call Hex2Ascii	  ; in r15 
+  	impr_texto fmtint3, 8
+  	impr_texto enterNow, 1
+
+	;mov r15d, dword [rsp+OFFSET_POINTER_REG+32]
+	mov eax, 			dword [rsp+OFFSET_POINTER_REG+32]	
+	mov [string],       eax 	
 	call Hex2Ascii	  ; in r15 
   	impr_texto fmtint3, 8
   	impr_texto enterNow, 1
 	
-	mov r15d, dword [rsp+OFFSET_POINTER_REG+36];+OFFSET_RSPCALL]
-	call Hex2Ascii	  ; in r15 
-  	impr_texto fmtint3, 8
-  	impr_texto enterNow, 1  	
+;	mov r15d, dword [rsp+OFFSET_POINTER_REG+36];+OFFSET_RSPCALL]
+;	call Hex2Ascii	  ; in r15 
+;  	impr_texto fmtint3, 8
+;  	impr_texto enterNow, 1  	
 
-	mov r15d, dword [rsp+OFFSET_POINTER_REG+40];+OFFSET_RSPCALL]
-	call Hex2Ascii	  ; in r15 
-  	impr_texto fmtint3, 8
-  	impr_texto enterNow, 1  	
+;	mov r15d, dword [rsp+OFFSET_POINTER_REG+40];+OFFSET_RSPCALL]
+;	call Hex2Ascii	  ; in r15 
+;  	impr_texto fmtint3, 8
+;  	impr_texto enterNow, 1  	
 
 	Writetxt fmtint3, 8
 	;impr_texto enterNow, 1  	
