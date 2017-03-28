@@ -45,6 +45,10 @@
 ;----------- $rsi have txt instructions -------------------	
 %endmacro
 
+
+
+
+
  %macro Writetxt 2  ;ACTULIZAR LENGTH
 ;------- open file for writing
 ;	mov rax, 	  		SYS_OPEN		            
@@ -52,18 +56,7 @@
 ;	mov rsi, 	  		STDERR   ; read & write ; STDOUT      		; for read only access
 ;	syscall  
 	;mov dword[FD_OUT],  		rax
- 
-mov eax, 8
-mov ebx, OUTPUT_FILE_NAME
-mov ecx, 0x02
-mov edx, 7777h
-int 0x80
-;____________________________________
 
-
-cmp eax, 0; verifica que se haya creado correctamente
-;jle salir
-mov dword[FD_OUT], eax
 
 
  ;------ write in txt 
@@ -85,11 +78,6 @@ int 0x80
 	;mov rdx, 0
 	;syscall
  
-mov eax, 6
-mov ebx, dword[FD_OUT]
-mov ecx, 0
-mov edx, 0
-int 0x80
 
 %endmacro	
 
@@ -1623,6 +1611,19 @@ section  .text
 
 
 _start:                     			; tell linker entry point
+	abretxt:
+	mov eax, 8
+	mov ebx, OUTPUT_FILE_NAME
+	mov ecx, 0x02
+	mov edx, 7777h
+	int 0x80
+;____________________________________
+
+
+	cmp eax, 0; verifica que se haya creado correctamente
+	;jle salir
+	mov dword[FD_OUT], eax
+
 
 _Reg0:
 
@@ -1742,6 +1743,11 @@ _Reg1:
 
 
 _end:
+	mov eax, 6
+	mov ebx, dword[FD_OUT]
+	mov ecx, 0
+	mov edx, 0
+	int 0x80
  	mov rax,       		 SYS_EXIT
    	mov rdi,       		 STDIN
     xor rbx,       		 rbx
