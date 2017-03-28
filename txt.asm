@@ -34,7 +34,7 @@
 ;------- close the file 
 	mov rax,      		SYS_CLOSE 
 	mov rdi,      		[FD_IN]
-
+ 
 ;------- print info  
 	mov rax,      		SYS_WRITE 
 	mov rdi,      		STDOUT
@@ -49,21 +49,21 @@
 ;------- open file for writing
 	mov rax, 	  		SYS_OPEN		            
 	mov rdi, 	  		OUTPUT_FILE_NAME
-	mov rsi, 	  		STDERR    ; STDOUT      		; for read only access
+	mov rsi, 	  		STDERR   ; read & write ; STDOUT      		; for read only access
 	syscall  
 	mov [FD_OUT],  		rax
  
  ;------ write in txt 
 	mov rax, 	  		SYS_WRITE    	; sys_write
 	mov rdi, 	  		[FD_OUT]
-	mov rsi,            %1              ; Buffer output 
-	mov rdx, 	  	    %2 ;1               ; Data length 
+	mov rsi,            fmtint3 ; %1              ; Buffer output 
+	mov rdx, 	  	    8 ;%2 ;1               ; Data length 
 	syscall 
 
 ;------- close the file 
 	mov rax,      		SYS_CLOSE 
 	mov rdi,      		[FD_OUT]
-
+ 
 %endmacro	
 
 
@@ -425,23 +425,34 @@ Hex2Ascii:
 	xor rax,      rax
 	mov [regout], rax
 
-	mov rax,      [string]   ; r15 
-	and rax, 0x0000000f;mascara, para extraer los ultimos bits
-	cmp rax, 0x00000009
+	mov rax,      [string]      ; r15 
+	and rax,      0x0000000f    ; máscara, para extraer los ultimos bits
+	cmp rax,      0x00000009
+
 	jbe esn1;  salta si es numero
 	ja ess1; salta si es string
 
 esn1:
 	add rax, 0x30 
+
+	;mov rsi, rax 
+
 	jmp segundo
  ess1:
 	add rax, 0x37 
+
+	;mov rsi, rax 
+	;add rsi, 0x29  ; 0x37 + 0x29 = 0x60 
 	
 
 ;_______________________________________________________________________
 segundo:
 	shl rax, 56
-	mov [regout], rax
+	;shl rsi, 56
+
+	mov [regout],     rax        ; Storing value 
+	;mov [SaveInTxt],  rsi        
+
 	mov rax,      [string]   ; r15 
 	shr rax, 4
 	and rax, 0x0000000f;mascara, para extraer los ultimos bits
@@ -451,14 +462,24 @@ segundo:
 
 esn2:
 	add rax, 0x30 
+
+	;mov rsi, rax 
+
 	jmp tercero
  ess2:
-	add rax, 0x37
+ 	add rax, 0x37
+
+	;mov rsi, rax 
+	;add rsi, 0x29  ; 0x37 + 0x29 = 0x60 
+
 	
 ;________________________________________
 tercero:
 	shl rax, 48
-	or [regout],  rax
+	;shl rsi, 48 
+	or [regout],     rax
+	;or [SaveInTxt],  rsi 
+
 	mov rax,      [string]   ; r15 
 	shr rax, 8
 	and rax, 0x0000000f;mascara, para extraer los ultimos bits
@@ -468,13 +489,20 @@ tercero:
 
 esn3:
 	add rax, 0x30 
+	;mov rsi, rax 	
 	jmp cuarto
  ess3:
 	add rax, 0x37
 
+	;mov rsi, rax 
+	;add rsi, 0x29  ; 0x37 + 0x29 = 0x60 	
+
 cuarto:
 	shl rax, 40
-	or [regout],  rax
+	;shl rsi, 40 
+	or [regout],    rax
+	;or [SaveInTxt], rsi 
+
 	mov rax,      [string]   ; r15 
 	shr rax, 12
 	and rax, 0x0000000f;mascara, para extraer los ultimos bits
@@ -484,13 +512,20 @@ cuarto:
 
 esn4:
 	add rax, 0x30 
+	;mov rsi, rax 	
 	jmp quinto
  ess4:
 	add rax, 0x37
 
+	;mov rsi, rax 
+	;add rsi, 0x29  ; 0x37 + 0x29 = 0x60 	
+
 quinto:
 	shl rax, 32
-	or [regout],  rax
+	;shl rsi, 32 
+	or [regout],    rax
+	;or [SaveInTxt], rsi 
+
 	mov rax,      [string]   ; r15 
 	shr rax, 16
 	and rax, 0x0000000f;mascara, para extraer los ultimos bits
@@ -500,12 +535,20 @@ quinto:
 
 esn5:
 	add rax, 0x30 
+	;mov rsi, rax 		
 	jmp sexto
  ess5:
 	add rax, 0x37
+
+	;mov rsi, rax 
+	;add rsi, 0x29  ; 0x37 + 0x29 = 0x60 	
+
 sexto:
 	shl rax, 24
-	or [regout],  rax
+	;shl rsi, 24 
+	or [regout],    rax
+	;or [SaveInTxt], rsi 
+
 	mov rax,      [string]   ; r15 
 	shr rax, 20
 	and rax, 0x0000000f;mascara, para extraer los ultimos bits
@@ -515,13 +558,20 @@ sexto:
 
 esn6:
 	add rax, 0x30 
+	;mov rsi, rax
 	jmp setimo
  ess6:
 	add rax, 0x37
 
+	;mov rsi, rax
+	;add rsi, 0x29  ; 0x37 + 0x29 = 0x60 
+
 setimo:
 	shl rax, 16
-	or [regout],  rax
+	;shl rsi, 16 
+	or [regout],     rax
+	;or [SaveInTxt],  rsi 
+
 	mov rax,      [string]   ; r15 
 	shr rax, 24
 	and rax, 0x0000000f;mascara, para extraer los ultimos bits
@@ -531,13 +581,20 @@ setimo:
 
 esn7:
 	add rax, 0x30 
+	;mov rsi, rax 
 	jmp octavo
  ess7:
 	add rax, 0x37
+
+	;mov rsi, rax 
+	;add rsi, 0x29 
 octavo:
 
 	shl rax, 8
-	or [regout],  rax
+	;shl rsi, 8 
+	or [regout],    rax
+	;or [SaveInTxt], rsi 
+
 	mov rax,      [string]   ; r15 
 	shr rax, 28
 	and rax, 0x0000000f;mascara, para extraer los ultimos bits
@@ -547,51 +604,186 @@ octavo:
 
 esn8:
 	add rax, 0x00000030; lo convierte en numero ascii
+	;mov rsi, rax 
 	jmp saledec
  ess8:
 	add rax, 0x00000037; lo conv en letra
+
+	;mov rsi, rax 
+	;add rsi, 0x00000029 
 ;________________________________________
 saledec:
 	
-	or [regout], rax
+	or [regout],    rax
+	;or [SaveInTxt], rsi 
+
 ;	mov r13, [regout]
  	ret
 
 
 
 %macro PrintR 0
-		; Tipo R 
+;--------------------- R Type Instruction
 		impr_texto cons_banner0, cons_tamano_banner0
-		; Opcode
-		impr_texto cons_banner01, cons_tamano_banner01
 
-		; RS 
-		impr_texto cons_banner02, cons_tamano_banner02
-		
-		mov eax,                      [RS]
-;		sub eax,					  OFFSET_POINTER_REG
-;		div eax,                      4
-
+;------------------------- Opcode
+		impr_texto cons_banner01, cons_tamano_banner01      ; Texto descriptivo 
+		mov eax,                      [OPC] 
 		mov [string],                 eax
-		call Hex2Ascii	  ; in [string] ; out [regout]
+		call Hex2Ascii	                      ; in [string] ; out [regout]
+
+  		impr_texto fmtint3, 	      8
+   		impr_texto enterNow,          1		
+
+;-------------------------- RS 
+		impr_texto cons_banner02, cons_tamano_banner02
+		mov eax,                      [RS] 
+		mov [string],                 eax
+		call Hex2Ascii	                      ; in [string] ; out [regout]
 
   		impr_texto fmtint3, 	      8
    		impr_texto enterNow,          1
 		
-
-		; RT
+;-------------------------- RT
 		impr_texto cons_banner03, cons_tamano_banner03
-		; RD
+		mov eax,                      [RT] 
+		mov [string],                 eax
+		call Hex2Ascii	                      ; in [string] ; out [regout]
+
+  		impr_texto fmtint3, 	      8
+   		impr_texto enterNow,          1
+
+;-------------------------- RD
 		impr_texto cons_banner04, cons_tamano_banner04
-		; Shamt
+		mov eax,                      [RD] 
+		mov [string],                 eax
+		call Hex2Ascii	                      ; in [string] ; out [regout]
+
+  		impr_texto fmtint3, 	      8
+   		impr_texto enterNow,          1
+
+;------------------------- Shamt
 		impr_texto cons_banner05, cons_tamano_banner05
-		; Function
+		mov eax,                      [Shamt] 
+		mov [string],                 eax
+		call Hex2Ascii	                      ; in [string] ; out [regout]
+
+  		impr_texto fmtint3, 	      8
+   		impr_texto enterNow,          1
+
+;------------------------- Function
 		impr_texto cons_banner06, cons_tamano_banner06
-		
+		mov eax,                      [FUNCT] 
+		mov [string],                 eax
+		call Hex2Ascii	                      ; in [string] ; out [regout]
 
-
+  		impr_texto fmtint3, 	      8
+   		impr_texto enterNow,          1		
+	 
 
 %endmacro
+
+
+%macro PrintOutReg 0 
+ 	
+	mov eax, 			dword [rsp+OFFSET_POINTER_REG+4]	    ; R[2]
+	mov [string],       eax  	
+	call Hex2Ascii	  											; input = string  ; output = [regout]
+	impr_texto v0_Reg, AllReg_Content_Length   		; Print Register $v0 description
+  	impr_texto fmtint3, 8							; Print Register $v0 content
+ 
+	mov eax, 			dword [rsp+OFFSET_POINTER_REG+8]	    ; R[3]
+	mov [string],       eax 	
+	call Hex2Ascii	  
+	impr_texto v1_Reg, AllReg_Content_Length   		; Print Register $v1 description
+  	impr_texto fmtint3, 8							; Print Register $v1 content
+ 	 
+	mov eax, 			dword [rsp+OFFSET_POINTER_REG+12]	    ; R[4]
+	mov [string],       eax 
+	call Hex2Ascii	  ; in r15 
+	impr_texto a0_Reg, AllReg_Content_Length   		; Print Register $a0 description  	
+  	impr_texto fmtint3, 8							; Print Register $a0 content
+ 
+	mov eax, 			dword [rsp+OFFSET_POINTER_REG+16]	    ; R[5]
+	mov [string],       eax 	
+	call Hex2Ascii	  ; in r15 
+	impr_texto a1_Reg, AllReg_Content_Length   		; Print Register $a1 description     	
+  	impr_texto fmtint3, 8							; Print Register $a1 content
+
+	mov eax, 			dword [rsp+OFFSET_POINTER_REG+20]	    ; R[6]
+	mov [string],       eax 	
+	call Hex2Ascii	  ; in r15 
+	impr_texto a2_Reg, AllReg_Content_Length   		; Print Register $a2 description     		
+  	impr_texto fmtint3, 8							; Print Register $a2 content
+ 
+	mov eax, 			dword [rsp+OFFSET_POINTER_REG+24]	    ; R[7]
+	mov [string],       eax 	
+	call Hex2Ascii	  ; in r15 
+	impr_texto a3_Reg, AllReg_Content_Length   		; Print Register $a3 description     		
+  	impr_texto fmtint3, 8							; Print Register $a3 content
+ 
+
+	mov eax, 			dword [rsp+OFFSET_POINTER_REG+60]	    ; R[16]
+	mov [string],       eax 	
+	call Hex2Ascii	  ; in r15 
+	impr_texto s0_Reg, AllReg_Content_Length   		; Print Register $s0 description     		
+  	impr_texto fmtint3, 8							; Print Register $s0 content
+
+	mov eax, 			dword [rsp+OFFSET_POINTER_REG+64]	    ; R[17]
+	mov [string],       eax 	
+	call Hex2Ascii	  ; in r15 
+	impr_texto s1_Reg, AllReg_Content_Length   		; Print Register $s1 description     		
+  	impr_texto fmtint3, 8							; Print Register $s1 content
+
+
+	mov eax, 			dword [rsp+OFFSET_POINTER_REG+68]	    ; R[18]
+	mov [string],       eax 	
+	call Hex2Ascii	  ; in r15 	
+	impr_texto s2_Reg, AllReg_Content_Length   		; Print Register $s2 description    	
+  	impr_texto fmtint3, 8							; Print Register $s2 content
+
+	mov eax, 			dword [rsp+OFFSET_POINTER_REG+72]	    ; R[19]
+	mov [string],       eax 	
+	call Hex2Ascii	  ; in r15 
+	impr_texto s3_Reg, AllReg_Content_Length   		; Print Register $s3 description     		
+  	impr_texto fmtint3, 8							; Print Register $s3 content
+
+	mov eax, 			dword [rsp+OFFSET_POINTER_REG+76]	    ; R[20]
+	mov [string],       eax 	
+	call Hex2Ascii	  ; in r15 
+	impr_texto s4_Reg, AllReg_Content_Length   		; Print Register $s4 description     		
+  	impr_texto fmtint3, 8							; Print Register $s4 content
+
+	mov eax, 			dword [rsp+OFFSET_POINTER_REG+80]	    ; R[21]
+	mov [string],       eax 	
+	call Hex2Ascii	  ; in r15 
+	impr_texto s5_Reg, AllReg_Content_Length   		; Print Register $s5 description     	 	
+  	impr_texto fmtint3, 8							; Print Register $s5 content
+
+	mov eax, 			dword [rsp+OFFSET_POINTER_REG+84]	    ; R[22]
+	mov [string],       eax 	
+	call Hex2Ascii	  ; in r15 
+	impr_texto s6_Reg, AllReg_Content_Length   		; Print Register $s6 description     	
+  	impr_texto fmtint3, 8							; Print Register $s6 content
+
+	mov eax, 			dword [rsp+OFFSET_POINTER_REG+88]	    ; R[23]
+	mov [string],       eax 	
+	call Hex2Ascii	  ; in r15 
+	impr_texto s7_Reg, AllReg_Content_Length   		; Print Register $s7 description     		
+  	impr_texto fmtint3, 8							; Print Register $s7 content
+ 
+  	  	  	
+	mov eax, 			dword [rsp+OFFSET_POINTER_REG+112]		; R[29]	
+	mov [string],       eax 	
+	call Hex2Ascii	  ; in r15 
+	impr_texto sp_Reg, AllReg_Content_Length   		; Print Register $sp description     		
+  	impr_texto fmtint3, 8							; Print Register $sp content
+	
+
+    impr_texto enterNow, 1
+
+%endmacro
+
 ;-----------------------------------------------------------------------
 ;------------------------ Instruction Decoder --------------------------
 ;-----------------------------------------------------------------------
@@ -622,6 +814,7 @@ _DECO:
 	mov edx, 			dword r8d
 	shr edx,			cl 							  ; $rdx is the output ( OPCODE )
 	mov r15,            rdx
+	mov [OPC], 			rdx 
 
 ;--------------------- Mask & shift for $rs 	
 	mov r8d, 			dword [rsp+rbx]				  ; getting instruction from memory; 
@@ -649,6 +842,9 @@ _DECO:
 	mov rcx, 			16       	    			  ; shifting 16 bits
 	mov edx, 			dword r8d
 	shr edx,			cl 
+
+	mov [RT], 			rdx 
+
 	imul rdx, 			4  							  ; escale x4
 ;	sub rdx, 			4							  ; substract 4 to point propertly	
 	;add rbx, 4
@@ -662,6 +858,9 @@ _DECO:
 	mov rcx, 			11							  ; shifting 11 bits
 	mov edx,		    dword r8d
 	shr edx,			cl 
+	
+	mov [RD], 			rdx 
+
 	imul rdx, 		  	4
 ;	sub rdx, 			4
 	;add rbx, 4
@@ -684,15 +883,18 @@ _DECO:
 	mov edx,		    dword r8d
 	shr edx,			cl 
 	mov r10,            rdx
+	mov [FUNCT], 			rdx 
 
 ;---------------------- Mask & shift for Inmediate 	
 	mov r8d, 			dword [rsp+rbx]				  ; getting instruction from memory
 	and r8d, 0000_0000_0000_0000_1111_1111_1111_1111b ; masking address $rd
 	mov r9d,			r8d 
+	mov [IMM], 			rdx 
 
 ;---------------------- Mask & shift for Address 	
 	mov r8d, 			dword [rsp+rbx]				  ; getting instruction from memory
 	and r8d, 0000_0011_1111_1111_1111_1111_1111_1111b ; masking address $rd
+	mov [ADDRS], 			rdx 
 
 	ret
 
@@ -888,8 +1090,8 @@ _Alu2:
 
 
 	_add:
-		impr_texto Op1, tamano_Op1 ; Indica al usuario que operacion se realiza
-		PrintR                                                     ; Print Instruction parameters
+		impr_texto Print_Add, Add_Length ; Indica al usuario que operacion se realiza
+		PrintR                                                  ; Print Instruction parameters
 		mov eax,		       dword [rsp+r14+OFFSET_RSPCALL-4] ; +8, because call use rsp register	; Se pasan los datos a los registros que van a operar
 		add eax, 			   dword [rsp+r13+OFFSET_RSPCALL-4] ; Se realiza la operacion
 		mov dword [rsp+r12+OFFSET_RSPCALL-4], eax
@@ -1208,8 +1410,14 @@ section .data
   fmtint2:        equ $string ;
   enterNow:       equ $enter
  ; fmtint4:       equ $string2 
+
   fmtint3:        equ $regout
+  fmtint4:        equ $regout_aux
   
+;  fmtint3_aux:    equ $regout_aux
+  ;SaveInTxt_Print:     equ $SaveInTxt
+;  SaveInTxt_aux2: equ $SaveInTxt_aux
+
   RS1:			  equ $RS
   
   OUTPUT_FILE_NAME:    db "Resultados.txt", 0 ; nombre de archivo a escribir
@@ -1242,25 +1450,27 @@ section .data
   STDERR:       equ 2  
 
 ;------------------- Alu -----------------------------
-  l1: db 'Inicio del Programa',0xa
+  l1: db 0xa, 'Inicio del Programa '
   tamano_l1: equ $-l1
-  Op1: db 'Se realiza un add ',0xa
-  tamano_Op1: equ $-Op1
-  Op2: db 'Se realiza un and',0xa
+
+  Print_Add:		db 0xa, 'Se realiza un add ' 
+  Add_Length:       equ $-Print_Add
+
+  Op2: db 0xa, 'Se realiza un and '
   tamano_Op2: equ $-Op2
-  Op3: db 'Se realiza un or',0xa
+  Op3: db 0xa, 'Se realiza un or ' 
   tamano_Op3: equ $-Op3
-  Op4: db 'Se realiza un nor',0xa
+  Op4: db 0xa, 'Se realiza un nor '
   tamano_Op4: equ $-Op4
-  Op5: db 'Se realiza un Shift left',0xa
+  Op5: db 0xa, 'Se realiza un Shift left '
   tamano_Op5: equ $-Op5
-  Op6: db 'Se realiza un Shift Right',0xa
+  Op6: db 0xa, 'Se realiza un Shift Right '
   tamano_Op6: equ $-Op6
-  Op7: db 'Se realiza una Resta',0xa
+  Op7: db 0xa, 'Se realiza una Resta '
   tamano_Op7: equ $-Op7
-  Op8: db 'Se realiza una multiplicacion',0xa
+  Op8: db 0xa, 'Se realiza una multiplicacion '
   tamano_Op8: equ $-Op8
-  l3: db 'Fin del Programa!',0xa
+  l3: db 0xa, 'Fin del Programa '
   tamano_l3: equ $-l3
   num1: equ 0x1
 
@@ -1268,28 +1478,28 @@ section .data
 	cons_banner0: db 0xa, 'La instruccion es de tipo R y posee el siguiente formato : ', 0xa 		
 	cons_tamano_banner0: equ $-cons_banner0				
 
-	cons_banner01: db 0xa, 'Opcode : ' 			
+	cons_banner01: db 0xa, 'Opcode :   ' 			
 	cons_tamano_banner01: equ $-cons_banner01		
 
-	cons_banner02: db 0xa, 'RS : '			
+	cons_banner02: db 0xa, 'RS :       '			
 	cons_tamano_banner02: equ $-cons_banner02		
 
-	cons_banner03: db 0xa, 'RT : '			
+	cons_banner03: db 0xa, 'RT :       '			
 	cons_tamano_banner03: equ $-cons_banner03	
 
-	cons_banner04: db 0xa, 'RD : '			
+	cons_banner04: db 0xa, 'RD :       '			
 	cons_tamano_banner04: equ $-cons_banner04
 
-    cons_banner05: db 0xa, 'Shamt : '
+    cons_banner05: db 0xa, 'Shamt :    '
 	cons_tamano_banner05: equ $-cons_banner05
 
-	cons_banner06: db 0xa, 'Function : ', 0xa 
+	cons_banner06: db 0xa, 'Function : ' 
 	cons_tamano_banner06: equ $-cons_banner06
 
 	cons_banner07: db 0xa, 'Immediate : '			
 	cons_tamano_banner07: equ $-cons_banner07
 
-	cons_banner08: db 0xa, 'Address : '			
+	cons_banner08: db 0xa, 'Address :   '			
 	cons_tamano_banner08: equ $-cons_banner08
 
 	cons_banner2: db 0xa, 'La instruccion es de tipo I y posee el siguiente formato : '
@@ -1297,6 +1507,25 @@ section .data
 
 	cons_banner3: db 0xa, 'La instruccion es de tipo J y posee el siguiente formato : '			
 	cons_tamano_banner3: equ $-cons_banner3		
+
+
+	v0_Reg:       db     0xa, 'Contenido en Registro $v0 : '
+	v1_Reg:		  db     0xa, 'Contenido en Registro $v1 : '
+	a0_Reg:		  db     0xa, 'Contenido en Registro $a0 : '   
+	a1_Reg:		  db     0xa, 'Contenido en Registro $a1 : '
+	a2_Reg:		  db     0xa, 'Contenido en Registro $a2 : '
+	a3_Reg:		  db     0xa, 'Contenido en Registro $a3 : '
+	s0_Reg:		  db     0xa, 'Contenido en Registro $s0 : '
+	s1_Reg:		  db     0xa, 'Contenido en Registro $s1 : '
+	s2_Reg:		  db     0xa, 'Contenido en Registro $s2 : '
+	s3_Reg:		  db     0xa, 'Contenido en Registro $s3 : '
+	s4_Reg:		  db     0xa, 'Contenido en Registro $s4 : '
+	s5_Reg:		  db     0xa, 'Contenido en Registro $s5 : '
+	s6_Reg:		  db     0xa, 'Contenido en Registro $s6 : '
+	s7_Reg:		  db     0xa, 'Contenido en Registro $s7 : '
+	sp_Reg:       db     0xa, 'Contenido en Registro $sp : '
+	AllReg_Content_Length: equ 28                            ; Contant = 28 for this block
+
 
 
 	string:    db 8
@@ -1310,16 +1539,25 @@ section .bss
 	Shamt:          resb 4
    	BranchAddress:  resb 4   
  
- 
-	RT: resb 1
- 	RS: resb 8 ;1
- 	RD: resb 1
+  	OPC: 			resb 8
+  	RS:  			resb 8 ;1
+	RT:  			resb 8
+ 	RD:  			resb 8
+ 	FUNCT:          resb 8
+ 	IMM:            resb 8
+ 	ADDRS: 			resb 8
+
  	Address: resb 4
  	Immediate: resb 2
  	Opcode: resb 1
  	Function: resb 1
  
-	regout: resb 8
+	regout: 		resb 8
+
+	regout_aux: 	resb 32
+	;SaveInTxt:      resb 32
+;	SaveInTxt_aux:  resb 8
+
 
 	contador: resb 8 
 	 
@@ -1404,7 +1642,7 @@ _txt:
 
 
 _Reg001:
-	mov rcx, iMEM_BYTES  								; Number of words for the assignation ;  
+	mov rcx, iMEM_BYTES/4   								; Number of words for the assignation ;  
 	mov ebx, 0x4     									; 0x38 last word  ; 0x24  ; first instruct address +4 
 	
 	jmp _PCLoop
@@ -1440,90 +1678,15 @@ _Reg1:
 
 ;	mov r15d, dword [rsp+OFFSET_POINTER_REG-4] ; "This is the first position"
 	
-	mov eax, 			     dword [rsp+OFFSET_POINTER_REG-4]	
-	mov [string],            eax 
-	call Hex2Ascii	  ; in [string] ; out [regout]
+;	mov eax, 			     dword [rsp+OFFSET_POINTER_REG-4]	; R[0]
+;	mov [string],            eax 
+;	call Hex2Ascii	  ; in [string] ; out [regout]
 
-  	impr_texto fmtint3, 8
-   	impr_texto enterNow, 1
-   	
+			
+	PrintOutReg
+	Writetxt fmtint3, 8 										; Write on .txt
+	PrintOutReg
 
-	;mov r15d, dword [rsp+OFFSET_POINTER_REG] 
-	mov eax, 			dword [rsp+OFFSET_POINTER_REG]	
-	mov [string],       eax 	
-	call Hex2Ascii	  ; in r15 
-  	impr_texto fmtint3, 8
-   	impr_texto enterNow, 1
-	;Writetxt fmtint3, 8  
-
- 	;mov r15d, dword [rsp+OFFSET_POINTER_REG+4]
-	mov eax, 			dword [rsp+OFFSET_POINTER_REG+4]	
-	mov [string],       eax  	
-	call Hex2Ascii	  ; in r15 
-  	impr_texto fmtint3, 8
-  	impr_texto enterNow, 1
-
-	;mov r15d, dword [rsp+OFFSET_POINTER_REG+8]
-	mov eax, 			dword [rsp+OFFSET_POINTER_REG+8]	
-	mov [string],       eax 	
-	call Hex2Ascii	  ; in r15 
-  	impr_texto fmtint3, 8
-  	impr_texto enterNow, 1
-
-	;mov r15d, dword [rsp+OFFSET_POINTER_REG+12]
-	mov eax, 			dword [rsp+OFFSET_POINTER_REG+12]	
-	mov [string],       eax 
-	call Hex2Ascii	  ; in r15 
-  	impr_texto fmtint3, 8
-  	impr_texto enterNow, 1
-
-	;mov r15d, dword [rsp+OFFSET_POINTER_REG+16]
-	mov eax, 			dword [rsp+OFFSET_POINTER_REG+16]	
-	mov [string],       eax 	
-	call Hex2Ascii	  ; in r15 
-  	impr_texto fmtint3, 8
-  	impr_texto enterNow, 1
-
-	;mov r15d, dword [rsp+OFFSET_POINTER_REG +20]
-	mov eax, 			dword [rsp+OFFSET_POINTER_REG+20]	
-	mov [string],       eax 	
-	call Hex2Ascii	  ; in r15 
-  	impr_texto fmtint3, 8
-  	impr_texto enterNow, 1
-
-	;mov r15d, dword [rsp+OFFSET_POINTER_REG+24]
-	mov eax, 			dword [rsp+OFFSET_POINTER_REG+24]	
-	mov [string],       eax 	
-	call Hex2Ascii	  ; in r15 
-  	impr_texto fmtint3, 8
-  	impr_texto enterNow, 1
-
-	;mov r15d, dword [rsp+OFFSET_POINTER_REG +24]
-	mov eax, 			dword [rsp+OFFSET_POINTER_REG+28]	
-	mov [string],       eax 
-	call Hex2Ascii	  ; in r15 
-  	impr_texto fmtint3, 8
-  	impr_texto enterNow, 1
-
-	;mov r15d, dword [rsp+OFFSET_POINTER_REG+32]
-	mov eax, 			dword [rsp+OFFSET_POINTER_REG+32]	
-	mov [string],       eax 	
-	call Hex2Ascii	  ; in r15 
-  	impr_texto fmtint3, 8
-  	impr_texto enterNow, 1
-	
-;	mov r15d, dword [rsp+OFFSET_POINTER_REG+36];+OFFSET_RSPCALL]
-;	call Hex2Ascii	  ; in r15 
-;  	impr_texto fmtint3, 8
-;  	impr_texto enterNow, 1  	
-
-;	mov r15d, dword [rsp+OFFSET_POINTER_REG+40];+OFFSET_RSPCALL]
-;	call Hex2Ascii	  ; in r15 
-;  	impr_texto fmtint3, 8
-;  	impr_texto enterNow, 1  	
-
-	Writetxt fmtint3, 8
-	;impr_texto enterNow, 1  	
 
 _end:
  	mov rax,       		 SYS_EXIT
