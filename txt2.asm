@@ -1,4 +1,5 @@
 
+
 ;-------------------------  MACRO #1  ----------------------------------
 ;Macro-1: impr_texto.
 ;	Imprime un mensaje que se pasa como parametro
@@ -6,7 +7,7 @@
 ;		%1 es la direccion del texto a imprimir
 ;		%2 es la cantidad de bytes a imprimir
 ;-----------------------------------------------------------------------
-%macro impr_texto 2 	;recibe 2 parametros
+%macro impr_texto 2 			;recibe 2 parametros
 	mov rax, 1	;sys_write
 	;mov rdi, 1	;std_out
 	mov rsi, %1	;primer parametro: Texto
@@ -15,6 +16,16 @@
 %endmacro
 ;------------------------- FIN DE MACRO --------------------------------
  
+ %macro impr_textoPantalla 2 	;recibe 2 parametros
+	mov rax, 1	;sys_write
+	mov rdi, 1	;std_out
+	mov rsi, %1	;primer parametro: Texto
+	mov rdx, %2	;segundo parametro: Tamano texto
+	syscall
+%endmacro
+;------------------------- FIN DE MACRO --------------------------------
+ 
+
 
 %macro FillBuffer 0
 ;------- open file for reading
@@ -45,214 +56,208 @@
 ;----------- $rsi have txt instructions -------------------	
 %endmacro
 
-
-
-
-
- %macro Writetxt 2  ;ACTULIZAR LENGTH
+ %macro Opentxt 0  ;ACTULIZAR LENGTH
 ;------- open file for writing
-;	mov rax, 	  		SYS_OPEN		            
-;	mov rdi, 	  		OUTPUT_FILE_NAME
-;	mov rsi, 	  		STDERR   ; read & write ; STDOUT      		; for read only access
-;	syscall  
-	;mov dword[FD_OUT],  		rax
-
-
-
- ;------ write in txt 
- mov eax, 4
-mov ebx, dword[FD_OUT]
-mov ecx, fmtint3
-mov edx, 8;tamaño del texto
-int 0x80
-	;mov rax, 	  		SYS_WRITE    	; sys_write
-	;mov rdi, 	  		dword[FD_OUT]
-	;mov rsi,            fmtint3 ; %1              ; Buffer output 
-	;mov rdx, 	  	    8 ;%2 ;1               ; Data length 
-	;syscall 
-
-;------- close the file 
-	;mov rax,      		SYS_CLOSE 
-	;mov rdi,      		dword[FD_OUT]
-	;mov rsi,0
-	;mov rdx, 0
-	;syscall
- 
+	mov rax, 	  		SYS_OPEN		            
+	mov rdi, 	  		OUTPUT_FILE_NAME
+	mov rsi, 	  		2 ;STDOUT ; write STDERR   ; read & write ; STDOUT      		; for read only access
+	syscall  
+	mov [FD_OUT],  		rax
 
 %endmacro	
 
 
+%macro Writetxt 2
+		 ;------ write in txt 
+			mov rax, 	  		SYS_WRITE    	; sys_write
+			mov rdi, 	  		[FD_OUT]
+			mov rsi,            %1 ; fmtint3 ; %1              ; Buffer output 
+			mov rdx, 	  	    %2 ; 8 ;%2 ;1               ; Data length 
+			syscall 
 
-%macro PrintR 0 ;2 
+		;------- close the file 
+			mov rax,      		SYS_CLOSE 
+			mov rdi,      		[FD_OUT]
 
-		impr_texto Print_Add, Add_Length ; Indica al usuario que operacion se realiza
-;--------------------- R Type Instruction
-		impr_texto cons_banner0, cons_tamano_banner0
+%endmacro
 
+ 
+
+
+
+
+
+;%macro PrintR 0 ;2 
+	_PrintR:
 ;------------------------- Opcode
-		impr_texto cons_banner01, cons_tamano_banner01      ; Texto descriptivo 
-		mov eax,                      [OPC] 
-		mov [string],                 eax
-		
-		call Hex2Ascii	                      ; in [string] ; out [regout]
-  		impr_texto fmtint3, 	      8
-   		impr_texto enterNow,          1		
+		mov eax, 										  [OPC]
+		mov dword [rsp+OFFSET_DECODE_PROCESS+8 -8 +0],    eax  
 
 ;-------------------------- RS 
-		impr_texto cons_banner02, cons_tamano_banner02
-		mov eax,                      [RS] 
-		mov [string],                 eax
-		
-		call Hex2Ascii	                      ; in [string] ; out [regout]
-  		impr_texto fmtint3, 	      8
-   		impr_texto enterNow,          1
-		
+		mov eax, 									      [RS]
+		mov dword [rsp+OFFSET_DECODE_PROCESS+8 -8 +4],    eax
+
 ;-------------------------- RT
-		impr_texto cons_banner03, cons_tamano_banner03
-		mov eax,                      [RT] 
-		mov [string],                 eax
-		
-		call Hex2Ascii	                      ; in [string] ; out [regout]
-  		impr_texto fmtint3, 	      8
-   		impr_texto enterNow,          1
+		mov eax,             		         			  [RT] 
+		mov dword [rsp+OFFSET_DECODE_PROCESS+8 -8 +8], 	  eax 
 
 ;-------------------------- RD
-		impr_texto cons_banner04, cons_tamano_banner04
-		mov eax,                      [RD] 
-		mov [string],                 eax
-		
-		call Hex2Ascii	                      ; in [string] ; out [regout]
-  		impr_texto fmtint3, 	      8
-   		impr_texto enterNow,          1
-
+		mov eax,                                          [RD] 
+		mov dword [rsp+OFFSET_DECODE_PROCESS+8 -8 +12],  eax 
+		 
 ;------------------------- Shamt
-		impr_texto cons_banner05, cons_tamano_banner05
-		mov eax,                      [Shamt] 
-		mov [string],                 eax
+		mov eax,                                          [Shamt] 
+		mov dword [rsp+OFFSET_DECODE_PROCESS+8 -8 +16],   eax 
 		
-		call Hex2Ascii	                      ; in [string] ; out [regout]
-  		impr_texto fmtint3, 	      8
-   		impr_texto enterNow,          1
-
 ;------------------------- Function
-		impr_texto cons_banner06, cons_tamano_banner06
-		mov eax,                      [FUNCT] 
+		mov eax,                      					  [FUNCT] 
+		mov dword [rsp+OFFSET_DECODE_PROCESS+8 -8 +20],   eax
+		
+
+	;	impr_texto Print_Add, Add_Length ; Indica al usuario que operacion se realiza
+;--------------------- R Type Instruction
+	;	impr_texto cons_banner0, cons_tamano_banner0
+
+ 
+		;mov [string],                    eax
+		;impr_texto cons_banner03, cons_tamano_banner03		
+;		call Hex2Ascii	                      ; in [string] ; out [regout]
+;  		impr_texto fmtint3, 	          8
+;  		impr_texto enterNow,              1
+
+		ret 
+;%endmacro
+
+
+;%macro PrintOutReg1 0 
+	_PrintOutReg1:	
+ 
+;------------------------- Opcode
+
+		mov eax,                      dword [rsp+OFFSET_DECODE_PROCESS-8 +8 +0]  ; [OPC] 
 		mov [string],                 eax
 		
-		call Hex2Ascii	                      ; in [string] ; out [regout]
-  		impr_texto fmtint3, 	      8
-   		impr_texto enterNow,          1		
-	 
-   		
-%endmacro
+		call Hex2Ascii	                        ; in [string] ; out [regout]
+		 
+		mov [regout_aux], rcx ;eax 
+		impr_texto cons_banner01, cons_tamano_banner01      ; Texto descriptivo 	
+		impr_textoPantalla fmtint4, 	      8  	; con solo este ya imprime todo en pantalla !!
+
+;-------------------------- RS 
+
+		mov eax,                      dword [rsp+OFFSET_DECODE_PROCESS-8 +8 +4] ;  
+		mov [string],                 eax
+		
+		call Hex2Ascii 	                      ; in [string] ; out [regout]
+		mov [regout_aux], rcx 
+		impr_texto cons_banner02, cons_tamano_banner02			
+		impr_textoPantalla fmtint4, 	      8  	; con solo este ya imprime todo en pantalla !!
+
+;-------------------------- RT
+
+		mov eax,                      dword [rsp+OFFSET_DECODE_PROCESS-8 +8 +8] 
+		mov [string],                 eax
+		
+		call Hex2Ascii                       ; in [string] ; out [regout]
+		mov [regout_aux], rcx 
+		;mov [regout_aux1], rcx 
+		impr_texto cons_banner03, cons_tamano_banner03
+		impr_textoPantalla fmtint4, 	      8  	; con solo este ya imprime todo en pantalla !!
 
 
-%macro PrintOutReg 0 
+;		Opentxt 
+		;Writetxt fmtint4, 8 		; esta sobreescribiendo 
+		;Writetxt fmtint01,       8 
 
-	mov eax, 			     dword [rsp+OFFSET_POINTER_REG-4]	; R[0]
-	mov [string],            eax 
-	call Hex2Ascii	  											; in [string] ; out [regout]
-	impr_texto v0_Reg, AllReg_Content_Length   		; Print Register $v0 description
-  	impr_texto fmtint3, 8							; Print Register $v0 content
 
- 	
-	mov eax, 			dword [rsp+OFFSET_POINTER_REG+4]	    ; R[2]
-	mov [string],       eax  	
-	call Hex2Ascii	  											; input = string  ; output = [regout]
-	impr_texto v0_Reg, AllReg_Content_Length   		; Print Register $v0 description
-  	impr_texto fmtint3, 8							; Print Register $v0 content
+	  	;mov rdi, 1
+	  	ret 
+
+
+
+%macro disp 1
+	;  			mov [string], rcx 
+;			disp string 
+	mov ecx, %1 ; string
+	mov eax, 4
+	mov ebx, 1 
+	int 80H
+%endmacro 
+
+	  	_ifRegPantalla:
+			mov eax, 			     dword [rsp+OFFSET_POINTER_REG-4 + 8 + 16]	; R[0]
+			mov [string],            eax 
+			
+			call Hex2Ascii	  											; in [string] ; out [regout]
+  			mov [regout_aux], rcx 
+
+ 			impr_textoPantalla v0_Reg, AllReg_Content_Length
+ 			impr_textoPantalla fmtint4, 8 
  
-	mov eax, 			dword [rsp+OFFSET_POINTER_REG+8]	    ; R[3]
-	mov [string],       eax 	
-	call Hex2Ascii	  
-	impr_texto v1_Reg, AllReg_Content_Length   		; Print Register $v1 description
-  	impr_texto fmtint3, 8							; Print Register $v1 content
- 	 
-	mov eax, 			dword [rsp+OFFSET_POINTER_REG+12]	    ; R[4]
-	mov [string],       eax 
-	call Hex2Ascii	  ; in r15 
-	impr_texto a0_Reg, AllReg_Content_Length   		; Print Register $a0 description  	
-  	impr_texto fmtint3, 8							; Print Register $a0 content
- 
-	mov eax, 			dword [rsp+OFFSET_POINTER_REG+16]	    ; R[5]
-	mov [string],       eax 	
-	call Hex2Ascii	  ; in r15 
-	impr_texto a1_Reg, AllReg_Content_Length   		; Print Register $a1 description     	
-  	impr_texto fmtint3, 8							; Print Register $a1 content
+ 			mov eax, 			     dword [rsp+OFFSET_POINTER_REG-4 + 8 + 28]	; R[0]
+			mov [string],            eax 
+			
+			call Hex2Ascii	  											; in [string] ; out [regout]
+  			mov [regout_aux], rcx 
 
-	mov eax, 			dword [rsp+OFFSET_POINTER_REG+20]	    ; R[6]
-	mov [string],       eax 	
-	call Hex2Ascii	  ; in r15 
-	impr_texto a2_Reg, AllReg_Content_Length   		; Print Register $a2 description     		
-  	impr_texto fmtint3, 8							; Print Register $a2 content
- 
-	mov eax, 			dword [rsp+OFFSET_POINTER_REG+24]	    ; R[7]
-	mov [string],       eax 	
-	call Hex2Ascii	  ; in r15 
-	impr_texto a3_Reg, AllReg_Content_Length   		; Print Register $a3 description     		
-  	impr_texto fmtint3, 8							; Print Register $a3 content
- 
+ 			impr_textoPantalla v0_Reg, AllReg_Content_Length
+ 			impr_textoPantalla fmtint4, 8 
 
-	mov eax, 			dword [rsp+OFFSET_POINTER_REG+60]	    ; R[16]
-	mov [string],       eax 	
-	call Hex2Ascii	  ; in r15 
-	impr_texto s0_Reg, AllReg_Content_Length   		; Print Register $s0 description     		
-  	impr_texto fmtint3, 8							; Print Register $s0 content
+		   	ret 
 
-	mov eax, 			dword [rsp+OFFSET_POINTER_REG+64]	    ; R[17]
-	mov [string],       eax 	
-	call Hex2Ascii	  ; in r15 
-	impr_texto s1_Reg, AllReg_Content_Length   		; Print Register $s1 description     		
-  	impr_texto fmtint3, 8							; Print Register $s1 content
-
-
-	mov eax, 			dword [rsp+OFFSET_POINTER_REG+68]	    ; R[18]
-	mov [string],       eax 	
-	call Hex2Ascii	  ; in r15 	
-	impr_texto s2_Reg, AllReg_Content_Length   		; Print Register $s2 description    	
-  	impr_texto fmtint3, 8							; Print Register $s2 content
-
-	mov eax, 			dword [rsp+OFFSET_POINTER_REG+72]	    ; R[19]
-	mov [string],       eax 	
-	call Hex2Ascii	  ; in r15 
-	impr_texto s3_Reg, AllReg_Content_Length   		; Print Register $s3 description     		
-  	impr_texto fmtint3, 8							; Print Register $s3 content
-
-	mov eax, 			dword [rsp+OFFSET_POINTER_REG+76]	    ; R[20]
-	mov [string],       eax 	
-	call Hex2Ascii	  ; in r15 
-	impr_texto s4_Reg, AllReg_Content_Length   		; Print Register $s4 description     		
-  	impr_texto fmtint3, 8							; Print Register $s4 content
-
-	mov eax, 			dword [rsp+OFFSET_POINTER_REG+80]	    ; R[21]
-	mov [string],       eax 	
-	call Hex2Ascii	  ; in r15 
-	impr_texto s5_Reg, AllReg_Content_Length   		; Print Register $s5 description     	 	
-  	impr_texto fmtint3, 8							; Print Register $s5 content
-
-	mov eax, 			dword [rsp+OFFSET_POINTER_REG+84]	    ; R[22]
-	mov [string],       eax 	
-	call Hex2Ascii	  ; in r15 
-	impr_texto s6_Reg, AllReg_Content_Length   		; Print Register $s6 description     	
-  	impr_texto fmtint3, 8							; Print Register $s6 content
-
-	mov eax, 			dword [rsp+OFFSET_POINTER_REG+88]	    ; R[23]
-	mov [string],       eax 	
-	call Hex2Ascii	  ; in r15 
-	impr_texto s7_Reg, AllReg_Content_Length   		; Print Register $s7 description     		
-  	impr_texto fmtint3, 8							; Print Register $s7 content
- 
-  	  	  	
-	mov eax, 			dword [rsp+OFFSET_POINTER_REG+112]		; R[29]	
-	mov [string],       eax 	
-	call Hex2Ascii	  ; in r15 
-	impr_texto sp_Reg, AllReg_Content_Length   		; Print Register $sp description     		
-  	impr_texto fmtint3, 8							; Print Register $sp content
+	  	_ifRegTXT:
+			;Opentxt
+			;Writetxt v0_Reg,        AllReg_Content_Length
+			;Writetxt fmtint01,       8 
 	
+;------------------------- Opcode
 
-    impr_texto enterNow, 1
+			;mov eax,                      dword [rsp+OFFSET_DECODE_PROCESS-8 +8 +0]  ; [OPC] 
+			;mov [string],                 eax
+			;call Hex2Ascii	                        ; in [string] ; out [regout]
+			;mov [regout_aux0], rcx 
 
-%endmacro
+		;	impr_texto cons_banner01, cons_tamano_banner01      ; Texto descriptivo 	
+		;	impr_textoPantalla fmtint4, 	      8  	; con solo este ya imprime todo en pantalla !!
+
+
+
+
+			;mov eax, 				dword [rsp+OFFSET_POINTER_REG-4 +8 +16]	; R[2]
+			;mov [string],       	eax  	
+			;call Hex2Ascii	  											    ; input = string  ; output = [regout]
+			;mov [regout_aux1], 		rcx 
+ 
+
+			mov eax, 				dword [rsp+OFFSET_POINTER_REG-4 +8 +28]	; R[2]
+			mov [string],       	eax  	
+			call Hex2Ascii	  											    ; input = string  ; output = [regout]
+			mov [regout_aux2], 		rcx 
+
+			
+
+			Opentxt
+			Writetxt v0_Reg,        AllReg_Content_Length
+			Writetxt fmtint01,       	8 
+
+			Writetxt v1_Reg,        AllReg_Content_Length
+			Writetxt fmtint02,       8 
+
+			Writetxt v0_Reg,        AllReg_Content_Length
+			Writetxt fmtint01,       	8 
+
+			Writetxt v1_Reg,        AllReg_Content_Length
+			Writetxt fmtint02,       8 
+		;	Writetxt fmtint4,       8 
+		;	impr_texto fmtint4,		8	
+			
+			;Writetxt v0_Reg,        28  
+			;impr_texto v0_Reg, 		AllReg_Content_Length   			; Print Register $v0 description
+								; Print Register $v0 content
+ 			
+
+	   		ret 	   	
+;%endmacro
 
 
  
@@ -612,7 +617,7 @@ _ArgumentsRegInit:
 
 Hex2Ascii:
 	xor rax,      rax
-	mov [regout], rax
+	mov rcx , rax
 
 	mov rax,      [string]      ; r15 
 	and rax,      0x0000000f    ; máscara, para extraer los ultimos bits
@@ -639,7 +644,7 @@ segundo:
 	shl rax, 56
 	;shl rsi, 56
 
-	mov [regout],     rax        ; Storing value 
+	mov rcx ,     rax        ; Storing value 
 	;mov [SaveInTxt],  rsi        
 
 	mov rax,      [string]   ; r15 
@@ -666,7 +671,7 @@ esn2:
 tercero:
 	shl rax, 48
 	;shl rsi, 48 
-	or [regout],     rax
+	or rcx ,     rax
 	;or [SaveInTxt],  rsi 
 
 	mov rax,      [string]   ; r15 
@@ -689,7 +694,7 @@ esn3:
 cuarto:
 	shl rax, 40
 	;shl rsi, 40 
-	or [regout],    rax
+	or rcx ,    rax
 	;or [SaveInTxt], rsi 
 
 	mov rax,      [string]   ; r15 
@@ -712,7 +717,7 @@ esn4:
 quinto:
 	shl rax, 32
 	;shl rsi, 32 
-	or [regout],    rax
+	or rcx ,    rax
 	;or [SaveInTxt], rsi 
 
 	mov rax,      [string]   ; r15 
@@ -735,7 +740,7 @@ esn5:
 sexto:
 	shl rax, 24
 	;shl rsi, 24 
-	or [regout],    rax
+	or rcx ,    rax
 	;or [SaveInTxt], rsi 
 
 	mov rax,      [string]   ; r15 
@@ -758,7 +763,7 @@ esn6:
 setimo:
 	shl rax, 16
 	;shl rsi, 16 
-	or [regout],     rax
+	or rcx ,     rax
 	;or [SaveInTxt],  rsi 
 
 	mov rax,      [string]   ; r15 
@@ -781,7 +786,7 @@ octavo:
 
 	shl rax, 8
 	;shl rsi, 8 
-	or [regout],    rax
+	or rcx ,    rax
 	;or [SaveInTxt], rsi 
 
 	mov rax,      [string]   ; r15 
@@ -802,8 +807,8 @@ esn8:
 	;add rsi, 0x00000029 
 ;________________________________________
 saledec:
-	
-	or [regout],    rax
+	or rcx , rax 
+	;or [regout],    rax
 	;or [SaveInTxt], rsi 
 
 ;	mov r13, [regout]
@@ -843,6 +848,7 @@ _DECO:
 	mov edx, 			dword r8d
 	shr edx,			cl 							  ; $rdx is the output ( OPCODE )
 	mov r15,            rdx
+;	mov dword [rsp+OFFSET_DECODE_PROCESS],    r15d 
 	mov [OPC], 			rdx 
 
 ;--------------------- Mask & shift for $rs 	
@@ -852,18 +858,21 @@ _DECO:
 	mov edx, 			r8d
 	shr edx,			cl 	
 
+	
 	mov [RS], 			rdx 
-	
-	imul rdx,            4
-	;mov rax,            rdx
-	;imul 4 
-	;_continueRS:
-	;	mov r14,        eax 
-	;	sub r14, 		4	
-	
+;;;;;	mov dword [rsp+800], rdx 
 
+	imul rdx,            4 
 	mov r14, 			rdx                           ; $r14 is the rs pointer
+ 
 	add r14, 			OFFSET_POINTER_REG	          ; adding memory offset to $r13 to start in Register Bank allocation 
+	
+ ;	mov rax,            r14
+ ;	sub rax,            OFFSET_POINTER_REG
+; 	shr rax, 2 
+	;mov dword [rsp+OFFSET_DECODE_PROCESS+4],  r14d ;    eax
+
+
 
 ;--------------------- Mask & shift for $rt 	
 	mov r8d, 			dword [rsp+rbx]				  ; getting instruction from memory
@@ -872,7 +881,7 @@ _DECO:
 	mov edx, 			dword r8d
 	shr edx,			cl 
 
-	mov [RT], 			rdx 
+	mov [RT], 			rdx   ; ?[rdx]
 
 	imul rdx, 			4  							  ; escale x4
 ;	sub rdx, 			4							  ; substract 4 to point propertly	
@@ -929,7 +938,39 @@ _DECO:
 	
 	ret
 
+%macro CmpItype 0 
+		cmp r15d, 0x8 ; addi
+		je _addi 
 
+;		cmp r15d, 0xd ; ori
+;		je _ori 
+
+		cmp r15d, 0xc ; andi  
+		je _andi
+
+		;cmp r15d, 0xa ; slti
+		;je _slti
+
+		;cmp r15d, 0xb 
+		;je _sltiu
+
+;		cmp r15d, 0x4 ; beq
+;		je _beq
+
+;		cmp r15d, 0x5 ; bne
+;		je _bne
+
+		cmp r15d, 0x2 ; j
+		je _j 
+
+		cmp r15d, 0x3 ; jal
+		je _jal 
+
+		cmp r15d, 0x23 ; lw
+		je _lw
+
+		ret
+%endmacro		
 ;------------------------------ Prints ----------------------------------------
 ;etiqueta para imprimir
 ;_imprimirdeco:
@@ -1033,37 +1074,7 @@ _Alu2:
 	jne _OPcodeI
 
 	_OPcodeI:  
-		cmp r15d, 0x8 ; addi
-		je _addi 
-
-;		cmp r15d, 0xd ; ori
-;		je _ori 
-
-		cmp r15d, 0xc ; andi  
-		je _andi
-
-		;cmp r15d, 0xa ; slti
-		;je _slti
-
-		;cmp r15d, 0xb 
-		;je _sltiu
-
-;		cmp r15d, 0x4 ; beq
-;		je _beq
-
-;		cmp r15d, 0x5 ; bne
-;		je _bne
-
-		cmp r15d, 0x2 ; j
-		je _j 
-
-		cmp r15d, 0x3 ; jal
-		je _jal 
-
-		cmp r15d, 0x23 ; lw
-		je _lw
-
-		ret
+		CmpItype
  
 
 	_OPcodeR:
@@ -1121,9 +1132,30 @@ _Alu2:
 
 
 	_add:
-		PrintR
-	;;;;	Writetxt fmtint3, 8 					; Write on .txt
-		;;;;;; PrintR
+		
+		;mov eax, 			 dword [rsp+OFFSET_RSPCALL+iM]	
+
+;		mov eax, 		r14d
+;		sub eax, 		OFFSET_POINTER_REG-4 ;  396
+;		mov [string],   eax  
+
+;		call Hex2Ascii	  											; in [string] ; out [regout]
+  		call _PrintR
+  ;  		Writetxt fmtint3,   8  ; cambiar fmtint3
+  ; 		PrintR
+
+
+ 		call _PrintOutReg1  ; contenido de decods 
+		;Writetxt fmtint4, 8 										; Write on .txt
+		;call _PrintOutReg1
+
+
+
+		;call _ifRegTXT 
+										; Write on .txt
+		;call _ifRegPantalla  ;pantalla 
+
+
 
 		mov eax,		       dword [rsp+r14+OFFSET_RSPCALL-4] ; +8, because call use rsp register	; Se pasan los datos a los registros que van a operar
 		add eax, 			   dword [rsp+r13+OFFSET_RSPCALL-4] ; Se realiza la operacion
@@ -1437,8 +1469,9 @@ section .data
   iMEM_BYTES:     equ 400 ;600 ;56 ;400 ;                          ; x/4 = words num	; 100 dwords, Instructions Memory allocation 
   REG_BYTES:	  equ 128              				   ; 32 dwords
   DATAMEM_BYTES:  equ 400 ;56  ;400 
-  
-  TOT_MEM:		  equ 928 ;1128 ;928 ;240 ; 928    ; iMEM+REG_B
+  DecodeProccess: equ 320  ; op, funct, rs ...    ; 8(10 veces) *4 
+
+  TOT_MEM:		  equ 1248 ;928 ;1128 ;928 ;240 ; 928    ; iMEM+REG_B
  
 
   msg:            db " Memory Allocated! ", 10
@@ -1446,11 +1479,39 @@ section .data
   fmtint:         equ $RS ; $string ; $RS ;, 10, 0
   fmtint2:        equ $string ;
   enterNow:       equ $enter
- ; fmtint4:       equ $string2 
+  ;fmtint4:       equ $ 
+
+
 
   fmtint3:        equ $regout
   fmtint4:        equ $regout_aux
-  
+
+  fmtint01:		  equ $regout_aux1
+  fmtint02:		  equ $regout_aux2
+  fmtint03:		  equ $regout_aux3
+  fmtint04:		  equ $regout_aux4
+  fmtint05:		  equ $regout_aux5
+  fmtint06:		  equ $regout_aux6
+  fmtint07:		  equ $regout_aux7
+  fmtint08:		  equ $regout_aux8
+
+  fmtint_v0:		  equ $regout_v0
+  fmtint_v1:		  equ $regout_v1
+  fmtint_a0:		  equ $regout_a0
+  fmtint_a1:		  equ $regout_a1
+  fmtint_a2:		  equ $regout_a2
+  fmtint_a3:		  equ $regout_a3
+  fmtint_s0:		  equ $regout_s0
+  fmtint_s1:		  equ $regout_s1  
+  fmtint_s2:		  equ $regout_s2
+  fmtint_s3:		  equ $regout_s3
+  fmtint_s4:		  equ $regout_s4
+  fmtint_s5:		  equ $regout_s5 
+  fmtint_s6:		  equ $regout_s6
+  fmtint_s7:		  equ $regout_s7
+  fmtint_sp:		  equ $regout_sp 
+
+  fmtint5:        equ $TEXT
 ;  fmtint3_aux:    equ $regout_aux
   ;SaveInTxt_Print:     equ $SaveInTxt
 ;  SaveInTxt_aux2: equ $SaveInTxt_aux
@@ -1465,6 +1526,7 @@ section .data
   
 
   ;OFFSET_POINTER_ADDRESS:  equ 184 ; 
+  OFFSET_DECODE_PROCESS:   equ 924 ; 928
   OFFSET_RSPCALL:          equ 8  
   OFFSET_POINTER_DATAMEM:  equ 528 ;728 ;528 ; 184  ;528;; iMEM_BYTES+REG_BYTES
   OFFSET_POINTER_REG:      equ 400 ; iMEM_BYTES 				; 1 dword = 4 bytes
@@ -1569,7 +1631,7 @@ section .data
 	Ascii2Hex: db 8 ; 32
  
 section .bss
-	FD_OUT: 	    resd 1
+	FD_OUT: 	    resb 1
 	FD_IN: 		    resb 1
 	TEXT: 		    resb 32
 
@@ -1591,12 +1653,36 @@ section .bss
  
 	regout: 		resb 8
 
-	regout_aux: 	resb 32
-	;SaveInTxt:      resb 32
-;	SaveInTxt_aux:  resb 8
+	regout_aux: 	     resb 100 ; 64
+	regout_aux_RegFinal: resb 250 ;100 ; 64
+	regout_aux1:    resb 8 
+	regout_aux2:    resb 8
+	regout_aux3:    resb 8 
+	regout_aux4:    resb 8
+	regout_aux5:    resb 8
+	regout_aux6:    resb 8 
+	regout_aux7:    resb 8  
+	regout_aux8:    resb 8 
+	regout_aux9:    resb 8 
 
+	regout_v0:    resb 8 
+	regout_v1:    resb 8 
+	regout_a0:    resb 8 
+	regout_a1:    resb 8 
+ 	regout_a2:    resb 8 
+ 	regout_a3:    resb 8 
+ 	regout_s0:    resb 8 
+	regout_s1:    resb 8   
+ 	regout_s2:    resb 8 
+	regout_s3:    resb 8 
+	regout_s4:    resb 8 
+ 	regout_s5:    resb 8  
+  	regout_s6:    resb 8 
+ 	regout_s7:    resb 8 
+ 	regout_sp:    resb 8 
+ 
 
-	contador: resb 8 
+	contador: resb 8
 	 
  	enter: resb 1
 	arg1: resb 8 
@@ -1611,19 +1697,6 @@ section  .text
 
 
 _start:                     			; tell linker entry point
-	abretxt:
-	mov eax, 8
-	mov ebx, OUTPUT_FILE_NAME
-	mov ecx, 0x02
-	mov edx, 7777h
-	int 0x80
-;____________________________________
-
-
-	cmp eax, 0; verifica que se haya creado correctamente
-	;jle salir
-	mov dword[FD_OUT], eax
-
 
 _Reg0:
 
@@ -1715,12 +1788,9 @@ _PCLoop:
 	call _DECO 
 ;    call _imprimirdeco 
 ;    mov [RS],               r12    
-
-
+ 
     call _Alu2
-    
-
-
+     
 	mov rcx, [contador]
 
 	cmp rcx, 0x0
@@ -1730,26 +1800,210 @@ _PCLoop:
 _Reg1: 
 	mov r10, 0xa 
 	mov [enter], r10  
+  
+
+		;call _ifRegTXT 
+										; Write on .txt
+		;call _ifRegPantalla  ;pantalla 
+	  
  
+ ;		mov eax, 				dword [rsp+OFFSET_POINTER_REG-4 +20 ] ;+rdi*4]	; R[2]
+;		mov [string],       	eax  	
+;		call Hex2Ascii	  											    ; input = string  ; output = [regout]
+;		mov [regout_aux], 		rcx 
+		
+ ;		mov eax, 				dword [rsp+OFFSET_POINTER_REG-4 +0 ] ;+rdi*4]	; R[2]
+;		mov [string],       	eax  	
+;		call Hex2Ascii	  											    ; input = string  ; output = [regout]
+;		mov [regout_aux+8], 		rcx 
 
 
- 	PrintOutReg
-	Writetxt fmtint3, 8 										; Write on .txt
-	PrintOutReg
+	; .-------- loop para imprimir todo lo almacenado en memoria 
+		mov rcx, 13 ;  9 ;10; 5 ;10
+		mov rdi, -1 
+	_MemLOOP:
+		dec rcx
+		inc rdi ;add edi,                0x4 			
 
-	PrintOutReg
-	Writetxt fmtint3, 8 										; Write on .txt
-	PrintOutReg
+		mov [contador], 		rcx 
+ 		 
+ 		mov eax, 				dword [rsp+OFFSET_DECODE_PROCESS-16 +0 +rdi*4]	; R[2]
+		mov [string],       	eax  	
+		call Hex2Ascii	  											    ; input = string  ; output = [regout]
+		mov [regout_aux+rdi*8], rcx ;+rdi*8], 		rcx 
+		 
 
+		mov rcx, [contador]
+		cmp rcx, 0x0
+		je _end0
+		jne _MemLOOP
+
+	_end0:
+
+
+	; .-------- loop para imprimir contenidos del banco de Registros
+		mov rcx,  32 ; 7
+		mov rdi, -1 
+	_Mem1LOOP:
+		dec rcx
+		inc rdi ;add edi,                0x4 			
+
+		mov [contador], 		rcx 
+ 		 
+ 		mov eax, 				dword [rsp+OFFSET_POINTER_REG +rdi*4]	; R[2]
+		mov [string],       	eax  	
+		call Hex2Ascii	  											    ; input = string  ; output = [regout]
+		mov [regout_aux_RegFinal+rdi*8], rcx ;+rdi*8], 		rcx 
+		 
+
+		mov rcx, [contador]
+		cmp rcx, 0x0
+		je _end1
+		jne _Mem1LOOP
+
+	_end1:
+
+
+
+		Opentxt
+
+		
+		mov rax, [regout_aux+0]   ; opcode 
+		mov  [regout_aux1], rax 
+
+		mov rax, [regout_aux+8]   ; rs 
+		mov  [regout_aux2], rax 	
+
+		mov rax, [regout_aux+16]   ; rt
+		mov  [regout_aux3], rax 
+
+		mov rax, [regout_aux+24]   ; rd 
+		mov  [regout_aux4], rax 
+
+		mov rax, [regout_aux+32]   ; shamt
+		mov  [regout_aux5], rax 
+
+		mov rax, [regout_aux+40]   ; funct
+		mov  [regout_aux6], rax 
+
+
+		mov rax, [regout_aux_RegFinal+8]     ; $v0 content 
+		mov  [fmtint_v0], rax 
+
+		mov rax, [regout_aux_RegFinal+16]    ; $v1 content 
+		mov  [fmtint_v1], rax 
+
+		mov rax, [regout_aux_RegFinal+24]    ; $a0 content 
+		mov  [fmtint_a0], rax 
+
+		mov rax, [regout_aux_RegFinal+32]    ; $a1 content 
+		mov  [fmtint_a1], rax 
+
+		mov rax, [regout_aux_RegFinal+40]    ; $a2 content 
+		mov  [fmtint_a2], rax 
+
+		mov rax, [regout_aux_RegFinal+48]    ; $a3 content 
+		mov  [fmtint_a3], rax 
+
+
+		mov rax, [regout_aux_RegFinal+120]   ; $s0 content 
+		mov  [fmtint_s0], rax 
+
+		mov rax, [regout_aux_RegFinal+128]   ; $s1 content 
+		mov  [fmtint_s1], rax 
+
+		mov rax, [regout_aux_RegFinal+136]   ; $s2 content 
+		mov  [fmtint_s2], rax 
+
+		mov rax, [regout_aux_RegFinal+144]   ; $s3 content 
+		mov  [fmtint_s3], rax 
+
+		mov rax, [regout_aux_RegFinal+152]   ; $s4 content 
+		mov  [fmtint_s4], rax 
+
+		mov rax, [regout_aux_RegFinal+160]   ; $s5 content 
+		mov  [fmtint_s5], rax 
+
+		mov rax, [regout_aux_RegFinal+168]   ; $s6 content 
+		mov  [fmtint_s6], rax 
+
+		mov rax, [regout_aux_RegFinal+176]   ; $s7 content 
+		mov  [fmtint_s7], rax 
+
+		mov rax, [regout_aux_RegFinal+240]   ; $sp content 
+		mov  [fmtint_sp], rax 
+
+
+		Writetxt cons_banner01, cons_tamano_banner01   ; opcode 
+		Writetxt fmtint01,      8     	
+
+		Writetxt cons_banner02, cons_tamano_banner02   ; rs
+		Writetxt fmtint02,      8 
+
+		Writetxt cons_banner03, cons_tamano_banner03   ; rt 
+		Writetxt fmtint03,      8     	
+
+		Writetxt cons_banner04, cons_tamano_banner04   ; rd 
+		Writetxt fmtint04,      8 
+
+		Writetxt cons_banner05, cons_tamano_banner05   ; shamt 
+		Writetxt fmtint05,      8     	
+
+		Writetxt cons_banner06, cons_tamano_banner06   ; function 
+		Writetxt fmtint06,      8 
+
+
+
+		Writetxt v0_Reg,        AllReg_Content_Length
+		Writetxt fmtint_v0,     8		
+
+		Writetxt v1_Reg,        AllReg_Content_Length
+		Writetxt fmtint_v1,     8		
+
+		Writetxt a0_Reg,        AllReg_Content_Length
+		Writetxt fmtint_a0,     8	
+
+		Writetxt a1_Reg,        AllReg_Content_Length
+		Writetxt fmtint_a1,     8		
+
+		Writetxt a2_Reg,        AllReg_Content_Length
+		Writetxt fmtint_a2,     8		
+
+		Writetxt a3_Reg,        AllReg_Content_Length
+		Writetxt fmtint_a3,     8	
+
+
+		Writetxt s0_Reg,        AllReg_Content_Length
+		Writetxt fmtint_s0,     8		
+
+		Writetxt s1_Reg,        AllReg_Content_Length
+		Writetxt fmtint_s1,     8		
+
+		Writetxt s2_Reg,        AllReg_Content_Length
+		Writetxt fmtint_s2,     8					
+
+		Writetxt s3_Reg,        AllReg_Content_Length
+		Writetxt fmtint_s3,     8		
+
+		Writetxt s4_Reg,        AllReg_Content_Length
+		Writetxt fmtint_s4,     8		
+
+		Writetxt s5_Reg,        AllReg_Content_Length
+		Writetxt fmtint_s5,     8	
+
+		Writetxt s6_Reg,        AllReg_Content_Length
+		Writetxt fmtint_s6,     8		
+
+		Writetxt s7_Reg,        AllReg_Content_Length
+		Writetxt fmtint_s7,     8		
+
+		Writetxt sp_Reg,        AllReg_Content_Length
+		Writetxt fmtint_sp,     8			
+
+		;Writetxt fmtint4,     	56 ;64
 
 _end:
-	mov eax, 6
-	mov ebx, dword[FD_OUT]
-	mov ecx, 0
-	mov edx, 0
-	int 0x80
  	mov rax,       		 SYS_EXIT
    	mov rdi,       		 STDIN
     xor rbx,       		 rbx
     syscall
-
