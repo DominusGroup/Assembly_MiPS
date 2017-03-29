@@ -422,45 +422,53 @@ _FillBuffer:
 
  
 
-_errorOpcode:
+;_errorOpcode:
 		;jmp _errOpcode
 
 		;cmp r15d, 0x0 ; Tipo R
 		;je _salir
-		cmp r15d, 0x8 ; addi
-		je _salir
-		cmp r15d, 0xd ; ori
-		je _salir
-		cmp r15d, 0xc ; andi
-		je _salir
-		cmp r15d, 0xa ; slti
-		je _salir
-		cmp r15d, 0xb ; sltiu
-		je _salir
-		cmp r15d, 0x4 ; beq
-		je _salir
-		cmp r15d, 0x5 ; bne
-		je _salir
-		cmp r15d, 0x2 ; j
-		je _salir
-		cmp r15d, 0x3 ; jal
-		je _salir
-	    cmp r15d, 0x23 ; lw
-	    je _salir
-		cmp r15d, 0x0 ; Tipo R
-		je _salir	    
+;		cmp r15d, 0x8 ; addi
+;		je _salir
+
+;		cmp r15d, 0xd ; ori
+;		je _salir
+
+;		cmp r15d, 0xc ; andi  
+;		je _salir
+
+;		cmp r15d, 0xa ; slti
+;		je _salir
+
+;		cmp r15d, 0xb ; sltiu 
+;		je _salir
+
+;		cmp r15d, 0x4 ; beq
+;		je _salir
+
+;		cmp r15d, 0x5 ; bne
+;		je _salir
+
+;		cmp r15d, 0x2 ; j
+;		je _salir
+
+;		cmp r15d, 0x3 ; jal
+;		je _salir
+
+;		cmp r15d, 0x23 ; lw
+;		je _salir
+
 		
-		jne _errOpcode
+;		jne _errOpcode
 
-		_errOpcode:
+;		_errOpcode:
 			
-			impr_textoPantalla pantalla_final, ltamano
-			impr_textoPantalla error2, error02
+;			impr_textoPantalla pantalla_final, ltamano
+;			impr_textoPantalla error2, error02
  
-		    jmp _end
+;		    jmp _end
 
-		_salir:
-		ret
+;		_salir:
+;		ret
 
 
 
@@ -1158,13 +1166,14 @@ _DECO:
 _Alu2: 
 	;mov [Opcode], r15d
 	;mov [Function], r10d 
-	call _errorOpcode
+
 
 	cmp r15d, 0x00
 	je  _OPcodeR
 	jne _OPcodeI
 
 	_OPcodeI:  
+		;call _errorOpcode
 		;CmpItype
 
 		cmp r15d, 0x8 ; addi
@@ -1176,17 +1185,17 @@ _Alu2:
 		cmp r15d, 0xc ; andi  
 		je _andi
 
-		;cmp r15d, 0xa ; slti
-		;je _slti
+		cmp r15d, 0xa ; slti
+		je _slti
 
-		;cmp r15d, 0xb 
-		;je _sltiu
+		cmp r15d, 0xb ; sltiu 
+		je _sltiu
 
-;		cmp r15d, 0x4 ; beq
-;		je _beq
+		cmp r15d, 0x4 ; beq
+		je _beq
 
-;		cmp r15d, 0x5 ; bne
-;		je _bne
+		cmp r15d, 0x5 ; bne
+		je _bne
 
 		cmp r15d, 0x2 ; j
 		je _j 
@@ -1197,7 +1206,16 @@ _Alu2:
 		cmp r15d, 0x23 ; lw
 		je _lw
 		
-		ret 		
+
+		;_errOpcode:
+			
+		;	impr_textoPantalla pantallafinal1, ltamano
+		;	impr_textoPantalla error2, error02
+ 
+		;    jmp _end
+
+		_salir:		
+			ret 		
  
 
 	_OPcodeR:
@@ -1208,8 +1226,8 @@ _Alu2:
 		;cmp r10d, 0x00 ; shl function
 		;je _sll 			
  
-;		cmp r10d, 0x02 ; shr function
-;		je _shr
+		cmp r10d, 0x02 ; shr function
+		je _shr
  
 		cmp r10d, 0x18 ; *mult function
 		je _imul 
@@ -1237,8 +1255,8 @@ _Alu2:
 		cmp r10d, 0x2a ; slt function
 		je _slt 
 
-		;cmp r10d, 0x2b ; sltu function
-		;je _sltu 
+		cmp r10d, 0x2b ; sltu function
+		je _sltu 
 
 		cmp r10d, 0x21 ; addu function
 		je _addu 
@@ -1348,14 +1366,14 @@ _Alu2:
  
 	;	ret 
 
-;	_shr: ; ******   srl
-;		impr_texto Op22,tamano_Op22
-		;call _PantallaTipoR 
-;		mov eax,			 dword [rsp+r13+OFFSET_RSPCALL]
-;		mov ecx, 			 dword [Shamt]
-;		shr eax,			 cl
-;		mov dword [rsp+r12+OFFSET_RSPCALL], eax		       ; output pointer is rd		
-;		ret 
+	_shr: ; ******   srl
+		impr_texto Op22,tamano_Op22
+		call _PantallaTipoR 
+		mov eax,			 dword [rsp+r13+OFFSET_RSPCALL-4]
+		mov ecx, 			 dword [Shamt]
+		shr eax,			 cl
+		mov dword [rsp+r12+OFFSET_RSPCALL-4], eax		       ; output pointer is rd		
+		ret 
 
 	_jr:	 ; PC = R[rs]
 		impr_texto Op15,tamano_Op15
@@ -1369,7 +1387,7 @@ _Alu2:
 	_lw:
 		impr_texto Op16,tamano_Op16
 		call _PantallaTipoI
-		mov eax,             dword [rsp+r14+OFFSET_RSPCALL] ; [rs]
+		mov eax,             dword [rsp+r14+OFFSET_RSPCALL-4] ; [rs]
 		mov r8d, 4
 		add eax,             r9d               ; [rs] + Imm
 		;imul eax, 4 						   ; (6)*4 = 24, byte adjust 
@@ -1381,8 +1399,8 @@ _Alu2:
 		_GoGetIt:
 			;mov dword [PlayHard],         eax 				 ; guarda el valor modificado en el registro deseado
 			
-			mov r10d,            dword [rsp+rax+OFFSET_RSPCALL+OFFSET_POINTER_DATAMEM]
-			mov dword [rsp+r13+OFFSET_RSPCALL], r10d ;eax
+			mov r10d,            dword [rsp+rax+OFFSET_RSPCALL+OFFSET_POINTER_DATAMEM-4]
+			mov dword [rsp+r13+OFFSET_RSPCALL-4], r10d ;eax
 	 
 		ret 
 
@@ -1400,8 +1418,8 @@ _Alu2:
 		ret
 
 ;	_subu:
-		;impr_texto Op23,tamano_Op23
-		;call _PantallaTipoR 
+;		impr_texto Op23,tamano_Op23
+;		call _PantallaTipoR 
 ;		mov eax,         dword [rsp+r13+OFFSET_RSPCALL] 	   ; rt pointer	
 ;		cmp eax,         0
 ;		jg _subuRtIsPositive              	   ; Unsigned operation 
@@ -1432,40 +1450,40 @@ _Alu2:
 		ret
 
 
-;	_beq: 
-		;impr_texto Op11, tamano_Op11	
-		;call _PantallaTipoI
+	_beq: 
+		impr_texto Op11, tamano_Op11	
+		call _PantallaTipoI
 
-;		mov eax,         dword [rsp+r14+OFFSET_RSPCALL]  ; [rs]
-;		sub eax,         dword [rsp+r13+OFFSET_RSPCALL]  ; [rt]
+		mov eax,         dword [rsp+r14+OFFSET_RSPCALL]  ; [rs]
+		sub eax,         dword [rsp+r13+OFFSET_RSPCALL]  ; [rt]
 
-;		cmp eax,         0
-;		je _BeqC
-;		jne _BeqR
+		cmp eax,         0
+		je _BeqC
+		jne _BeqR
 
-;		_BeqC:
-;			add ebx,                    r9d 
-;			ret 
+		_BeqC:
+			add ebx,                    r9d 
+			ret 
 
-;		_BeqR: 
-;			ret 
+		_BeqR: 
+			ret 
 
 
-;	_bne: 
-		;impr_texto Op12, tamano_Op12
-		;call _PantallaTipoI
-;		mov eax,         dword [rsp+r14+OFFSET_RSPCALL]  ; [rs]
-;		sub eax,         dword [rsp+r13+OFFSET_RSPCALL]  ; [rt]
-;		cmp eax,         0
-;		je _bneC
-;		jne _bneR
+	_bne: 
+		impr_texto Op12, tamano_Op12
+		call _PantallaTipoI
+		mov eax,         dword [rsp+r14+OFFSET_RSPCALL]  ; [rs]
+		sub eax,         dword [rsp+r13+OFFSET_RSPCALL]  ; [rt]
+		cmp eax,         0
+		je _bneC
+		jne _bneR
 
-;		_bneR:
-;			add ebx,                    r9d  
-;			ret 
+		_bneR:
+			add ebx,                    r9d  
+			ret 
 
-;		_bneC:  
-;			ret 
+		_bneC:  
+			ret 
 
 	_j:
 		impr_texto Op13,tamano_Op13
@@ -1479,7 +1497,7 @@ _Alu2:
 		call _PantallaTipoR
 		;add ebx, 8
 		;PC+8;sub ebx,  8  ; apuntando a la instruccion anterior (suponiendo que estan consecutivas, REVISAR)
-		mov dword [rsp+OFFSET_POINTER_REG+OFFSET_RSPCALL +124], ebx ; R[31] = PC+8
+		mov dword [rsp+OFFSET_POINTER_REG+OFFSET_RSPCALL +124 -4], ebx ; R[31] = PC+8
 											; R[31] => 31*4 = 124
 		;add ebx, 8
 		;_jal2:			
@@ -1505,56 +1523,54 @@ _Alu2:
 			mov dword [rsp+r12+OFFSET_RSPCALL-4], eax
 			ret	
 
-;	_slti:
-		;impr_texto Op19,tamano_Op19
-		;call _PantallaTipoI		
-;		mov eax,         dword [rsp+r14+OFFSET_RSPCALL] ; rs pointer	
-;		cmp eax,         r9d               ; cmp with imm 
-;		jl _sltiSetLess
+	_slti:
+		impr_texto Op19,tamano_Op19
+		call _PantallaTipoI		
+		mov eax,         dword [rsp+r14+OFFSET_RSPCALL-4] ; rs pointer	
+		cmp eax,         r9d               ; cmp with imm 
+		jl _sltiSetLess
 
-;		mov dword [rsp+r13+OFFSET_RSPCALL],  0          ; [rs] = 0
-;		ret
+		mov dword [rsp+r13+OFFSET_RSPCALL-4],  0          ; [rs] = 0
+		ret
 
-;		_sltiSetLess: 
-;			mov dword [rsp+r13+OFFSET_RSPCALL], 1       ; [rt] = 1
-;			ret
+		_sltiSetLess: 
+			mov dword [rsp+r13+OFFSET_RSPCALL-4], 1       ; [rt] = 1
+			ret
 
 
-;    _sltiu: ; ESTA TODAVIA NO FUNCIONA
-		;impr_texto Op25,tamano_Op25		
-		;call _PantallaTipoI
-;    	mov eax,         dword [rsp+r14+OFFSET_RSPCALL]       ; [rs]
-;    	cmp eax,         0
-;		jg _sltiuSetLess
-		; Unsigned operation 
-;		mov r10d,        -1  ; r10d reg because we don't need function
-;		imul r10d             ; se multiplica por -1 para que el resultado sea positivo
+    _sltiu: ; ESTA TODAVIA NO FUNCIONA
+		impr_texto Op19,tamano_Op19
+		call _PantallaTipoI		
+		mov eax,         dword [rsp+r14+OFFSET_RSPCALL-4] ; rs pointer	
+		cmp eax,         r9d               ; cmp with imm 
+		jb _sltiSetLess1
 
-;		_sltiuSetLess:
-;			mov r8d,      eax			
-;			continueSltiu0:
-;				mov eax,       r9d	
+		mov dword [rsp+r13+OFFSET_RSPCALL-4],  0          ; [rs] = 0
+		ret
 
-;				cmp eax,      0
-;				jg _continueSltiu
+		_sltiSetLess1: 
+			mov dword [rsp+r13+OFFSET_RSPCALL-4], 1       ; [rt] = 1
+			ret   	
 
-;				mov ebp,     -1
-;				imul ebp            ; eax = imm
+
+
+	_sltu: 
+		impr_texto Op18,tamano_Op18	
+		call _PantallaTipoR 
+		mov eax,      dword [rsp+r14+OFFSET_RSPCALL-4] ; rs pointer
+		cmp eax,      dword [rsp+r13+OFFSET_RSPCALL-4] ; rt pointer
+		jb _Rd4
+
 		
-;		_continueSltiu:
-;			cmp eax,      r8d
-;			jl _Rd0iu
+			mov eax,  0
+			mov dword [rsp+r12+OFFSET_RSPCALL-4], eax
+		
+			ret 
 
-;		_Rd0iu:
-;			mov eax,  0
-;			mov dword [rsp+r13+OFFSET_RSPCALL], eax
-;			ret 
-
-;		_Rd1iu:
-;			mov eax,  1
-;			mov dword [rsp+r13+OFFSET_RSPCALL], eax
-;			ret	    	
-
+		_Rd4:
+			mov eax,  1
+			mov dword [rsp+r12+OFFSET_RSPCALL-4], eax
+			ret	
 
 
 ;	_sltu:
@@ -1668,7 +1684,7 @@ section .data
   OUTPUT_FILE_NAME:    db "Resultados.txt", 0 ; nombre de archivo a escribir
   OUTPUT_FILE_LENGTH:  equ 21
 
-  FILE_NAME:      db "code.txt", 0
+  FILE_NAME:      db "ROM.txt", 0
   FILE_LENGTH:    equ  200 				        		; length of inside text
   
 
@@ -1729,8 +1745,8 @@ var_nombre: db ''
 	pantalla_final_0: db 0xa, 0xa, 0xa,'Ejecucion Exitosa',0xa 
 	l5_tamano: equ $-pantalla_final_0
 
-    pantalla_final: db 0xa,'Ejecucion Fallida',0xa 
-	ltamano: equ $-pantalla_final
+    pantallafinal1: db 0xa,'Ejecucion Fallida',0xa 
+	ltamano: equ $-pantallafinal1
 
      pantalla_final_1: db 'Felipe Munoz Soto 201121294', 0xa
 	l7_tamano: equ $-pantalla_final_1
