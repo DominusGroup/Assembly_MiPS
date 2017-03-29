@@ -1052,6 +1052,49 @@ _DECO:
 %endmacro		
 
 
+_errorOpcode:
+		
+		cmp r15d, 0x0 ; Tipo R
+		je _salir
+		cmp r15d, 0x8 ; addi
+		je _salir
+		cmp r15d, 0xd ; ori
+		je _salir
+		cmp r15d, 0xc ; andi
+		je _salir
+		cmp r15d, 0xa ; slti
+		je _salir
+		cmp r15d, 0xb ; sltiu
+		je _salir
+		cmp r15d, 0x4 ; beq
+		je _salir
+		cmp r15d, 0x5 ; bne
+		je _salir
+		cmp r15d, 0x2 ; j
+		je _salir
+		cmp r15d, 0x3 ; jal
+		je _salir
+	    	cmp r15d, 0x23 ; lw
+	    	je _salir
+		jne _errOpcode
+
+		_salir:
+
+		ret
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ;------------------------------------------------------------------------------
 ;------------------------------ Master ALU ------------------------------------
 ;------------------------------------------------------------------------------
@@ -1068,6 +1111,8 @@ _Alu2:
 	;mov [Opcode], r15d
 	;mov [Function], r10d 
 
+	call _errorOpcode
+	
 	cmp r15d, 0x00
 	je  _OPcodeR
 	jne _OPcodeI
@@ -1562,6 +1607,11 @@ var_nombre: db ''
 	pantalla_final_0: db 0xa,'Ejecucion Exitosa',0xa 
 	l5_tamano: equ $-pantalla_final_0
 
+        pantalla_final: db 0xa,'Ejecucion Fallida',0xa 
+	ltamano: equ $-pantalla_final
+
+	error2: db 0xa,'OpCode ingresado no existe en el simulador :',0xa 
+	error02: equ $-error2
 
      pantalla_final_1: db 'Felipe Munoz Soto 201121294', 0xa
 	l7_tamano: equ $-pantalla_final_1
@@ -1881,6 +1931,37 @@ _Reg1:
 	mov [enter], r10  
   
 	jmp _pantallafinal
+
+_errOpcode:
+
+	mov rax, 1
+	mov rdi, 1
+	mov rsi, pantalla_final
+	mov rdx, ltamano
+	syscall
+
+	mov rax, 1
+	mov rdi, 1
+	mov rsi, error2
+	mov rdx, error02
+	syscall
+
+	mov eax,                      dword [rsp+OFFSET_DECODE_PROCESS-8 +8 +0]  ; [OPC] 
+	mov [string],                 eax
+	call Hex2Ascii	                        ; in [string] ; out [regout]
+	mov [regout_aux], rcx ;eax 
+        impr_textoPantalla fmtint4, 	      8  	
+
+    
+jmp _end
+
+
+
+
+
+
+
+
 
 
 _error:
