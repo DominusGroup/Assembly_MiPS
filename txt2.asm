@@ -34,7 +34,7 @@ _FillBuffer:
 	mov rsi, 	  		STDIN      		; for read only access
 	mov rdx, 0
 	syscall  
-	cmp rax,0
+	cmp rax,0 
 	jle _error
 	
 	mov [FD_IN],  		rax
