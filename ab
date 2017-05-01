@@ -1,0 +1,438 @@
+
+
+;-------------------------  MACRO #1  ----------------------------------
+;Macro-1: impr_texto.
+;	Imprime un mensaje que se pasa como parametro
+;	Recibe 2 parametros de entrada:
+;		%1 es la direccion del texto a imprimir
+;		%2 es la cantidad de bytes a imprimir
+;-----------------------------------------------------------------------
+%macro impr_texto 2 			;recibe 2 parametros
+	mov rax, 1	;sys_write
+	;mov rdi, 1	;std_out
+	mov rsi, %1	;primer parametro: Texto
+	mov rdx, %2	;segundo parametro: Tamano texto
+	syscall
+%endmacro
+;------------------------- FIN DE MACRO --------------------------------
+ 
+ %macro impr_textoPantalla 2 	;recibe 2 parametros
+	mov rax, 1	;sys_write
+	mov rdi, 1	;std_out
+	mov rsi, %1	;primer parametro: Texto
+	mov rdx, %2	;segundo parametro: Tamano texto
+	syscall
+%endmacro
+;------------------------- FIN DE MACRO --------------------------------
+ 
+ 
+
+ _Buffer:
+    ;mov eax, 4
+   ;mov ebx, 1
+   ;mov ecx, userMsg
+   ;mov edx, lenUserMsg
+   ;int 80h
+
+   ;rewind file
+  ; mov eax, 19                  ; sys_lseek
+   ;mov ebx, esi ;[FD_IN] ; esi                 ; fd
+   ;xor ecx, ecx ; 4 ;ecx                 ; offset 0
+   ;xor edx, edx                 ; SEEK_SET
+   ;int 80h                     ; call
+
+   ;Read and store the user input
+   mov eax, 3
+   mov ebx, 2
+   mov ecx, num
+   mov edx, CharLength ;100          ;5 bytes (numeric, 1 for sign) of that information
+   int 80h
+	
+   ;Output the message 'The entered number is: '
+   mov eax, 4
+   mov ebx, 1
+   mov ecx, dispMsg
+   mov edx, lenDispMsg
+   int 80h  
+
+   ;Output the number entered
+   mov eax, 4
+   mov ebx, 1
+   mov ecx, num
+   mov edx, CharLength ;100
+   int 80h  
+    
+   ; Exit code
+   ;;mov eax, 1
+   ;;mov ebx, 0
+   ;;int 80h
+
+   ret 
+
+;------ Pasa contenido en el .txt al Buffer 
+
+_FillBuffer:
+
+    ;mov eax, 5 
+    ;mov ebx, FILE_NAME
+    ;mov ecx, 2          ; read & write
+    ;int 80h
+
+    ;mov ebx, eax 
+    ;mov ecx, pantalla_inicio_1
+    ;mov edx, l1_tamano
+    ;int 80h 
+
+    ;mov eax, 1 
+    ;mov ebx, 0 
+    ;int 80h 
+
+
+    ;------- open file for reading
+    mov rax,            SYS_OPEN                    
+    mov rdi,            FILE_NAME ;  [arg1]   ; FILE_NAME       ; [arg1]      
+    mov rsi,            STDERR; STDOUT ;: STDERR ; STDIN           ; for read only access
+    mov rdx, 0
+    syscall  
+    mov [FD_IN],        rax    
+    cmp rax,0
+    jle  _creat
+    jnle _continue1
+
+    _creat:
+        mov eax, 8        ; creat
+        mov ebx, FILE_NAME; [arg1]     ; filename ; first argument
+        mov ecx, fileSize ; the suffix O means Octal in nasm, like the leading 0 in C. see: http://www.nasm.us/doc/nasmdoc3.html
+        int 80h ; calls the kernel
+        
+        ;------- open file for reading
+        mov rax,            SYS_OPEN                    
+        mov rdi,            FILE_NAME ; [arg1]   ; FILE_NAME       ; [arg1]      
+        mov rsi,            STDIN           ; for read only access
+        mov rdx, 0
+        syscall  
+        jmp _continue2
+
+    _continue1:
+     
+
+    ;------- read from file
+    mov rax,            SYS_READ        ; sys_read
+    mov rdi,            [FD_IN]
+    mov rsi,            TEXT ;[TEXT-6]        ;num ;TEXT
+    mov rdx,            CharLength  ; FILE_LENGTH     ; Data length 
+    syscall
+
+; como hacer para simular que el contenido en el txt sea escrito por el usuario en la terminal 
+
+    ;;;;trabajando aqui 
+   ;Read and store the user input
+;   mov eax, 3
+;   mov ebx, 2
+;   mov rdi,            [FD_IN]   
+;   mov ecx, TEXT + 5;num
+;   mov edx, CharLength ;100          ;5 bytes (numeric, 1 for sign) of that information
+;   int 80h
+ 
+ 
+
+    ;mov rax, 1
+    ;mov rdi, 1
+    ;mov rsi, noerror
+    ;mov rdx, noerror1
+    ;syscall
+
+    ;mov rax, 0
+    ;mov rdi, 0
+    ;mov rsi, var_nombre
+    ;mov rdx, var_nombre
+    ;syscall
+
+;------- print info  
+    mov rax,            SYS_WRITE 
+    mov rdi,            STDOUT
+    mov rsi,            TEXT               ;   TEXT            ; The Buffer TEXT
+    mov rdx,            CharLength         ;   FILE_LENGTH     ; Data length 
+    syscall 
+
+    _continue2:
+    
+;------- close the file 
+    mov rax,            SYS_CLOSE
+    mov rdi,            [FD_IN]
+    syscall 
+        ;mov rdx,0
+        ;mov rsi,0
+        
+   ;Read and store the user input
+   ;mov eax, 19
+   ;mov ebx, STDERR
+   ;mov ecx, 10 ; num;+counting
+   ;;mov edx, 0  ;100          ;5 bytes (numeric, 1 for sign) of that information
+
+   ;mov ecx, TEXT+10 ; num;+counting   
+
+;------------------ At this point -------------------------
+;----------- $rsi have txt instructions ------------------- 
+    ret 
+
+
+; Macro para abrir el .txt en que se guardaran los datos resultantes de la ejecución 
+ %macro Opentxt 0   
+;-------     
+
+;------- open file for writing
+	mov rax, 	  		SYS_OPEN		            
+	mov rdi, 	  	    FILE_NAME ; [arg1]	 ;filename ;OUTPUT_FILE_NAME
+	mov rsi, 	  	    STDOUT ; 	STDERR   ; read & write 
+	syscall  
+	mov [FD_OUT],  		rax
+
+%endmacro	
+%macro Writetxt 2
+		 ;------ write in txt 
+			mov rax, 	  		SYS_WRITE    	; sys_write
+			mov rdi, 	  		[FD_OUT]
+			mov rsi,            %1              ; Buffer output 
+			mov rdx, 	  	    %2              ; Data length 
+			syscall 
+
+		;------- close the file 
+			mov rax,      		SYS_CLOSE 
+			mov rdi,      		[FD_OUT]
+            syscall
+
+%endmacro
+
+ ;------- Macro encargado de guardar información resultante en el .txt 
+%macro PrintREGFinal 2 
+ 
+	Opentxt        ; Abrir el archivo de texto para guardar la información 
+
+	; --------------- Writting on Output .txt 
+	Writetxt %1, %2   ;fmtint5, fmtint6     
+
+      
+%endmacro
+
+  
+
+
+ 
+ 
+
+section .data
+  fmtint5:        equ $num
+  fmtint4:        equ $TEXT
+
+  fmtint7:        equ $BufferFinal
+  fmtint77:       equ $BufferFinal2
+
+  CharLength:     equ 1000
+  fileSize:       equ 1000
+
+  filename:            db "Tarea1.txt", 0
+
+  ;FILE_NAME:    db "a.txt", 0 ; nombre de archivo a escribir
+  FILE_NAME:    equ $arg1
+  FILE_NAME2:   db "~/Documents/Micros_project1/Tarea_uS_EditorTxt/a.txt", 0
+  FILE_LENGTH:  equ 21
+
+
+  SYS_EXIT: 	equ 60
+  SYS_READ: 	equ 0
+  SYS_WRITE: 	equ 1
+  SYS_OPEN: 	equ	2  
+  SYS_CLOSE: 	equ 3  
+  SYS_BRK:		equ 12 
+  SYS_STAT:		equ	4 
+  O_RDONLY:		equ	0
+  O_WRONLY:		equ	1
+  O_RDWR:		equ 2
+
+  STDIN:        equ 0
+  STDOUT:       equ 1
+  STDERR:       equ 2  
+
+
+
+;Inicio
+	pantalla_inicio_1: db 'Hola', 0xa
+	l1_tamano: equ $-pantalla_inicio_1
+
+	pantalla_inicio_2: db 'EL-4313 Estructura de Microprocesadores', 0xa
+	l2_tamano: equ $-pantalla_inicio_2
+
+	pantalla_inicio_3: db '1S-2017', 0xa
+	l3_tamano: equ $-pantalla_inicio_3
+
+	pantalla_inicio_4: db '', 0xa
+	l4_tamano: equ $-pantalla_inicio_4
+
+;Error archivo
+	error: db 'Archivo ROM.txt no encontrado', 0xa
+	error1: equ $-error
+
+	noerror: db 'Archivo ROM.txt encontrado', 0xa
+	noerror1: equ $-noerror 
+ 
+
+;Pantalla final
+    
+	pantalla_final_0: db 0xa, 0xa, 0xa,'Ejecucion Exitosa',0xa 
+	l5_tamano: equ $-pantalla_final_0
+
+    pantallafinal1: db 0xa,'Ejecucion Fallida',0xa 
+	ltamano: equ $-pantallafinal1
+ 
+
+;----------------- Prints ----------------------------
+
+    userMsg db 'Please enter a number: ' ;Ask the user to enter a number
+   	lenUserMsg equ $-userMsg             ;The length of the message
+    dispMsg db 'You have entered: '
+    lenDispMsg equ $-dispMsg           
+
+ 
+section .bss
+	FD_OUT: 	    resb 1
+	FD_IN: 		    resb 1
+	TEXT: 		    resb CharLength
+ 
+ 	num:		    resb CharLength
+    BufferFinal:    resb CharLength
+    BufferFinal2:   resb CharLength
+    
+    counting:       resb 8
+    arg1:           resb 16
+    deskryptor:     resb 8
+    descriptor:     resb 8
+    pointer:        resb 8    
+
+section  .text
+   global _start       
+
+
+_start:                     			; tell linker entry point
+ 
+
+;--------------------------------------------------------
+;----------- Code to get Arguments from terminal 
+;--------------------------------------------------------
+    pop rcx ;argc
+    ;cmp rcx, 4 ;if no arguments, then
+    ;jl _end ;noArgs ;error.
+    pop rcx ;argv[0] (program name)
+        
+    pop_arg1:
+        pop rcx ; 1st arg
+        mov r15,     [rcx]
+        mov [arg1],  r15  
+
+	;impr_textoPantalla pantalla_inicio_1, l1_tamano	 
+    
+_pantallafinal: 
+    
+    call _FillBuffer 
+
+_I1: ; Copiando dato de buffer del contenido en el txt 
+    mov al, byte [TEXT+r10]
+    mov [BufferFinal+r10], al 
+    mov [num+r10], al 
+
+    inc r10
+
+    cmp r10,        CharLength             ; Break condition
+    je              _I2  
+    jne             _I1
+
+
+_I2: ; Cuenta el numero de letras/numeros que se tenia del texto 
+        ; al hacer operaciones en el buffer se jode* por ello se guarda previamente 
+    mov al,         byte [TEXT+r13]         ; 19 is a constant to find Index(;) 
+    inc             r13                    ; in format [yyyyyyyy] xxxxxxxx;
+
+    cmp r13,        CharLength             ; Break condition
+    je              _Return2  
+
+    cmp al,         31                    ; 0x3b => Index ( ; )          
+    jg             _I2     
+    
+    sub r13, 1
+    mov [counting], r13
+_Return2:
+
+
+  ;  mov eax, [TEXT]      ; copy the dword to fill the buffer
+   ; mov esp, TEXT + 4    ; start with the next dword
+    ;mov ecx, r13d        ; 127                 ; repeat until it's full
+      
+    ;_expand:
+     ; mov [esp], eax               ; do the actual buffer writing
+     ; add esp, 4                   ; move to the next dword
+     ; dec ecx                     ; count this iteration
+     ; jnz _expand                 ; repeat until done
+
+  ; rewind file
+ ; mov eax,19                  ; sys_lseek
+ ; mov ebx, esi ;[FD_IN] ; esi                 ; fd
+ ; xor ecx, ecx ; 4 ;ecx                 ; offset 0
+ ; xor edx,edx                 ; SEEK_SET
+ ; int 80h                     ; call
+
+    call _Buffer
+    xor r12, r12 
+    xor r15, r15
+ 
+_I3: ; Copiando contenido digitado en el auxiliar r12
+
+    mov al,         byte [num+r12]         ; 19 is a constant to find Index(;) 
+    mov byte [BufferFinal+r13+r12], al
+    mov byte [BufferFinal2+r12], al
+    inc             r12                    ; in format [yyyyyyyy] xxxxxxxx;
+
+    cmp r12,        CharLength             ; Break condition
+    je              _Instruction2Memory
+    jne             _I3  
+
+
+_Instruction2Memory: 
+
+    mov al,         byte [num+r15]         ; 19 is a constant to find Index(;) 
+   ; mov [BufferFinal2+r13+r15], al
+    inc             r15                    ; in format [yyyyyyyy] xxxxxxxx;
+
+    cmp r15,        CharLength             ; Break condition
+    je              _Return  
+
+    cmp al,         31                    ; 0x3b => Index ( ; )          
+    jg              _Instruction2Memory     
+    sub r15, 1   
+
+_Return:
+    
+
+
+; Concatenando buffers
+    ;mov ah,         byte []
+    ;mov al,         byte [num]
+    mov rax, r15
+    add rax, r13 
+    mov r13, rax 
+
+
+    Opentxt        ; Abrir el archivo de texto para guardar la información 
+    ; --------------- Writting on Output .txt 
+    Writetxt fmtint7, r13
+    ;Writetxt fmtint77, r15 ;%1, %2   ;fmtint5, fmtint6     
+
+
+
+
+ 
+
+_end:
+ 	mov rax,       		 SYS_EXIT
+   	mov rdi,       		 STDIN
+    xor rbx,       		 rbx
+    syscall
